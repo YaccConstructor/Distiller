@@ -6,6 +6,8 @@ import qualified Test.Tasty.Hedgehog
 import qualified Hedgehog.Gen as Gen
 import Hedgehog
 import qualified Hedgehog.Range as Range
+import Test.Tasty (TestTree, testGroup)
+import Test.Tasty.Hedgehog (testProperty)
 
 genBool :: Gen Bool
 genBool = Gen.bool
@@ -22,6 +24,15 @@ instance Num MyNat where
   
   Zero * y = Zero
   Succ x * y = y + (x * y)
+ 
+  (-) Zero _         = Zero
+  (-) x Zero         = x
+  (-) (Succ x) (Succ y) = x - y
+
+  abs x = x
+
+  signum Zero = Zero
+  signum _ = Succ Zero
   
   fromInteger 0 = Zero
   fromInteger n = Succ (fromInteger (n - 1)) 
@@ -33,7 +44,7 @@ instance Enum MyNat where
 
   fromEnum :: MyNat -> Int
   fromEnum Zero     = 0
-  fromEnum (Succ x) = 1 + (fromEnum x)
+  fromEnum (Succ x) = 1 + fromEnum x
 
   toEnum :: Int -> MyNat
   toEnum 0 = Zero
@@ -42,10 +53,57 @@ instance Enum MyNat where
     | otherwise = error "Negative argument is prohibited."      
 
 genNat :: Gen MyNat
-genNat =  Gen.int (Range.constantFrom 0 0 100) >>= (return . toEnum)
+genNat =  Gen.int (Range.constantFrom 0 0 10) >>= (return . toEnum)
 
 genListNat :: Gen [MyNat]
 genListNat = Gen.list (Range.linear 0 100) genNat
+
+test_natPropertyTestTree :: IO TestTree
+test_natPropertyTestTree = return $ testGroup "Nat property tests"
+   [ testProperty "(a + b) + c = a + (b + c)" associativePlusProp
+   , testProperty "(a + b) - b = a" natPlusMinusProp
+   , testProperty "(a * b) * c = a * (b * c)" associativeMulProp
+   , testProperty "(toEnum (fromEnum a) = a)" natEnumProp
+   , testProperty "Succ a >= a" greaterProp
+   , testProperty "Pred a <= a" lessProp
+    ]
+
+natEnumProp :: Property
+natEnumProp = property $ do
+  a <- forAll genNat
+  toEnum (fromEnum a) === a 
+
+natPlusMinusProp :: Property
+natPlusMinusProp = property $ do
+  a <- forAll genNat
+  b <- forAll genNat
+  (a + b) - b === a 
+
+associativePlusProp :: Property
+associativePlusProp = property $ do
+  a <- forAll genNat
+  b <- forAll genNat
+  c <- forAll genNat
+  (a + b) + c  === a + (b + c)
+
+associativeMulProp :: Property
+associativeMulProp = property $ do
+  a <- forAll genNat
+  b <- forAll genNat
+  c <- forAll genNat
+  (a * b) * c  === a * (b * c)
+  
+greaterProp :: Property
+greaterProp = property $ do
+  a <- forAll genNat
+  b <- (forAll . pure) $ succ a
+  (b >= a) === True  
+  
+lessProp :: Property
+lessProp = property $ do
+  a <- forAll genNat
+  b <- if a == Zero then (forAll . pure) Zero else (forAll . pure) $ pred a
+  (b <= a) === True  
 
 
 

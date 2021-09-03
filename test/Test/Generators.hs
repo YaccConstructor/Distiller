@@ -9,6 +9,8 @@ import qualified Hedgehog.Range as Range
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.Hedgehog (testProperty)
 
+import Term
+
 genBool :: Gen Bool
 genBool = Gen.bool
 
@@ -58,6 +60,10 @@ genNat =  Gen.int (Range.constantFrom 0 0 10) >>= (return . toEnum)
 genListNat :: Gen [MyNat]
 genListNat = Gen.list (Range.linear 0 100) genNat
 
+natToTerm :: MyNat -> Term
+natToTerm Zero = Con "Zero" []
+natToTerm (Succ x) = Con "Succ" [natToTerm x]
+
 test_natPropertyTestTree :: IO TestTree
 test_natPropertyTestTree = return $ testGroup "Nat property tests"
    [ testProperty "(a + b) + c = a + (b + c)" associativePlusProp
@@ -104,16 +110,3 @@ lessProp = property $ do
   a <- forAll genNat
   b <- if a == Zero then (forAll . pure) Zero else (forAll . pure) $ pred a
   (b <= a) === True  
-
-
-
-
-
-
-
-
-
-
-
-
-

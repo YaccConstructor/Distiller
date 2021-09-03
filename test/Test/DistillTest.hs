@@ -9,22 +9,8 @@ import Data.List
 import Data.Maybe (fromJust, isJust)
 import Text.Printf ( printf )
 import Control.Exception
+import Test.TestHelpers
 
-defaultTimeout :: Integer
-defaultTimeout = 2 * 1000000 --timeout in nanoseconds: 1 sec = 10^6 ns 
-
-_10sec :: Integer
-_10sec = 10 * 1000000
-
-_1min :: Integer
-_1min = 60 * 1000000
-
-timeOutTest :: Integer -> TestName -> Assertion -> TestTree
-timeOutTest timeout testName assertion =
-  localOption (mkTimeout timeout) $ testCase testName assertion
-
-load :: String -> String -> IO (Maybe (Term, [(String, ([String], Term))]))
-load root imports = loadProg [root] [] [] $ Just imports
 
 createDistillationTest :: String -> String -> String -> String -> Integer -> IO TestTree
 createDistillationTest fileToDistill importsForDistill fileWithGold importsForGold timeoutForDistillation =  do
@@ -63,68 +49,68 @@ test_distillerBasicTest3 = do
   createDistillationTest "map" "inputs/" "gold/map_gold" "inputs/" defaultTimeout
 
 test_distillerBasicTest4 :: IO TestTree
-test_distillerBasicTest4 =
+test_distillerBasicTest4 = do
   createDistillationTest "pluscomm" "inputs/" "gold/pluscomm_gold" "inputs/" defaultTimeout
 
 test_distillerBasicTest5 :: IO TestTree
-test_distillerBasicTest5 =
+test_distillerBasicTest5 = do
   createDistillationTest "revrev" "inputs/" "gold/revrev_gold" "inputs/" defaultTimeout
 
 test_distillerBasicTest6 :: IO TestTree
-test_distillerBasicTest6 =
+test_distillerBasicTest6 = do
   createDistillationTest "mapmap" "inputs/" "gold/mapmap_gold" "inputs/" defaultTimeout
 
 test_distillerBasicTest7 :: IO TestTree
-test_distillerBasicTest7 =
+test_distillerBasicTest7 = do
   createDistillationTest "mapfold" "inputs/" "gold/mapfold_gold" "inputs/" defaultTimeout    
 
 test_distillerBasicTest8 :: IO TestTree
-test_distillerBasicTest8 =
+test_distillerBasicTest8 = do
   createDistillationTest "nonterm" "inputs/" "gold/nonterm_gold" "inputs/" defaultTimeout    
 
 test_distillerBasicTest9 :: IO TestTree
-test_distillerBasicTest9 =
+test_distillerBasicTest9 = do
   createDistillationTest "palindrome" "inputs/" "gold/palindrome_gold" "inputs/" _10sec    
 
 test_distillerBasicTest10 :: IO TestTree
-test_distillerBasicTest10 =
+test_distillerBasicTest10 = do
   createDistillationTest "sumfac" "inputs/" "gold/sumfac_gold" "inputs/" _10sec    
 
 test_distillerBasicTest11 :: IO TestTree
-test_distillerBasicTest11 =
+test_distillerBasicTest11 = do
   createDistillationTest "neil1" "inputs/" "gold/neil1_gold" "inputs/" defaultTimeout    
 
 test_distillerBasicTest12 :: IO TestTree
-test_distillerBasicTest12 =
+test_distillerBasicTest12 = do
   createDistillationTest "neil2" "inputs/" "gold/neil2_gold" "inputs/" defaultTimeout    
 
 
 test_distillerBasicTest13 :: IO TestTree
-test_distillerBasicTest13 =
+test_distillerBasicTest13 = do
   createDistillationTest "neil3" "inputs/" "gold/neil3_gold" "inputs/" _10sec    
 
 test_distillerBasicTest14 :: IO TestTree
-test_distillerBasicTest14 =
+test_distillerBasicTest14 = do
   createDistillationTest "plusMinus_1" "inputs/" "gold/plusMinus_1_gold" "inputs/" defaultTimeout    
 
 test_distillerBasicTest15 :: IO TestTree
-test_distillerBasicTest15 =
+test_distillerBasicTest15 = do
   createDistillationTest "plusMinus_2" "inputs/" "gold/plusMinus_2_gold" "inputs/" defaultTimeout    
 
 test_distillerBasicTest16 :: IO TestTree
-test_distillerBasicTest16 =
+test_distillerBasicTest16 = do
   createDistillationTest "multDiv_1" "inputs/" "gold/multDiv_1_gold" "inputs/" _10sec    
 
 test_distillerBasicTest17 :: IO TestTree
-test_distillerBasicTest17 =
+test_distillerBasicTest17 = do
   createDistillationTest "multDiv_2" "inputs/" "gold/multDiv_2_gold" "inputs/" _10sec    
 
 test_distillerBasicTest18 :: IO TestTree
-test_distillerBasicTest18 =
+test_distillerBasicTest18 = do
   createDistillationTest "plusMultDistrib" "inputs/" "gold/plusMultDistrib_gold" "inputs/" _10sec    
 
 test_distillerBasicTest19 :: IO TestTree
-test_distillerBasicTest19 =
+test_distillerBasicTest19 = do
   createDistillationTest "natEq" "inputs/" "gold/natEq_gold" "inputs/" defaultTimeout    
 
 

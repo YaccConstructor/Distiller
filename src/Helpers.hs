@@ -16,11 +16,11 @@ import System.Process
 evalProg :: (Num c, Foldable t) => [[Char]] -> Term -> [(String, (t String, Term))] -> IO (Term, Int, c)
 evalProg [] t d = do let (v,r,a) = eval t EmptyCtx d 0 0
                      return (v, r, a)
-evalProg (x:xs) t d = do putStr (x++" = ")
+evalProg (x:xs) t d = do putStr (x ++ " = ")
                          hFlush stdout
                          l <-  getLine
                          case parseTerm l of
-                            Left s -> do putStrLn ("Could not parse term: "++ show s)
+                            Left s -> do putStrLn ("Could not parse term: " ++ show s)
                                          evalProg (x:xs) t d
                             Right u -> evalProg xs (subst u (abstract t x)) d
 

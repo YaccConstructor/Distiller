@@ -53,3 +53,6 @@ tests:
     - tasty-discover
     - tasty
     - tasty-hunit
+    - tasty-hedgehog
+    - hedgehog
+    - random

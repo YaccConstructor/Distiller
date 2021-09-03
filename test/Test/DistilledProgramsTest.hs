@@ -25,6 +25,16 @@ substituteAll :: Foldable t => Term -> t (String, Term) -> Term
 substituteAll =
     foldl (\ term (name, subst_term) -> subst subst_term (abstract term name)) 
 
+getEvalResults :: (Num a1, Foldable t1, Num a2, Foldable t3, Foldable t2) =>
+                  t2 (String, Term)
+                  -> (Term, [(String, (t3 String, Term))])
+                  -> (Term, [(String, (t1 String, Term))])
+                  -> ((Term, Int, a2), (Term, Int, a1))
+getEvalResults substitutions (origMainTerm, origTerms) (distilledMainTerm, distilledTerms) =         
+    let origResults = Term.eval (substituteAll origMainTerm substitutions) EmptyCtx origTerms 0 0            
+        distilledResults = Term.eval (substituteAll distilledMainTerm substitutions)  EmptyCtx distilledTerms 0 0
+    in (origResults, distilledResults)
+
 createTest :: String 
               -> String 
               -> ((Term, [(String, ([String], Term))]) -> (Term, [(String, ([String], Term))]) -> (Property, Property)) 
@@ -55,45 +65,35 @@ createTest fileToDistill importsForDistill makePropertyTest timeoutForDistillati
 
 
 test_plusMinus_2_property :: IO TestTree
-test_plusMinus_2_property = do createTest "plusMinus_2" "inputs/" plusMinus_2 defaultTimeout 
+test_plusMinus_2_property = do createTest "plusMinus_2" "inputs/" cases defaultTimeout 
     where
-    plusMinus_2 (origMainTerm, origTerms) (distilledMainTerm, distilledTerms) = do (p1,p2)
+    cases origProg distilledProg = do (p1, p2)
         where 
-        getEvalResults m n = let n_term = natToTerm n
-                                 m_term = natToTerm m
-                                 substitutions = [("n", n_term), ("m", m_term)]
-                                 origResults = Term.eval (substituteAll origMainTerm substitutions) EmptyCtx origTerms 0 0            
-                                 distilledResults = Term.eval (substituteAll distilledMainTerm substitutions)  EmptyCtx distilledTerms 0 0
-                             in (origResults, distilledResults)
-
         p1 = property $ do  n <- forAll genNat
                             m <- forAll genNat
-                            let ((origRes, _1,_2), (distilledRes, _3,_4)) = getEvalResults m n
+                            let substitutions = [("n", natToTerm n), ("m", natToTerm m)]
+                            let ((origRes, _1,_2), (distilledRes, _3,_4)) = getEvalResults substitutions origProg distilledProg
                             origRes === distilledRes
         p2 = property $ do  n <- forAll genNat
                             m <- forAll genNat
-                            let ((_1, origReductions, origAllocations), (_2, distilledReductions,distilledAllocations)) = getEvalResults m n
+                            let substitutions = [("n", natToTerm n), ("m", natToTerm m)]
+                            let ((_1, origReductions, origAllocations), (_2, distilledReductions,distilledAllocations)) = getEvalResults substitutions origProg distilledProg
                             (origReductions >= distilledReductions && origAllocations >= distilledAllocations) === True
         
 
 test_plusMinus_1_property :: IO TestTree
-test_plusMinus_1_property = do createTest "plusMinus_1" "inputs/" plusMinus_2 defaultTimeout 
+test_plusMinus_1_property = do createTest "plusMinus_1" "inputs/" cases defaultTimeout 
     where
-    plusMinus_2 (origMainTerm, origTerms) (distilledMainTerm, distilledTerms) = do (p1,p2)
+    cases origProg distilledProg = do (p1, p2)
         where 
-        getEvalResults m n = let n_term = natToTerm n
-                                 m_term = natToTerm m
-                                 substitutions = [("n", n_term), ("m", m_term)]
-                                 origResults = Term.eval (substituteAll origMainTerm substitutions) EmptyCtx origTerms 0 0            
-                                 distilledResults = Term.eval (substituteAll distilledMainTerm substitutions)  EmptyCtx distilledTerms 0 0
-                             in (origResults, distilledResults)
-
         p1 = property $ do  n <- forAll genNat
                             m <- forAll genNat
-                            let ((origRes, _1,_2), (distilledRes, _3,_4)) = getEvalResults m n
+                            let substitutions = [("n", natToTerm n), ("m", natToTerm m)]
+                            let ((origRes, _1,_2), (distilledRes, _3,_4)) = getEvalResults substitutions origProg distilledProg
                             origRes === distilledRes
         p2 = property $ do  n <- forAll genNat
                             m <- forAll genNat
-                            let ((_1, origReductions, origAllocations), (_2, distilledReductions,distilledAllocations)) = getEvalResults m n
-                            (origReductions >= distilledReductions && origAllocations >= distilledAllocations) === True    
+                            let substitutions = [("n", natToTerm n), ("m", natToTerm m)]
+                            let ((_1, origReductions, origAllocations), (_2, distilledReductions,distilledAllocations)) = getEvalResults substitutions origProg distilledProg
+                            (origReductions >= distilledReductions && origAllocations >= distilledAllocations) === True
     

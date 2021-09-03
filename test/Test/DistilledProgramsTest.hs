@@ -19,6 +19,7 @@ import Helpers
 import Control.Exception
 import Text.Printf (printf)
 import Data.Maybe (fromJust, isJust)
+import Control.Monad.IO.Class
 
 substituteAll :: Foldable t => Term -> t (String, Term) -> Term
 substituteAll =
@@ -34,12 +35,19 @@ getEvalResults substitutions (origMainTerm, origTerms) (distilledMainTerm, disti
         distilledResults = Term.eval (substituteAll distilledMainTerm substitutions)  EmptyCtx distilledTerms 0 0
     in (origResults, distilledResults)
 
-createTest :: String 
-              -> String 
-              -> ((Term, [(String, ([String], Term))]) -> (Term, [(String, ([String], Term))]) -> (Property, Property)) 
-              -> p 
-              -> IO TestTree
-createTest fileToDistill importsForDistill makePropertyTest timeoutForDistillation =  do
+--createTest :: String 
+--              -> String 
+--              -> ((Term, [(String, ([String], Term))]) -> (Term, [(String, ([String], Term))]) -> (Property, Property)) 
+--              -> p 
+--              -> IO TestTree
+createTest :: (Monoid a, Monoid b, Monoid c, Eq a, Show a, Ord b, Ord c) =>
+               String
+               -> String
+               -> ((Term, [(String, ([String], Term))])
+                   -> (Term, [(String, ([String], Term))]) -> PropertyT m ((a, b, c),(a, b, c)))
+               -> p
+               -> IO TestTree
+createTest fileToDistill importsForDistill getEvaluationResults timeoutForDistillation =  do
   progToDistill <- load fileToDistill importsForDistill  
   if isJust progToDistill
   then do
@@ -50,7 +58,11 @@ createTest fileToDistill importsForDistill makePropertyTest timeoutForDistillati
         let assertion = assertFailure $ printf "program: %s; imports: %s; exception: %s" fileToDistill importsForDistill (show ex)
         return $ testCase testCaseName assertion
       Right  distilled -> do
-        let (distillerIsCorrect, distillerIsOptimizer) = makePropertyTest (fromJust progToDistill) distilled
+        let x = do getEvaluationResults (fromJust progToDistill) distilled            
+        ((origResult, origReductions, origAllocations), (distilledResult, distilledReductions,distilledAllocations)) <- liftIO $ getEvaluationResults (fromJust progToDistill) distilled
+        let distillerIsCorrect = property $ origResult === distilledResult
+        let distillerIsOptimizer = property $ (origReductions >= distilledReductions && origAllocations >= distilledAllocations) === True
+        
         let distillerIsCorrectTestCaseName = printf "%s: evaluation results of original and distilled programs are equal" fileToDistill 
         let distillerIsOptimizerTestCaseName = printf "%s: evaluation of the distilled program requires less resources than evaluation of the original one" fileToDistill 
         return $ testGroup 
@@ -63,36 +75,29 @@ createTest fileToDistill importsForDistill makePropertyTest timeoutForDistillati
     return $ testCase testCaseName assertion
 
 
-test_plusMinus_2_property :: IO TestTree
+--test_plusMinus_2_property :: IO TestTree
 test_plusMinus_2_property = do createTest "plusMinus_2" "inputs/" cases defaultTimeout 
     where
-    cases origProg distilledProg = do (property p1, property p2)
-        where 
-        getEvaluationResults = do  
+    cases origProg distilledProg = do  
             n <- forAll genNat
             m <- forAll genNat            
             return $ getEvalResults [("n", natToTerm n), ("m", natToTerm m)] origProg distilledProg
-        p1 = do
-                ((origRes, _, _), (distilledRes, _,_)) <- getEvaluationResults                            
-                origRes === distilledRes
-        p2 = do  
-                ((_, origReductions, origAllocations), (_, distilledReductions,distilledAllocations)) <- getEvaluationResults
-                (origReductions >= distilledReductions && origAllocations >= distilledAllocations) === True
+        
         
 
-test_plusMinus_1_property :: IO TestTree
-test_plusMinus_1_property = do createTest "plusMinus_1" "inputs/" cases defaultTimeout 
-    where
-    cases origProg distilledProg = do (property p1, property p2)
-        where 
-        getEvaluationResults = do  
-            n <- forAll genNat
-            m <- forAll genNat            
-            return $ getEvalResults [("n", natToTerm n), ("m", natToTerm m)] origProg distilledProg
-        p1 = do
-                ((origRes, _, _), (distilledRes, _,_)) <- getEvaluationResults                            
-                origRes === distilledRes
-        p2 = do  
-                ((_, origReductions, origAllocations), (_, distilledReductions,distilledAllocations)) <- getEvaluationResults
-                (origReductions >= distilledReductions && origAllocations >= distilledAllocations) === True
+--test_plusMinus_1_property :: IO TestTree
+--test_plusMinus_1_property = do createTest "plusMinus_1" "inputs/" cases defaultTimeout 
+--    where
+--    cases origProg distilledProg = do (property p1, property p2)
+--        where 
+--        getEvaluationResults = do  
+--            n <- forAll genNat
+--            m <- forAll genNat            
+--            return $ getEvalResults [("n", natToTerm n), ("m", natToTerm m)] origProg distilledProg
+--        p1 = do
+--                ((origRes, _, _), (distilledRes, _,_)) <- getEvaluationResults                            
+--                origRes === distilledRes
+--        p2 = do  
+--                ((_, origReductions, origAllocations), (_, distilledReductions,distilledAllocations)) <- getEvaluationResults
+--                (origReductions >= distilledReductions && origAllocations >= distilledAllocations) === True
     

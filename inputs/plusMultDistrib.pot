@@ -1,0 +1,3 @@
+import Nat
+
+main = plus (mul n m) (mul n k)

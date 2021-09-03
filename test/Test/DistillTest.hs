@@ -103,6 +103,30 @@ test_distillerBasicTest13 :: IO TestTree
 test_distillerBasicTest13 =
   createDistillationTest "neil3" "inputs/" "gold/neil3_gold" "inputs/" _10sec    
 
+test_distillerBasicTest14 :: IO TestTree
+test_distillerBasicTest14 =
+  createDistillationTest "plusMinus_1" "inputs/" "gold/plusMinus_1_gold" "inputs/" defaultTimeout    
+
+test_distillerBasicTest15 :: IO TestTree
+test_distillerBasicTest15 =
+  createDistillationTest "plusMinus_2" "inputs/" "gold/plusMinus_2_gold" "inputs/" defaultTimeout    
+
+test_distillerBasicTest16 :: IO TestTree
+test_distillerBasicTest16 =
+  createDistillationTest "multDiv_1" "inputs/" "gold/multDiv_1_gold" "inputs/" _10sec    
+
+test_distillerBasicTest17 :: IO TestTree
+test_distillerBasicTest17 =
+  createDistillationTest "multDiv_2" "inputs/" "gold/multDiv_2_gold" "inputs/" _10sec    
+
+test_distillerBasicTest18 :: IO TestTree
+test_distillerBasicTest18 =
+  createDistillationTest "plusMultDistrib" "inputs/" "gold/plusMultDistrib_gold" "inputs/" _10sec    
+
+test_distillerBasicTest19 :: IO TestTree
+test_distillerBasicTest19 =
+  createDistillationTest "natEq" "inputs/" "gold/natEq_gold" "inputs/" defaultTimeout    
+
 
 -- Linear algebra tests
 

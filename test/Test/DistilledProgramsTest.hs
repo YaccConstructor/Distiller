@@ -54,7 +54,6 @@ createTest fileToDistill importsForDistill getEvaluationResults timeoutForDistil
         return $ testCase testCaseName assertion
       Right  distilled -> do
 
-
         let (distillerIsCorrect, distillerIsOptimizer) =
                 let p1 = do ((origRes, _, _), (distilledRes, _, _)) <- getEvaluationResults (fromJust progToDistill) distilled                           
                             origRes === distilledRes 

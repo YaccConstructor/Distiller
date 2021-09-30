@@ -1,0 +1,3 @@
+import LinearAlgebra
+
+main = map isZ f2 (map isZ f1 m1)

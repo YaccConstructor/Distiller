@@ -1,0 +1,13 @@
+import LinearAlgebra
+import Bool
+
+main = mAdd isZ op_add (kron isZ op_mul m1 m3) m2
+;
+
+isZ x = eqBool x False
+;
+
+op_add x y = or x y
+;
+
+op_mul x y = and x y

@@ -1,0 +1,18 @@
+import LinearAlgebra
+import Bool
+import Nat
+
+main = map is_z_nut g (mAdd is_z_bool op m1 m2)
+;
+
+is_z_nut x = eqNat x (Zero)
+;
+
+is_z_bool x = eqBool x (False)
+;
+
+op x y = or x y
+;
+
+g x = (Succ(Zero))
+;

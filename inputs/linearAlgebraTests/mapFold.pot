@@ -1,0 +1,3 @@
+import LinearAlgebra
+
+main = fold f2 s (map isZ f1 m1)

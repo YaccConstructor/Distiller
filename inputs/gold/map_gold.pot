@@ -1,4 +1,4 @@
-main = fix me;
-map f l = case l of
-             Nil -> []
-           | Cons(hd,tl) -> Cons(f hd,map f tl)
+main = f l g;
+f l g = case l of
+           Nil -> []
+         | Cons(x,xs) -> Cons(g x,f xs g)

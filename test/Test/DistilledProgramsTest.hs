@@ -75,19 +75,92 @@ createTest fileToDistill importsForDistill getEvaluationResults timeoutForDistil
     return $ testCase testCaseName assertion
 
 
-test_plusMinus_2_property :: IO TestTree
-test_plusMinus_2_property = do createTest "plusMinus_2" "inputs/" getEvaluationResults defaultTimeout 
-    where 
-    getEvaluationResults origProg distilledProg = do  
-        n <- forAll genNat
-        m <- forAll genNat            
-        return $ getEvalResults [("n", natToTerm n), ("m", natToTerm m)] origProg distilledProg
-            
+--test_plusMinus_2_property :: IO TestTree
+--test_plusMinus_2_property = do createTest "plusMinus_2" "inputs/" getEvaluationResults defaultTimeout 
+--    where 
+--    getEvaluationResults origProg distilledProg = do  
+--        n <- forAll genNat
+--        m <- forAll genNat            
+--        return $ getEvalResults [("n", natToTerm n), ("m", natToTerm m)] origProg distilledProg
+--            
+--
+--test_plusMinus_1_property :: IO TestTree
+--test_plusMinus_1_property = do createTest "plusMinus_1" "inputs/" getEvaluationResults defaultTimeout 
+--    where
+--    getEvaluationResults origProg distilledProg = do  
+--        n <- forAll genNat
+--        m <- forAll genNat            
+--        return $ getEvalResults [("n", natToTerm n), ("m", natToTerm m)] origProg distilledProg
 
-test_plusMinus_1_property :: IO TestTree
-test_plusMinus_1_property = do createTest "plusMinus_1" "inputs/" getEvaluationResults defaultTimeout 
+
+createRealWorldTest fileToDistill importsForDistill getEvaluationResults =  do
+  progToDistill <- load fileToDistill importsForDistill  
+  if isJust progToDistill
+  then do
+    distillationResult <- try (evaluate $ dist (fromJust progToDistill)) :: IO (Either SomeException (Term, [(String, ([String], Term))]))
+    let testCaseName = printf "Distillation of %s" fileToDistill
+    case distillationResult of
+      Left ex -> do
+        let assertion = assertFailure $ printf "program: %s; imports: %s; exception: %s" fileToDistill importsForDistill (show ex)        
+        return $ testCase testCaseName assertion
+      Right  distilled -> do        
+        p <- getEvaluationResults (fromJust progToDistill) distilled                                   
+        case p of 
+          Left ex -> do
+            let assertion = assertFailure $ printf "program: %s; imports: %s; exception: %s" fileToDistill importsForDistill (show ex)
+            return $ testCase testCaseName assertion
+          Right ((origRes, origReductions, origAllocations), (distilledRes, distilledReductions, distilledAllocations)) -> do
+            let assertion = origRes @?= distilledRes
+                testCaseName = printf "Distillation of %s. Original reductions %s, allocations %s. Distilled reductions %s, allocations %s." 
+                                      fileToDistill 
+                                      (show origReductions)
+                                      (show origAllocations)
+                                      (show distilledReductions)
+                                      (show distilledAllocations)
+            return $ testCase testCaseName assertion
+  else do
+    let testCaseName = printf "Parsing: %s" fileToDistill
+    let assertion = assertFailure $ printf "program: %s; imports: %s." fileToDistill importsForDistill
+    return $ testCase testCaseName assertion
+
+
+test_matrices_add_add_football_football_64x64 = do createRealWorldTest "linearAlgebraExamples/addadd" "inputs/" getEvaluationResults
     where
-    getEvaluationResults origProg distilledProg = do  
-        n <- forAll genNat
-        m <- forAll genNat            
-        return $ getEvalResults [("n", natToTerm n), ("m", natToTerm m)] origProg distilledProg
+    getEvaluationResults origProg distilledProg = do          
+        m <- loadFileToTerm "inputs/data/Football_64x64.pot"
+        case m of 
+          Left e -> return $ Left e            
+          Right u -> 
+            return $ Right $ getEvalResults [("m1", u), ("m2", u), ("m3", u)] origProg distilledProg
+
+test_matrices_add_kron_football_64x64_small_2x2 = do createRealWorldTest "linearAlgebraExamples/addKron2" "inputs/" getEvaluationResults
+    where
+    getEvaluationResults origProg distilledProg = do          
+        m <- loadFileToTerm "inputs/data/Football_64x64.pot"
+        n <- loadFileToTerm "inputs/data/Small_1_2x2.pot"
+        case (m,n) of 
+          (Left e,x) -> return $ Left e            
+          (x, Left e) -> return $ Left e            
+          (Right u, Right v) -> 
+            return $ Right $ getEvalResults [("m1", u), ("m2", u), ("m3", v)] origProg distilledProg
+
+--test_matrices_add_kron_kron_football_64x64_small_2x2 = do createRealWorldTest "linearAlgebraExamples/addKron1" "inputs/" getEvaluationResults
+--    where
+--    getEvaluationResults origProg distilledProg = do          
+--        m <- loadFileToTerm "inputs/data/Football_64x64.pot"
+--        n <- loadFileToTerm "inputs/data/Small_1_2x2.pot"
+--        case (m,n) of 
+--          (Left e,x) -> return $ Left e            
+--          (x, Left e) -> return $ Left e            
+--          (Right u, Right v) -> 
+--            return $ Right $ getEvalResults [("m1", u), ("m2", u), ("m3", v), ("m4", v)] origProg distilledProg
+
+
+--test_matrices_map_add_football_football_64x64 = do createRealWorldTest "linearAlgebraExamples/mapAdd" "inputs/" getEvaluationResults
+--    where
+--    getEvaluationResults origProg distilledProg = do          
+--        m <- loadFileToTerm "inputs/data/Football_64x64.pot"
+--        case m of 
+--          Left e -> return $ Left e            
+--          Right u -> 
+--            return $ Right $ getEvalResults [("m1", u), ("m2", u)] origProg distilledProg

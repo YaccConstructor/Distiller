@@ -23,4 +23,8 @@ timeOutTest timeout testName assertion =
 load :: String -> String -> IO (Maybe (Term, [(String, ([String], Term))]))
 load root imports = loadProg [root] [] [] $ Just imports
 
+loadFileToTerm file = do
+    str <- readFile file
+    return $ parseTerm str
+
 

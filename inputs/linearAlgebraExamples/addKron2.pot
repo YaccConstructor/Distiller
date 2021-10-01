@@ -1,10 +1,10 @@
 import LinearAlgebra
 import Bool
 
-main = mAdd isZ op_add (kron isZ op_mul m1 m3) m2
+main = mAdd is_z_bool op_add (kron is_z_bool op_mul m1 m2) m3
 ;
 
-isZ x = eqBool x False
+is_z_bool x = eqBool x False
 ;
 
 op_add x y = or x y

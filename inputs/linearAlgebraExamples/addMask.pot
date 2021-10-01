@@ -1,0 +1,10 @@
+import LinearAlgebra
+import Bool
+
+main = mask (mAdd is_z_bool op_add m1 m2) msk
+;
+
+is_z_bool x = eqBool x False
+;
+
+op_add x y = or x y 

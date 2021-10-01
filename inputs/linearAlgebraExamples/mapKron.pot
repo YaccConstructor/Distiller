@@ -2,7 +2,7 @@ import LinearAlgebra
 import Bool
 import Nat
 
-main = map is_z_nut to_nat (mAdd is_z_bool op m1 m2)
+main = map is_z_nut to_nat (kron is_z_bool op m1 m2)
 ;
 
 is_z_nut x = eqNat x (Zero)
@@ -11,7 +11,7 @@ is_z_nut x = eqNat x (Zero)
 is_z_bool x = eqBool x (False)
 ;
 
-op x y = or x y
+op x y = and x y
 ;
 
 to_nat x = (Succ(Zero))

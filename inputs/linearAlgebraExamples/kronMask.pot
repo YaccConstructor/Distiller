@@ -1,0 +1,10 @@
+import LinearAlgebra
+import Bool
+
+main = mask (kron is_z_bool op_mul m1 m2) msk
+;
+
+is_z_bool x = eqBool x False
+;
+
+op_mul x y = and x y 

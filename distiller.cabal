@@ -69,6 +69,7 @@ test-suite distiller-test
       Test.DistilledProgramsTest
       Test.DistillTest
       Test.Generators
+      Test.LinearAlgebraExamplesTest
       Test.TestHelpers
       Paths_distiller
   hs-source-dirs:

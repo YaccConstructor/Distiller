@@ -1,1 +1,4 @@
-main = fix me
+main = f l x f1 f2;
+f l x f1 f2 = case l of
+                 Nil -> x
+               | Cons(x',xs) -> (f xs (f1 x (f2 x')) f1 f2)

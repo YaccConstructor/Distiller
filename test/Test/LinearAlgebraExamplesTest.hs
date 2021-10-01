@@ -34,7 +34,7 @@ createRealWorldTest fileToDistill importsForDistill bindingsInfo =  do
                   Right l ->  
                     case r of 
                       Left e -> Left e
-                      Right x -> Right ((vName,x) : l)
+                      Right x -> Right (((vName,x),(vName,file)) : l)
                   Left e -> Left e ) (loadFileToTerm file)) 
                   (Right []))
               bindingsInfo                             
@@ -55,7 +55,8 @@ createRealWorldTest fileToDistill importsForDistill bindingsInfo =  do
                           Left e -> do
                             let assertion = assertFailure $ printf "program: %s; imports: %s; exception: %s" fileToDistill importsForDistill (show e)
                             return $ testCase testCaseName assertion
-                          Right bindings -> do
+                          Right _bindings -> do
+                            let (bindings, bindingsInfo) = unzip _bindings
                             let ((origRes, origReductions, origAllocations), (distilledRes, distilledReductions, distilledAllocations)) = getEvalResults bindings (fromJust progToDistill) distilled
                                 assertion = origRes @?= distilledRes
                                 testCaseName = printf "Evaluation of %s. Computed for %s. Original reductions %s, allocations %s. Distilled reductions %s, allocations %s." 
@@ -138,10 +139,28 @@ test_matrices_map_kron_football_64x64_small_1_2x2 = do createRealWorldTest "line
     where
     bindings = 
       [
-        [("m1","inputs/data/Football_64x64.pot"),("m2", "inputs/data/Small_1_2x2.pot")],
+        [("m1","inputs/data/bfwa62_64x64_nnz_450.pot"),("m2", "inputs/data/Small_1_2x2.pot")],
+        [("m1","inputs/data/can_61_64x64_nnz_309.pot"),("m2", "inputs/data/Small_1_2x2.pot")],
+        [("m1","inputs/data/dolphins_64x64_nnz_159.pot"),("m2", "inputs/data/Small_1_2x2.pot")],
+        [("m1","inputs/data/GD99_b_64x64_nnz_127.pot"),("m2", "inputs/data/Small_1_2x2.pot")],
+        [("m1","inputs/data/will57_64x64_nnz_281.pot"),("m2", "inputs/data/Small_1_2x2.pot")],
+
+        [("m1","inputs/data/football_128x128_nnz_613.pot"),("m2", "inputs/data/Small_1_2x2.pot")],
+        [("m1","inputs/data/GD98_b_128x128_nnz_207.pot"),("m2", "inputs/data/Small_1_2x2.pot")],
+        [("m1","inputs/data/gent113_128x128_nnz_655.pot"),("m2", "inputs/data/Small_1_2x2.pot")],
+        [("m1","inputs/data/Journals_128x128_nnz_6096.pot"),("m2", "inputs/data/Small_1_2x2.pot")],
+        [("m1","inputs/data/robot_128x128_nnz_870.pot"),("m2", "inputs/data/Small_1_2x2.pot")],
+
         [("m1","inputs/data/dwt_245_256x256_nnz_853.pot"),("m2", "inputs/data/Small_1_2x2.pot")],
         [("m1","inputs/data/n3c5-b4_256x256_nnz_1260.pot"),("m2", "inputs/data/Small_1_2x2.pot")], 
-        [("m1","inputs/data/Steam1_256x256_nnz_3762.pot"),("m2", "inputs/data/Small_1_2x2.pot")]
+        [("m1","inputs/data/Steam1_256x256_nnz_3762.pot"),("m2", "inputs/data/Small_1_2x2.pot")],        
+        [("m1","inputs/data/can_256_256x256_nnz_1586.pot"),("m2", "inputs/data/Small_1_2x2.pot")], 
+        
+        [("m1","inputs/data/dw256A_512x512_nnz_2480.pot"),("m2", "inputs/data/Small_1_2x2.pot")],
+        [("m1","inputs/data/dwb512_512x512_nnz_2500.pot"),("m2", "inputs/data/Small_1_2x2.pot")], 
+        [("m1","inputs/data/dwt_503_512x512_nnz_3265.pot"),("m2", "inputs/data/Small_1_2x2.pot")],        
+        [("m1","inputs/data/tomography_512x512_nnz_28726.pot"),("m2", "inputs/data/Small_1_2x2.pot")],
+        [("m1","inputs/data/Trefethen_500_512x512_nnz_4489.pot"),("m2", "inputs/data/Small_1_2x2.pot")]
       ]
 
 --test_matrices_kron_mask_football_64x64_small_1_2x2_mask1 = do createRealWorldTest "linearAlgebraExamples/kronMask" "inputs/" getEvaluationResults

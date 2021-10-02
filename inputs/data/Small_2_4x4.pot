@@ -1,0 +1,1 @@
+Node ((Node ((Val (True)), None, None, (Val (True)))), None, None, None)

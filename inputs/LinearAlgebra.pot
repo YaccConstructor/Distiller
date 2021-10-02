@@ -143,7 +143,7 @@ maskFromMatrix m =
         | Val (v) -> MVal
         | None -> MNone
         | Node (m1,m2,m3,m4) -> MNode (maskFromMatrix m1, maskFromMatrix m2, maskFromMatrix m3, maskFromMatrix m4)
-    in reduceMask res
+    in res
 ;
 
 mEq m1 m2 opEq =

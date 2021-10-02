@@ -60,9 +60,15 @@ m64x64 =
 
 m2x2 =
   [
-    "inputs/data/Small_1_2x2.pot"
+    "inputs/data/Small_1_2x2.pot",
+    "inputs/data/Small_2_2x2.pot"
   ]
 
+m4x4 =
+  [
+    "inputs/data/Small_1_4x4.pot",
+    "inputs/data/Small_2_4x4.pot"
+  ]
 
 createRealWorldTest :: 
   (Foldable t, Show (t (String, FilePath))) =>
@@ -122,7 +128,7 @@ test_matrices_add_add = do createRealWorldTest "linearAlgebraExamples/addAdd" "i
         [ [("m1",x), ("m2",y) , ("m3",z)] | x <- m128x128, y <- m128x128, z <- m128x128 ] ++
         [ [("m1",x), ("m2",y) , ("m3",z)] | x <- m256x256, y <- m256x256, z <- m256x256 ] ++
         [ [("m1",x), ("m2",y) , ("m3",z)] | x <- m512x512, y <- m512x512, z <- m512x512 ]
-        
+      
 
 test_matrices_add_add_add_1 = do createRealWorldTest "linearAlgebraExamples/addAddAdd1" "inputs/" bindings
     where
@@ -132,7 +138,7 @@ test_matrices_add_add_add_1 = do createRealWorldTest "linearAlgebraExamples/addA
         [ [("m1",x), ("m2",y), ("m3",z), ("m4",q)] | x <- m256x256, y <- m256x256, z <- m256x256, q <- m256x256 ] ++
         [ [("m1",x), ("m2",y), ("m3",z), ("m4",q)] | x <- m512x512, y <- m512x512, z <- m512x512, q <- m512x512 ]
 
-test_matrices_add_add_add_2_football_football_64x64 = do createRealWorldTest "linearAlgebraExamples/addAddAdd2" "inputs/" bindings
+test_matrices_add_add_add_2 = do createRealWorldTest "linearAlgebraExamples/addAddAdd2" "inputs/" bindings
     where
     bindings =           
         [ [("m1",x), ("m2",y), ("m3",z), ("m4",q)] | x <- m64x64, y <- m64x64, z <- m64x64, q <- m64x64 ] ++
@@ -143,7 +149,11 @@ test_matrices_add_add_add_2_football_football_64x64 = do createRealWorldTest "li
 test_matrices_add_kron = do createRealWorldTest "linearAlgebraExamples/addKron2" "inputs/" bindings
     where
     bindings =           
-        [ [("m1",x), ("m2",y) , ("m3",z)] | x <- m64x64, y <- m2x2, z <- m128x128 ]        
+        [ [("m1",x), ("m2",y) , ("m3",z)] | x <- m64x64, y <- m2x2, z <- m128x128 ] ++
+        [ [("m1",x), ("m2",y) , ("m3",z)] | x <- m64x64, y <- m4x4, z <- m256x256 ] ++
+        [ [("m1",x), ("m2",y) , ("m3",z)] | x <- m128x128, y <- m2x2, z <- m256x256 ] ++
+        [ [("m1",x), ("m2",y) , ("m3",z)] | x <- m128x128, y <- m4x4, z <- m512x512 ] ++
+        [ [("m1",x), ("m2",y) , ("m3",z)] | x <- m256x256, y <- m2x2, z <- m512x512 ]
 
 --test_matrices_add_kron_kron_football_64x64_small_2x2 = do test <- createRealWorldTest "linearAlgebraExamples/addKron1" "inputs/" getEvaluationResults
 --                                                          return $ ignoreTest test    
@@ -174,47 +184,29 @@ test_matrices_map_kron = do createRealWorldTest "linearAlgebraExamples/mapKron" 
         [ [("m1",x), ("m2",y)] | x <- m256x256, y <- m2x2 ] ++
         [ [("m1",x), ("m2",y)] | x <- m512x512, y <- m2x2 ] ++
 
+        [ [("m1",x), ("m2",y)] | x <- m64x64, y <- m4x4 ] ++
+        [ [("m1",x), ("m2",y)] | x <- m128x128, y <- m4x4 ] ++
+        [ [("m1",x), ("m2",y)] | x <- m256x256, y <- m4x4 ] ++
+        [ [("m1",x), ("m2",y)] | x <- m512x512, y <- m4x4 ] ++
+
         [ [("m1",x), ("m2",y)] | x <- m64x64, y <- m64x64 ] ++
         [ [("m1",x), ("m2",y)] | x <- m128x128, y <- m64x64 ] ++
         [ [("m1",x), ("m2",y)] | x <- m256x256, y <- m64x64 ] ++
         [ [("m1",x), ("m2",y)] | x <- m512x512, y <- m64x64 ] 
         
+test_matrices_kron_mask = do createRealWorldTest "linearAlgebraExamples/kronMask" "inputs/" bindings
+    where
+    bindings =           
+        [ [("m1",x), ("m2",y), ("m3",z)] | x <- m64x64,   y <- m2x2, z <- m128x128 ] ++
+        [ [("m1",x), ("m2",y), ("m3",z)] | x <- m64x64,   y <- m4x4, z <- m256x256 ] ++
+        [ [("m1",x), ("m2",y), ("m3",z)] | x <- m128x128, y <- m2x2, z <- m256x256 ] ++
+        [ [("m1",x), ("m2",y), ("m3",z)] | x <- m128x128, y <- m4x4, z <- m512x512 ] ++
+        [ [("m1",x), ("m2",y), ("m3",z)] | x <- m256x256, y <- m2x2, z <- m512x512 ]
 
---test_matrices_kron_mask_football_64x64_small_1_2x2_mask1 = do createRealWorldTest "linearAlgebraExamples/kronMask" "inputs/" getEvaluationResults
---    where
---    getEvaluationResults origProg distilledProg = do          
---        m <- loadFileToTerm "inputs/data/Football_64x64.pot"
---        n <- loadFileToTerm "inputs/data/Small_1_2x2.pot"
---        msk <- loadFileToTerm "inputs/data/Mask1.pot"
---        case (m,n,msk) of 
---          (Left e,x,y) -> return $ Left e
---          (x, Left e,y) -> return $ Left e
---          (x, y, Left e) -> return $ Left e
---          (Right u, Right v, Right msk) -> 
---            return $ Right $ getEvalResults [("m1", u), ("m2", v), ("msk", msk)] origProg distilledProg
---
---test_matrices_kron_mask_football_64x64_small_1_2x2_mask2 = do createRealWorldTest "linearAlgebraExamples/kronMask" "inputs/" getEvaluationResults
---    where
---    getEvaluationResults origProg distilledProg = do          
---        m <- loadFileToTerm "inputs/data/Football_64x64.pot"
---        n <- loadFileToTerm "inputs/data/Small_1_2x2.pot"
---        msk <- loadFileToTerm "inputs/data/Mask2.pot"
---        case (m,n,msk) of 
---          (Left e,x,y) -> return $ Left e
---          (x, Left e,y) -> return $ Left e
---          (x, y, Left e) -> return $ Left e
---          (Right u, Right v, Right msk) -> 
---            return $ Right $ getEvalResults [("m1", u), ("m2", v), ("msk", msk)] origProg distilledProg
---
---
---test_matrices_add_mask_football_football_64x64_mask1 = do createRealWorldTest "linearAlgebraExamples/addMask" "inputs/" getEvaluationResults
---    where
---    getEvaluationResults origProg distilledProg = do          
---        m <- loadFileToTerm "inputs/data/Football_64x64.pot"        
---        msk <- loadFileToTerm "inputs/data/Mask1.pot"
---        case (m,msk) of 
---          (Left e,x) -> return $ Left e
---          (x, Left e) -> return $ Left e          
---          (Right u, Right msk) -> 
---            return $ Right $ getEvalResults [("m1", u), ("m2", u), ("msk", msk)] origProg distilledProg
---
+test_matrices_add_mask = do createRealWorldTest "linearAlgebraExamples/addMask" "inputs/" bindings
+    where
+    bindings =           
+        [ [("m1",x), ("m2",y), ("m3",z)] | x <- m64x64,   y <- m64x64,   z <- m64x64 ] ++
+        [ [("m1",x), ("m2",y), ("m3",z)] | x <- m128x128, y <- m128x128, z <- m128x128 ] ++
+        [ [("m1",x), ("m2",y), ("m3",z)] | x <- m256x256, y <- m256x256, z <- m256x256 ] ++
+        [ [("m1",x), ("m2",y), ("m3",z)] | x <- m512x512, y <- m512x512, z <- m512x512 ]

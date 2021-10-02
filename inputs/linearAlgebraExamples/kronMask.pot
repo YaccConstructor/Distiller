@@ -1,7 +1,7 @@
 import LinearAlgebra
 import Bool
 
-main = mask (kron is_z_bool op_mul m1 m2) msk
+main = mask (kron is_z_bool op_mul m1 m2) (maskFromMatrix m3)
 ;
 
 is_z_bool x = eqBool x False

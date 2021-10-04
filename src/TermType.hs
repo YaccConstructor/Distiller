@@ -19,6 +19,7 @@ data Term = Free String -- free variable
           | Let String Term Term -- let expression
           | Unfold String Term Term -- unfolding
           | Fold String Term -- folding
+          | Gen Term Term -- generalization node
           deriving Show
 
 -- equality of terms

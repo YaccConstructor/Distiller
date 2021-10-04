@@ -594,5 +594,4 @@ branch = do
 
 parseTerm = parse term "Parse error"
 
-parseModule :: String -> Either ParseError ([[Char]], [(String, ([String], Term))])
 parseModule = parse modul "Parse error"

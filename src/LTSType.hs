@@ -1,4 +1,5 @@
 module LTSType (
+    LTS,
     doLTS0Tr, doLTS1Tr, doLTSManyTr,
     getLabels, getNewTerms, getOldTerm) where
   

@@ -1,7 +1,11 @@
-module Distiller where
+module Distiller (distill) where
+
+import LTSType 
+import TermType
 
 
-{---dist (t,d) = let e = map (processFun d) d
-                 t' = returnval (trans 2 t EmptyCtx (free t) [] d e)
-                 (t'',d',e') = residualise t' d e
-             in  (t'',d')--}
+distill :: Term -> Context -> [String] -> p3 -> p4 -> LTS
+distill = d_n
+
+d_n :: Term -> Context -> [String] -> p3 -> p4 -> LTS
+d_n term context funNamesAccum previousGensAccum funsDefs = doLTS0Tr term

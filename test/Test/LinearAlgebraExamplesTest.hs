@@ -26,10 +26,10 @@ import Data.Maybe (fromJust, isJust)
 m512x512 = 
   map (\x -> (loadFileToTerm x, x))
     [ 
-      "inputs/data/dw256A_512x512_nnz_2480.pot",
+      --"inputs/data/dw256A_512x512_nnz_2480.pot",
       "inputs/data/dwb512_512x512_nnz_2500.pot",
       "inputs/data/dwt_503_512x512_nnz_3265.pot",
-      "inputs/data/tomography_512x512_nnz_28726.pot",
+      --"inputs/data/tomography_512x512_nnz_28726.pot",
       "inputs/data/Trefethen_500_512x512_nnz_4489.pot",
       "inputs/data/diag_512x512.pot"
     ]
@@ -39,7 +39,7 @@ m256x256 =
     [ 
       "inputs/data/dwt_245_256x256_nnz_853.pot",
       "inputs/data/n3c5-b4_256x256_nnz_1260.pot",
-      "inputs/data/Steam1_256x256_nnz_3762.pot",
+      --"inputs/data/Steam1_256x256_nnz_3762.pot",
       "inputs/data/can_256_256x256_nnz_1586.pot",
       "inputs/data/diag_256x256.pot"
     ]  
@@ -49,9 +49,9 @@ m128x128 =
     [ 
       "inputs/data/football_128x128_nnz_613.pot",
       "inputs/data/GD98_b_128x128_nnz_207.pot",
-      "inputs/data/gent113_128x128_nnz_655.pot",
+      --"inputs/data/gent113_128x128_nnz_655.pot",
       "inputs/data/Journals_128x128_nnz_6096.pot",
-      "inputs/data/robot_128x128_nnz_870.pot",
+      --"inputs/data/robot_128x128_nnz_870.pot",
       "inputs/data/diag_128x128.pot"
     ]  
 
@@ -59,8 +59,8 @@ m64x64 =
   map (\x -> (loadFileToTerm x, x))
     [ 
       "inputs/data/bfwa62_64x64_nnz_450.pot",
-      "inputs/data/can_61_64x64_nnz_309.pot",
-      "inputs/data/dolphins_64x64_nnz_159.pot",
+      --"inputs/data/can_61_64x64_nnz_309.pot",
+      --"inputs/data/dolphins_64x64_nnz_159.pot",
       "inputs/data/GD99_b_64x64_nnz_127.pot",
       "inputs/data/will57_64x64_nnz_281.pot",
       "inputs/data/diag_64x64.pot"
@@ -180,19 +180,6 @@ test_matrices_add_kron3 = do createRealWorldTest "linearAlgebraExamples/addKron3
         [ [("m1",x), ("m2",y) , ("m3",z)] | x <- m512x512, y <- m2x2, z <- m2x2 ] ++
         [ [("m1",x), ("m2",y) , ("m3",z)] | x <- m512x512, y <- m4x4, z <- m4x4 ]
 
---test_matrices_add_kron_kron_football_64x64_small_2x2 = do test <- createRealWorldTest "linearAlgebraExamples/addKron1" "inputs/" getEvaluationResults
---                                                          return $ ignoreTest test    
---    where
---    getEvaluationResults origProg distilledProg = do          
---        m <- loadFileToTerm "inputs/data/Football_64x64.pot"
---        n <- loadFileToTerm "inputs/data/Small_1_2x2.pot"
---        case (m,n) of 
---          (Left e,x) -> return $ Left e            
---          (x, Left e) -> return $ Left e            
---          (Right u, Right v) -> 
---            return $ Right $ getEvalResults [("m1", u), ("m2", u), ("m3", v), ("m4", v)] origProg distilledProg
-
-
 test_matrices_map_add = do createRealWorldTest "linearAlgebraExamples/mapAdd" "inputs/" bindings
     where
     bindings =           
@@ -212,12 +199,7 @@ test_matrices_map_kron = do createRealWorldTest "linearAlgebraExamples/mapKron" 
         [ [("m1",x), ("m2",y)] | x <- m64x64, y <- m4x4 ] ++
         [ [("m1",x), ("m2",y)] | x <- m128x128, y <- m4x4 ] ++
         [ [("m1",x), ("m2",y)] | x <- m256x256, y <- m4x4 ] ++
-        [ [("m1",x), ("m2",y)] | x <- m512x512, y <- m4x4 ] ++
-
-        [ [("m1",x), ("m2",y)] | x <- m64x64, y <- m64x64 ] ++
-        [ [("m1",x), ("m2",y)] | x <- m128x128, y <- m64x64 ] ++
-        [ [("m1",x), ("m2",y)] | x <- m256x256, y <- m64x64 ] ++
-        [ [("m1",x), ("m2",y)] | x <- m512x512, y <- m64x64 ] 
+        [ [("m1",x), ("m2",y)] | x <- m512x512, y <- m4x4 ]
         
 test_matrices_kron_mask = do createRealWorldTest "linearAlgebraExamples/kronMask" "inputs/" bindings
     where

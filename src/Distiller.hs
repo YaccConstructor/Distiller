@@ -2,10 +2,10 @@ module Distiller (distill) where
 
 import LTSType 
 import TermType
+import HelperTypes
 
+distill :: Term -> Context -> [String] -> [Generalization] -> [FunctionDefinition] -> LTS
+distill = dN
 
-distill :: Term -> Context -> [String] -> [(Term, Term)] -> p4 -> LTS
-distill = d_n
-
-d_n :: Term -> Context -> [String] -> [(Term, Term)] -> p4 -> LTS
-d_n term context funNamesAccum previousGensAccum funsDefs = doLTS0Tr term
+dN :: Term -> Context -> [String] -> [Generalization] -> [FunctionDefinition] -> LTS
+dN term context funNamesAccum previousGensAccum funsDefs = doLTS0Tr term

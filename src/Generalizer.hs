@@ -1,5 +1,7 @@
 module Generalizer where
 
+import TermType
+
 -- generalisation of terms
 
 {--generaliseTerm t u = generalise t u (free t++free u) [] []
@@ -188,7 +190,7 @@ funs' d (Fun f) fs = if   f `elem` fs
                              Just (xs,t)  -> funs' d t (f:fs)
 funs' d (Case t bs) fs = foldr (\(_,_,t) fs -> funs' d t fs) (funs' d t fs) bs
 funs' d (Let x t u) fs = funs' d t (funs' d u fs)
-
+-}
 -- shift global de Bruijn indices by i, where current depth is d
 
 shift = shift' 0
@@ -224,7 +226,7 @@ subst' i t (Unfold l t' u) = Unfold l (subst' i t t') (subst' (i+1) t u)
 subst' i t (Fold l t') = Fold l (subst' i t t')
 
 -- rename a term t using renaming r
-
+{-
 rename r (Free x) = case lookup x r of
                        Just x'  -> Free x'
                        Nothing -> Free x
@@ -253,7 +255,7 @@ instantiate' d s (Fun f) = Fun f
 instantiate' d s (Case t bs) = Case (instantiate' d s t) (map (\(c,xs,t) -> (c,xs,instantiate' (d+length xs) s t)) bs)
 instantiate' d s (Let x t u) = Let x (instantiate' d s t) (instantiate' (d+1) s u)
 instantiate' d s (Unfold l t u) = Unfold l (instantiate' d s t) (instantiate' (d+1) s u)
-instantiate' d s (Fold l t) = Fold l (instantiate' d s t) 
+instantiate' d s (Fold l t) = Fold l (instantiate' d s t) --}
 
 -- replace variable x with de Bruijn index
 
@@ -272,7 +274,7 @@ abstract' i (Fold l t) x = Fold l (abstract' i t x)
 
 -- replace de Bruijn index 0 with variable x
 
-concrete = concrete' 0
+{---concrete = concrete' 0
 
 concrete' i x (Free x') = Free x'
 concrete' i x (Bound i')

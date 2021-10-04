@@ -1,8 +1,19 @@
 module ProgParser where
 
+import TermType
+import Generalizer
+import ProgPrinter
+
+import Data.List
+
+import Text.ParserCombinators.Parsec hiding (labels)
+import Text.ParserCombinators.Parsec.Expr
+import qualified Text.ParserCombinators.Parsec.Token as T
+import Text.ParserCombinators.Parsec.Language
+
 -- lexing and parsing
 
-{--potDef = emptyDef
+potDef = emptyDef
          { commentStart    = "/*"
          , commentEnd      = "*/"
          , commentLine     = "--"
@@ -114,4 +125,3 @@ parseTerm = parse term "Parse error"
 
 parseModule :: String -> Either ParseError ([[Char]], [(String, ([String], Term))])
 parseModule = parse modul "Parse error"
---}

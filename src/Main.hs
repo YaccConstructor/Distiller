@@ -6,6 +6,7 @@ import Exception
 import TermType
 import Transformer
 import Helpers
+import HelperTypes
 
 import Text.ParserCombinators.Parsec
 import Debug.Trace
@@ -16,8 +17,7 @@ import Data.List
 import System.Exit
 import System.Process
 
-main = putStrLn "New distiller"
-{--data Command = Load String (Maybe String)
+data Command = Load String (Maybe String)
              | Prog
              | Term
              | Eval
@@ -28,7 +28,7 @@ main = putStrLn "New distiller"
 
 command str = let res = words str
               in case res of
-                   [":load",f] -> Load f (Nothing)
+                   [":load",f] -> Load f Nothing
                    [":load",f, sourceDir] -> Load f (Just sourceDir)
                    [":prog"] -> Prog
                    [":term"] -> Term
@@ -63,7 +63,7 @@ toplevel p = do putStr "POT> "
                    Prog -> case p of
                               Nothing -> do putStrLn "No program loaded"
                                             toplevel p
-                              Just (t,d) -> do putStrLn (showProg (t,d))
+                              Just (t,d) -> do print (t,d)
                                                toplevel p
                    Term -> case p of
                               Nothing -> do putStrLn "No program loaded"
@@ -73,24 +73,13 @@ toplevel p = do putStr "POT> "
                    Eval -> case p of
                               Nothing -> do putStrLn "No program loaded"
                                             toplevel p
-                              Just (t,d) -> do
-                                (v, r, a) <- evalProg (free t) t d
-                                print v
-                                putStrLn ("Reductions: " ++ show r)
-                                putStrLn ("Allocations: " ++ show a)
-                                toplevel p
+                              Just (t,d) -> do putStrLn "Implementation needs revision"
                    Distill f -> case p of
                                      Nothing -> do putStrLn "No program loaded"
                                                    toplevel p
-                                     Just (t,d) -> do let p' = dist (t,d)
-                                                      putStrLn (showProg p')
-                                                      case f of
-                                                           Nothing -> return ()
-                                                           Just f -> writeFile f (showProg p')  
-                                                      toplevel (Just p')
+                                     Just (t,d) -> do putStrLn "Not implemented yet"
                    Quit -> return ()
                    Help -> do putStrLn helpMessage
                               toplevel p
                    Unknown -> do putStrLn "Err: Could not parse command, type ':help' for a list of commands"
                                  toplevel p
---}

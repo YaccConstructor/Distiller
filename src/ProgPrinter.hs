@@ -1,5 +1,7 @@
 module ProgPrinter where
 
+import TermType
+
 -- pretty printing
 
 {-stripLambda (Lambda x t) = let x' = renameVar (free t) x
@@ -43,7 +45,7 @@ prettyProg (t,d) = let d' = [f | f <- d, fst f `elem` funs (t,d)]
                    in  prettyEnv (("main",([],t)):d')
 
 
-prettyEnv xs = vcat (punctuate semi $ map (\(f,(xs,t)) -> text f <+> hsep (map text xs) <+> equals <+> prettyTerm (foldr concrete t xs)) xs)
+prettyEnv xs = vcat (punctuate semi $ map (\(f,(xs,t)) -> text f <+> hsep (map text xs) <+> equals <+> prettyTerm (foldr concrete t xs)) xs)-}
 
 isList (Con "Nil" []) = True
 isList (Con "Cons" [h,t]) = isList t
@@ -68,6 +70,3 @@ nat2con n = Con "Succ" [nat2con $ n-1]
 
 con2nat (Con "Zero" [])  = 0
 con2nat (Con "Succ" [n]) = 1+con2nat n
-
-
---}

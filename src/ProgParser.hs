@@ -43,7 +43,7 @@ con = do
       return (c:cs)
 
 makeProg ds = let fs = map fst ds
-                  ds' =  map (\(f,(xs,t)) -> (f,(xs,foldl abstract (makeFun fs t) xs))) ds
+                  ds' =  map (\(f,(xs,t)) -> (f,(xs,{-foldl abstract-} (makeFun fs t) {--xs-}))) ds
               in  case lookup "main" ds' of
                      Nothing -> error "No main function"
                      Just (xs,t) -> (t,delete ("main",(xs,t)) ds')
@@ -82,7 +82,7 @@ term =     do
            xs <- many1 identifier
            symbol "->"
            t <- term
-           return (foldr (\x t->Lambda x (abstract t x)) t xs)
+           return (foldr (\x t->Lambda x t {-(abstract t x)-}) t xs)
        <|> do
            reserved "case"
            t <- term
@@ -96,7 +96,7 @@ term =     do
           t <- term
           reserved "in"
           u <- term
-          return (Let x t (abstract u x))
+          return (Let x t u{-(abstract u x)-})
 
 atom =     do Free <$> identifier
        <|> do
@@ -119,7 +119,7 @@ branch = do
          xs <- option [] (bracks (sepBy1 identifier comm))
          symbol "->"
          t <- term
-         return (c,xs,foldl abstract t xs)
+         return (c,xs,t)
 
 parseTerm = parse term "Parse error"
 

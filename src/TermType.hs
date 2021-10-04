@@ -1,5 +1,14 @@
 module TermType where
 
+--import ProgPrinter
+import Prelude hiding ((<>))
+import Text.PrettyPrint.HughesPJ as P
+import Text.ParserCombinators.Parsec hiding (labels)
+import Text.ParserCombinators.Parsec.Expr
+import qualified Text.ParserCombinators.Parsec.Token as T
+import Text.ParserCombinators.Parsec.Language
+
+
 data Term = Free String -- free variable
           | Bound Int -- bound variable with de Bruijn index
           | Lambda String Term -- lambda abstraction
@@ -10,14 +19,7 @@ data Term = Free String -- free variable
           | Let String Term Term -- let expression
           | Unfold String Term Term -- unfolding
           | Fold String Term -- folding
-
-instance Show Term where
-   show t = render $ prettyTerm t
-
-type Prog = (Term,[(String,([String],Term))])
-
-showProg p = renderStyle (Style { lineLength = 100, ribbonsPerLine = 1.1, mode = PageMode }) $ prettyProg p
-   --render $ prettyProg p
+          deriving Show
 
 -- equality of terms
 

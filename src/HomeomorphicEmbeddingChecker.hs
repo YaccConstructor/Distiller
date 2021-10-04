@@ -2,7 +2,7 @@ module HomeomorphicEmbeddingChecker where
 
 -- homeomorphic embedding of terms
 
-isEmbedding t u = not (null(embedding t u))
+{--isEmbedding t u = not (null(embedding t u))
 
 embedding t u = couple t u []
 
@@ -24,3 +24,4 @@ dive t (Apply t' u) r = embed t t' r ++ embed t u r
 dive t (Case t' bs) r = embed t t' r ++ concatMap (\(c,xs,t') -> embed t (foldr concrete t' xs) r) bs
 dive t (Let x t' u) r = embed t t' r ++ embed t (concrete x u) r
 dive t t' r = []
+--}

@@ -2,7 +2,7 @@ module Residualizer where
 
 -- Program residualisation
 
-residualise t = residualise' [] t (free t)
+{--residualise t = residualise' [] t (free t)
 
 residualise' ls (Free x) fv d e = (Free x,d,e)
 residualise' ls (Bound i) fv d e = (Bound i,d,e)
@@ -38,4 +38,4 @@ residualise' ls t'@(Unfold l t u) fv d e = case [rename r u | (u,u') <- e, r <- 
                                                              in  (t'',(f,(xs,foldl abstract u' xs)):d',(t'',t'):e')
 residualise' ls (Fold l t) fv d e = case [instantiate s t' | (l',(t',u)) <- ls, l==l', s <- inst u t] of
                                        (t:ts) -> (t,d,e)
-                                       [] -> residualise' ls t fv d e
+                                       [] -> residualise' ls t fv d e--}

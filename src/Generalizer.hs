@@ -2,7 +2,7 @@ module Generalizer where
 
 -- generalisation of terms
 
-generaliseTerm t u = generalise t u (free t++free u) [] []
+{--generaliseTerm t u = generalise t u (free t++free u) [] []
 
 generalise t u fv s1 s2 | isEmbedding t u = generalise' t u fv s1 s2
 generalise t u fv s1 s2 = case find (\(x,t') -> t==t' && (lookup x s2 == Just u)) s1 of
@@ -305,4 +305,4 @@ unfold (Case t bs,d) = let t' = unfold (t,d)
 unfold (Fun f,d) = case lookup f d of
                     Nothing -> error ("Undefined function: "++f)
                     Just (xs,t) -> foldr Lambda t xs
-unfold (t,d) = t                                     
+unfold (t,d) = t                                     --}

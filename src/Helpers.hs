@@ -1,8 +1,8 @@
 module Helpers where
 
-import Exception
-import Term
-import Trans
+{-import Exception
+import TermType
+import Transformer
 
 import Text.ParserCombinators.Parsec
 import Debug.Trace
@@ -52,4 +52,4 @@ loadFile f = do x <-  doesFileExist (f++".pot")
                                              return Nothing
                                 Right t -> return (Just t)
                      else do putStrLn ("No such file: "++f++".pot")
-                             return Nothing
+                             return Nothing-}

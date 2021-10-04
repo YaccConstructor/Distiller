@@ -2,7 +2,7 @@ module ProgPrinter where
 
 -- pretty printing
 
-stripLambda (Lambda x t) = let x' = renameVar (free t) x
+{-stripLambda (Lambda x t) = let x' = renameVar (free t) x
                                (xs,u) = stripLambda $ concrete x' t
                            in  (x':xs,u)
 stripLambda t = ([],t)
@@ -70,3 +70,4 @@ con2nat (Con "Zero" [])  = 0
 con2nat (Con "Succ" [n]) = 1+con2nat n
 
 
+--}

@@ -3,8 +3,8 @@ module Main (
 ) where
 
 import Exception
-import Term
-import Trans
+import TermType
+import Transformer
 import Helpers
 
 import Text.ParserCombinators.Parsec
@@ -16,7 +16,8 @@ import Data.List
 import System.Exit
 import System.Process
 
-data Command = Load String (Maybe String)
+main = putStrLn "New distiller"
+{--data Command = Load String (Maybe String)
              | Prog
              | Term
              | Eval
@@ -92,3 +93,4 @@ toplevel p = do putStr "POT> "
                               toplevel p
                    Unknown -> do putStrLn "Err: Could not parse command, type ':help' for a list of commands"
                                  toplevel p
+--}

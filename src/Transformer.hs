@@ -2,7 +2,7 @@ module Transformer where
 
 -- level n transformer
 
-trans 0 t k fv m d e = return (place t k)
+{--trans 0 t k fv m d e = return (place t k)
 
 trans n (Free x) (CaseCtx k bs) fv m d e = do
                                            bs' <- mapM (\(c,xs,t) -> let t' = place t k
@@ -44,7 +44,7 @@ trans n (Fun f) k fv m d e = let t = returnval (trans (n-1) (Fun f) k fv [] d e)
                                                                               in  trans n (makeLet s1 u') EmptyCtx fv m d' e'
                                                                          else throw (l',u)
                                                     in  do
-                                                        u <- handle (trans n (unfold(t',d')) EmptyCtx fv ((l,t'):m) d' e') handler
+                                                       u <- handle (trans n (unfold(t',d')) EmptyCtx fv ((l,t'):m) d' e') handler
                                                         return (if l `elem` folds u then Unfold l t' u else u)
 trans n (Case t bs) k fv m d e = trans n t (CaseCtx k bs) fv m d e
 trans n (Let x t u) k fv m d e = let x' = renameVar fv x
@@ -63,4 +63,4 @@ transCtx n t (CaseCtx k bs) fv m d e = do
                                                                  in do
                                                                     t' <- trans n (foldr concrete t xs') k fv' m d e
                                                                     return (c,xs,foldl abstract t' xs')) bs
-                                       return (Case t bs')
+                                       return (Case t bs')--}

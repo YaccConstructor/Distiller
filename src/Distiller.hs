@@ -4,8 +4,8 @@ import LTSType
 import TermType
 import HelperTypes
 
-distill :: Term -> Context -> [String] -> [Generalization] -> [FunctionDefinition] -> LTS
+distill :: LTS -> Context -> [LTS] -> [Generalization] -> [FunctionDefinition] -> LTS
 distill = dN
 
-dN :: Term -> Context -> [String] -> [Generalization] -> [FunctionDefinition] -> LTS
-dN term context funNamesAccum previousGensAccum funsDefs = doLTS0Tr term
+dN :: LTS -> Context -> [LTS] -> [Generalization] -> [FunctionDefinition] -> LTS
+dN lts context funCallsAccum previousGensAccum funsDefs = lts

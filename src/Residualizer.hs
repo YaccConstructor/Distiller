@@ -1,5 +1,13 @@
-module Residualizer where
-
+module Residualizer (residualize) where
+  
+import TermType
+import LTSType
+import HelperTypes  
+  
+residualize :: LTS -> Prog
+residualize lts = (Free "t", [("t",(["t"], Free "t"))])
+  
+  
 -- Program residualisation
 
 {--residualise t = residualise' [] t (free t)

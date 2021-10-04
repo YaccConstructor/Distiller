@@ -1,4 +1,15 @@
-module HomeomorphicEmbeddingChecker where
+module HomeomorphicEmbeddingChecker (isRenaming) where
+
+
+import TermType
+import LTSType
+import HelperTypes
+
+isRenaming :: LTS -> LTS -> Bool
+isRenaming lts1 lts2 = True
+
+isHomeomorphicEmbedding :: LTS -> LTS -> Bool
+isHomeomorphicEmbedding lts1 lts2 = True
 
 -- homeomorphic embedding of terms
 

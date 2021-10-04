@@ -1,4 +1,15 @@
-module Transformer where
+module Transformer (transform) where
+
+import TermType
+import LTSType
+import HelperTypes
+
+transform :: LTS -> Context -> [String] -> [Generalization] -> [FunctionDefinition] -> LTS
+transform lts context funNamesAccum previousGensAccum funsDefs = transform' lts context funNamesAccum previousGensAccum funsDefs
+transform lts context funNamesAccum previousGensAccum funsDefs = lts
+
+transform' :: LTS -> Context -> [String] -> [Generalization] -> [FunctionDefinition] -> LTS
+transform' lts context funNamesAccum previousGensAccum funsDefs = lts
 
 -- level n transformer
 

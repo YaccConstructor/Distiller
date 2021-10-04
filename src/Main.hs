@@ -73,11 +73,15 @@ toplevel p = do putStr "POT> "
                    Eval -> case p of
                               Nothing -> do putStrLn "No program loaded"
                                             toplevel p
-                              Just (t,d) -> do putStrLn "Implementation needs revision"
+                              Just (t,d) -> do
+                                            putStrLn "Implementation needs revision"
+                                            toplevel p
                    Distill f -> case p of
                                      Nothing -> do putStrLn "No program loaded"
                                                    toplevel p
-                                     Just (t,d) -> do putStrLn "Not implemented yet"
+                                     Just (t,d) -> do
+                                                   putStrLn "Not implemented yet"
+                                                   toplevel p
                    Quit -> return ()
                    Help -> do putStrLn helpMessage
                               toplevel p

@@ -15,7 +15,6 @@ import qualified Text.ParserCombinators.Parsec.Token as T
 import Text.ParserCombinators.Parsec.Language
 import System.IO
 import System.Directory
-import Debug.Trace
 
 -- process trees
 
@@ -597,5 +596,3 @@ parseTerm = parse term "Parse error"
 
 parseModule :: String -> Either ParseError ([[Char]], [(String, ([String], Term))])
 parseModule = parse modul "Parse error"
-
-

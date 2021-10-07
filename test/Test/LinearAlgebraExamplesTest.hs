@@ -112,19 +112,14 @@ createRealWorldTest fileToDistill importsForDistill bindingsInfo =  do
                         Left e -> do
                           let assertion = assertFailure $ printf "program: %s; imports: %s; exception: %s" fileToDistill importsForDistill (show e)
                           return $ testCase testCaseName assertion
-                        Right _bindings -> do
-                          let (bindings, bindingsInfo) = unzip _bindings
-                          let ((origRes, origReductions, origAllocations), (distilledRes, distilledReductions, distilledAllocations)) = getEvalResults bindings (fromJust progToDistill) distilled
-                              assertion = origRes @?= distilledRes
-                              testCaseName = 
-                                printf "Evaluation of %s. Computed for %s. Original reductions %s, allocations %s. Distilled reductions %s, allocations %s." 
-                                        fileToDistill 
-                                        (show bindingsInfo)
-                                        (show origReductions)
-                                        (show origAllocations)
-                                        (show distilledReductions)
-                                        (show distilledAllocations)
-                          return $ testCase testCaseName assertion) 
+                        Right _bindings -> return $
+                          testCase "tc" (do
+                            let (bindings, bindingsInfo) = unzip _bindings
+                                ((origRes, origReductions, origAllocations), (distilledRes, distilledReductions, distilledAllocations)) = getEvalResults bindings (fromJust progToDistill) distilled
+                            origRes @?= distilledRes)
+                              
+                          --return $ testCase testCaseName assertion) 
+            )
                   loadedBindings
         return $ testGroup fileToDistill cases
   else do

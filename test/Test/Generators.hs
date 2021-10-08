@@ -4,12 +4,12 @@ module Test.Generators where
 
 import qualified Test.Tasty.Hedgehog
 import qualified Hedgehog.Gen as Gen
-import Hedgehog
+import Hedgehog (Gen)
 import qualified Hedgehog.Range as Range
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.Hedgehog (testProperty)
 
-import Term
+import Term (Term(Con))
 
 genBool :: Gen Bool
 genBool = Gen.bool

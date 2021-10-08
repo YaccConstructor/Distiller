@@ -2,19 +2,18 @@
 
 module Test.DistilledProgramsTest where
 
-import qualified Test.Tasty.Hedgehog
 import qualified Hedgehog.Gen as Gen
-import Hedgehog
+import Hedgehog (PropertyT, (===), property)
 import qualified Hedgehog.Range as Range
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.Hedgehog (testProperty)
-import Test.Tasty.HUnit
+import Test.Tasty.HUnit (testCase, assertFailure)
 
-import Test.Generators
-import Test.TestHelpers
-import Term
+import Test.Generators ()
+import Test.TestHelpers (load)
+import Term (Term)
 import Trans (dist)
-import Helpers
+import Helpers ()
 
 import Control.Exception
 import Text.Printf (printf)

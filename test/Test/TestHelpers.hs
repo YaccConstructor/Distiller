@@ -1,13 +1,16 @@
 {-# LANGUAGE BangPatterns #-}
 module Test.TestHelpers where
 
-import Helpers
-import Test.Tasty
-import Test.Tasty.HUnit
+import Test.Tasty (TestName, TestTree, localOption, mkTimeout)
+import Test.Tasty.HUnit (Assertion, testCase)
+
 import Data.Maybe (fromJust, isJust)
-import Term
+import System.IO.Strict (readFile)
+
+import Helpers (loadProg)
+import Term (Term, abstract, eval, parseTerm, subst, Context(EmptyCtx))
 import Trans (dist)
-import System.IO.Strict
+
 
 defaultTimeout :: Integer
 defaultTimeout = 2 * 1000000 --timeout in nanoseconds: 1 sec = 10^6 ns 

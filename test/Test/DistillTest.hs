@@ -1,16 +1,17 @@
 module Test.DistillTest where
 
-import Helpers
-import Test.Tasty
-import Test.Tasty.HUnit
-import Term
-import Trans (dist)
-import Data.List
-import Data.Maybe (fromJust, isJust)
-import Text.Printf ( printf )
-import Control.Exception
-import Test.TestHelpers
+import Test.Tasty (TestTree)
+import Test.Tasty.HUnit ((@?=), assertFailure)
 
+import Data.List (intersect)
+import Data.Maybe (fromJust, isJust)
+import Text.Printf (printf)
+import Control.Exception (SomeException, try, evaluate)
+
+import Helpers ()
+import Term (Term)
+import Trans (dist)
+import Test.TestHelpers (_10sec, defaultTimeout, load, timeOutTest)
 
 createDistillationTest :: String -> String -> String -> String -> Integer -> IO TestTree
 createDistillationTest fileToDistill importsForDistill fileWithGold importsForGold timeoutForDistillation =  do

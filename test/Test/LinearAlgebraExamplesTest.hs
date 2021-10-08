@@ -22,7 +22,8 @@ import Helpers
 import Control.Exception
 import Text.Printf (printf)
 import Data.Maybe (fromJust, isJust)
-
+import System.FilePath.Posix (takeBaseName)
+import Data.Bifunctor
 
 m512x512 =   
     [ 
@@ -76,46 +77,56 @@ m4x4 =
     ]
 
 genCases :: 
-  Maybe (Term, [(String, ([String], Term))])
-  -> [[(String, FilePath)]] -> [TestTree]
-genCases progToDistill =
-  map 
-    (\bindingsInfo -> 
+  String -> Maybe (Term, [(String, ([String], Term))])
+  -> String -> [[(String, FilePath)]] -> [TestTree]
+genCases fileToDistill progToDistill logFileName =
+   map $
+    \bindingsInfo -> 
         testCase "tc" ( do
               _bindings <- 
                 mapM 
                   (\(vName, filePath) -> do 
                       term <-  loadFileToTerm filePath
-                      return (vName, term)
+                      return ((vName, term),(vName, filePath))
                   ) bindingsInfo
               
               let bindings = 
                     foldl 
-                      (\stt (vName, term) -> 
+                      (\stt ((vName, term), info) -> 
                           case stt of
                             Right l -> 
                               case term of 
                                 Left e -> Left e
-                                Right x -> Right ((vName,x) : l)
+                                Right x -> Right (((vName, x), info) : l)
                             Left e -> Left e
                       ) (Right []) _bindings
 
               case bindings of
-                Left e -> assertFailure $ printf "Matrices can not be loaded"
-                Right b -> do
+                Left e -> assertFailure $ printf "Matrices can not be loaded: %s" (show e)
+                Right _b -> do
+                  let (b, bindingsInfo) = unzip _b
                   let ((origRes, origReductions, origAllocations), (distilledRes, distilledReductions, distilledAllocations)) = 
                         getEvalResults b (fromJust progToDistill) (dist $ fromJust progToDistill)
-                  putStr $ printf "%s %s %s %s " (show origReductions) (show origAllocations) (show distilledReductions) (show distilledAllocations)
-                  origRes @?= distilledRes)
-    )  
+                      info = printf "%s; %s; %s; %s; %s; %s \n" 
+                            (takeBaseName fileToDistill)
+                            (show $ map (Data.Bifunctor.second takeBaseName) bindingsInfo) 
+                            (show origReductions) 
+                            (show origAllocations) 
+                            (show distilledReductions) 
+                            (show distilledAllocations)
+                  appendFile logFileName info
+                  putStr info
+                  origReductions >= distilledReductions && origAllocations >= distilledAllocations && origRes == distilledRes @?= True )
 
 
 createRealWorldTest :: String -> String -> [[(String, FilePath)]] -> IO TestTree
 createRealWorldTest fileToDistill importsForDistill bindingsInfo = do
+  let logFileName = takeBaseName fileToDistill ++ "_log.csv"
+  appendFile logFileName "Test case; Bindings; Original reductions; Original allocations; Distilled reductions; Distilled allocations \n"  
   progToDistill <- load fileToDistill importsForDistill    
   return $ testGroup fileToDistill (
     if isJust progToDistill
-    then genCases progToDistill bindingsInfo          
+    then genCases fileToDistill progToDistill logFileName bindingsInfo     
     else do
       let testCaseName = printf "Parsing: %s" fileToDistill
           assertion = assertFailure $ printf "program: %s; imports: %s." fileToDistill importsForDistill

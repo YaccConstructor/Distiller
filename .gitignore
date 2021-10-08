@@ -24,3 +24,5 @@ cabal.project.local~
 src/Main
 
 run
+
+*_log.csv

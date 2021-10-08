@@ -17,22 +17,23 @@ createDistillationTest fileToDistill importsForDistill fileWithGold importsForGo
   progToDistill <- load fileToDistill importsForDistill
   (mainOfExpectedProg, y) <- fromJust <$> load fileWithGold importsForGold -- parsing golden file should always succeed
   let testCaseName = printf "Distillation of %s" fileToDistill
-  if isJust progToDistill
-  then do
-    distillationResult <- try (evaluate $ dist (fromJust progToDistill)) :: IO (Either SomeException (Term, [(String, ([String], Term))]))
-    case distillationResult of
-      Left ex -> do 
-        let assertion = assertFailure $ printf "program: %s; imports: %s; exception: %s" fileToDistill importsForDistill (show ex)
-        return $ testCase testCaseName assertion
-      Right  (mainOfDistilledProg, x) -> do
-        let actual = ("main", ([], mainOfDistilledProg)) : x
-        let expected = ("main", ([], mainOfExpectedProg)) : y
-        let assertion = expected `intersect` actual @?= expected        
-        return $ timeOutTest timeoutForDistillation testCaseName assertion
-  else do
-    let testCaseName = printf "Parsing: %s" fileToDistill
-    let assertion = assertFailure $ printf "program: %s; imports: %s." fileToDistill importsForDistill
-    return $ testCase testCaseName assertion
+  return $ timeOutTest timeoutForDistillation testCaseName (do
+    if isJust progToDistill
+    then do
+      distillationResult <- try (evaluate $ dist (fromJust progToDistill)) :: IO (Either SomeException (Term, [(String, ([String], Term))]))
+      case distillationResult of
+        Left ex -> do 
+          let assertion = assertFailure $ printf "Distillation of program: %s; imports: %s; exception: %s" fileToDistill importsForDistill (show ex)
+          assertion
+        Right  (mainOfDistilledProg, x) -> do
+          let actual = ("main", ([], mainOfDistilledProg)) : x
+          let expected = ("main", ([], mainOfExpectedProg)) : y
+          let assertion = expected `intersect` actual @?= expected        
+          assertion
+    else do      
+      let assertion = assertFailure $ printf "Parsing of program: %s; imports: %s." fileToDistill importsForDistill
+      assertion
+    )
 
 -- Basic tests
 

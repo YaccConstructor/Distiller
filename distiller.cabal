@@ -37,6 +37,7 @@ library
   build-depends:
       base >=4.7 && <5
     , directory
+    , filepath
     , parsec
     , pretty
     , process
@@ -58,6 +59,7 @@ executable distiller
       base >=4.7 && <5
     , directory
     , distiller
+    , filepath
     , parsec
     , pretty
     , process
@@ -81,6 +83,7 @@ test-suite distiller-test
       base >=4.7 && <5
     , directory
     , distiller
+    , filepath
     , hedgehog
     , parsec
     , pretty

@@ -1,0 +1,14 @@
+import LinearAlgebra
+import Bool
+import Nat
+
+main = fold count (Zero) (kron is_z_bool op m1 m2)
+;
+
+count x y = Succ(x)
+;
+
+is_z_bool x = eqBool x (False)
+;
+
+op x y = and x y

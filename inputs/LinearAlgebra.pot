@@ -1,8 +1,7 @@
 import Bool
 
-mkNode isZ x = case (isZ x) of True -> None | False -> Val(x); 
-
-reduceTree n1 n2 n3 n4 = Node (n1, n2, n3, n4);
+mkNode isZ x = case (isZ x) of True -> None | False -> Val(x)
+; 
 
 mAdd isZ g m1 m2 = 
     case m1 of

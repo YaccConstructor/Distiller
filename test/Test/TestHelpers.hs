@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns #-}
 module Test.TestHelpers where
 
 import Helpers
@@ -6,6 +7,7 @@ import Test.Tasty.HUnit
 import Data.Maybe (fromJust, isJust)
 import Term
 import Trans (dist)
+import System.IO.Strict
 
 defaultTimeout :: Integer
 defaultTimeout = 2 * 1000000 --timeout in nanoseconds: 1 sec = 10^6 ns 
@@ -24,7 +26,7 @@ load :: String -> String -> IO (Maybe (Term, [(String, ([String], Term))]))
 load root imports = loadProg [root] [] [] $ Just imports
 
 loadFileToTerm file = do
-    str <- readFile file
+    !str <- System.IO.Strict.readFile file
     return $ parseTerm str
 
 substituteAll :: Foldable t => Term -> t (String, Term) -> Term

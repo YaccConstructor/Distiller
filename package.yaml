@@ -25,6 +25,7 @@ dependencies:
 - parsec
 - directory
 - process
+- strict
 
 library:
   source-dirs: src

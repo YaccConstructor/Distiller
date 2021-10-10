@@ -42,7 +42,7 @@ con = do
       spaces
       return (c:cs)
 
-makeProg :: Eq a => [(String, (a, Term))] -> (Term, [(String, (a, Term))])
+makeProg :: [(String, ([String], Term))] -> (Term, [(String, ([String], Term))])
 makeProg funDefinitions = let
                         funsNames = map fst funDefinitions
                         funDefinitions' =  map (\(funName,(funFreeVariables, funResultTerm)) ->

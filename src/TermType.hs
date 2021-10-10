@@ -1,4 +1,5 @@
-module TermType where
+module TermType (createTermInContext, getTerm, getContext,
+                Context, Term (..)) where
 
 --import ProgPrinter
 import Prelude hiding ((<>))
@@ -8,6 +9,17 @@ import Text.ParserCombinators.Parsec.Expr
 import qualified Text.ParserCombinators.Parsec.Token as T
 import Text.ParserCombinators.Parsec.Language
 
+
+type TermInContext = (Term, Context)
+
+createTermInContext :: Term -> Context -> TermInContext
+createTermInContext term context = (term, context) 
+
+getTerm :: TermInContext -> Term
+getTerm (term, _) = term
+
+getContext :: TermInContext -> Context
+getContext (_, context) = context
 
 data Term = Free String -- free variable
           | Bound Int -- bound variable with de Bruijn index

@@ -42,20 +42,25 @@ con = do
       spaces
       return (c:cs)
 
-makeProg ds = let fs = map fst ds
-                  ds' =  map (\(f,(xs,t)) -> (f,(xs,{-foldl abstract-} (makeFun fs t) {--xs-}))) ds
-              in  case lookup "main" ds' of
+makeProg :: Eq a => [(String, (a, Term))] -> (Term, [(String, (a, Term))])
+makeProg funDefinitions = let
+                        funsNames = map fst funDefinitions
+                        funDefinitions' =  map (\(funName,(funFreeVariables, funResultTerm)) ->
+                            (funName,(funFreeVariables, makeFun funsNames funResultTerm))) funDefinitions
+              in  case lookup "main" funDefinitions' of
                      Nothing -> error "No main function"
-                     Just (xs,t) -> (t,delete ("main",(xs,t)) ds')
+                     Just (mainName,t) -> (t,delete ("main",(mainName,t)) funDefinitions')
 
-makeFun fs (Free x) = if x `elem` fs then Fun x else Free x
-makeFun fs (Bound i) = Bound i
-makeFun fs (Lambda x t) = Lambda x (makeFun fs t)
-makeFun fs (Con c ts) = Con c (map (makeFun fs) ts)
-makeFun fs (Apply t u) = Apply (makeFun fs t) (makeFun fs u)
-makeFun fs (Fun f) = Fun f
-makeFun fs (Case t bs) = Case (makeFun fs t) (map (\(c,xs,t) -> (c,xs,makeFun fs t)) bs)
-makeFun fs (Let x t u) = Let x (makeFun fs t) (makeFun fs u)
+-- check if term name is same as function name
+makeFun :: [String] -> Term -> Term
+makeFun funNames (Free x) = if x `elem` funNames then Fun x else Free x
+makeFun _ (Bound i) = Bound i
+makeFun funNames (Lambda x t) = Lambda x (makeFun funNames t)
+makeFun funNames (Con c ts) = Con c (map (makeFun funNames) ts)
+makeFun funNames (Apply t u) = Apply (makeFun funNames t) (makeFun funNames u)
+makeFun _ (Fun f) = Fun f
+makeFun funNames (Case t bs) = Case (makeFun funNames t) (map (\(c,xs,t) -> (c,xs,makeFun funNames t)) bs)
+makeFun funNames (Let x t u) = Let x (makeFun funNames t) (makeFun funNames u)
 
 modul = do
         fs <- many imp
@@ -123,5 +128,6 @@ branch = do
 
 parseTerm = parse term "Parse error"
 
-parseModule :: String -> Either ParseError ([[Char]], [(String, ([String], Term))])
+-- return ([imports], fundef : [(function name, ([arguments], Term) )]
+parseModule :: String -> Either ParseError ([String], [(String, ([String], Term))])
 parseModule = parse modul "Parse error"

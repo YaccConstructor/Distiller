@@ -17,22 +17,23 @@ evalProg (x:xs) t d = do putStr (x ++ " = ")
                             Right u -> evalProg xs (subst u (abstract t x)) d-}
 
 
-loadProg :: [[Char]] -> [[Char]] -> [(String, ([String], Term))] -> Maybe [Char] -> IO (Maybe (Term, [([Char], ([String], Term))]))
-loadProg [] _ d _ = return (Just (makeProg d))
-loadProg (x:xs) ys d sourcesDir = do
-  if  x `elem` ys
-    then loadProg xs ys d sourcesDir
+-- return (result of function = Term,  : [(function name, ([arguments], the same Term) )]
+loadProg :: [String] -> [String] -> [(String, ([String], Term))] -> Maybe String -> IO (Maybe (Term, [(String, ([String], Term))]))
+loadProg [] _ funDefinitions _ = return (Just (makeProg funDefinitions))
+loadProg (i:importFiles) loadedImportFiles funDefinitions sourcesDir = do
+  if  i `elem` loadedImportFiles
+    then loadProg importFiles loadedImportFiles funDefinitions sourcesDir
     else case sourcesDir of
         Nothing -> do
-              r <- loadFile x
-              case r of
+              fileContent <- loadFile i
+              case fileContent of
                  Nothing -> return Nothing
-                 Just (fs,d') -> loadProg (xs++fs) (x:ys) (d++d') sourcesDir
+                 Just (importFiles',funDefinitions') -> loadProg (importFiles++importFiles') (i:loadedImportFiles) (funDefinitions++funDefinitions') sourcesDir
         Just sourcesDir' -> do
-              r <- loadFile (sourcesDir' ++ x)
+              r <- loadFile (sourcesDir' ++ i)
               case r of
                  Nothing -> return Nothing
-                 Just (fs,d') -> loadProg (xs++fs) (x:ys) (d++d') sourcesDir
+                 Just (fs,d') -> loadProg (importFiles++fs) (i:loadedImportFiles) (funDefinitions++d') sourcesDir
 
 loadFile :: String -> IO (Maybe ([String],[(String,([String],Term))]))
 loadFile f = do x <-  doesFileExist (f++".pot")

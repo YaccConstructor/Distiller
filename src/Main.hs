@@ -53,37 +53,38 @@ helpMessage = "\n:load filename <directory>\t\tTo load the given filename. If a 
 main = toplevel Nothing
 
 toplevel :: Maybe Prog -> IO ()
-toplevel p = do putStr "POT> "
-                hFlush stdout
-                x <-  getLine
-                case command x of
-                   Load f sourcesDir -> do
-                     prog <- loadProg [f] [] [] sourcesDir
-                     toplevel prog
-                   Prog -> case p of
-                              Nothing -> do putStrLn "No program loaded"
-                                            toplevel p
-                              Just (t,d) -> do print (t,d)
-                                               toplevel p
-                   Term -> case p of
-                              Nothing -> do putStrLn "No program loaded"
-                                            toplevel p
-                              Just (t,d) -> do print t 
-                                               toplevel p
-                   Eval -> case p of
-                              Nothing -> do putStrLn "No program loaded"
-                                            toplevel p
-                              Just (t,d) -> do
-                                            putStrLn "Implementation needs revision"
-                                            toplevel p
-                   Distill f -> case p of
-                                     Nothing -> do putStrLn "No program loaded"
-                                                   toplevel p
-                                     Just (t,d) -> do
-                                                   putStrLn "Not implemented yet"
-                                                   toplevel p
-                   Quit -> return ()
-                   Help -> do putStrLn helpMessage
-                              toplevel p
-                   Unknown -> do putStrLn "Err: Could not parse command, type ':help' for a list of commands"
-                                 toplevel p
+toplevel prog = do 
+                    putStr "POT> "
+                    hFlush stdout
+                    x <-  getLine
+                    case command x of
+                       Load f sourcesDir -> do
+                         prog <- loadProg [f] [] [] sourcesDir
+                         toplevel prog
+                       Prog -> case prog of
+                                  Nothing -> do putStrLn "No program loaded"
+                                                toplevel prog
+                                  Just (t,d) -> do print (t,d)
+                                                   toplevel prog
+                       Term -> case prog of
+                                  Nothing -> do putStrLn "No program loaded"
+                                                toplevel prog
+                                  Just (t,d) -> do print t 
+                                                   toplevel prog
+                       Eval -> case prog of
+                                  Nothing -> do putStrLn "No program loaded"
+                                                toplevel prog
+                                  Just (t,d) -> do
+                                                putStrLn "Implementation needs revision"
+                                                toplevel prog
+                       Distill f -> case prog of
+                                         Nothing -> do putStrLn "No program loaded"
+                                                       toplevel prog
+                                         Just (imports, definitions) -> do
+                                                       putStrLn "Not implemented yet"
+                                                       toplevel prog
+                       Quit -> return ()
+                       Help -> do putStrLn helpMessage
+                                  toplevel prog
+                       Unknown -> do putStrLn "Err: Could not parse command, type ':help' for a list of commands"
+                                     toplevel prog

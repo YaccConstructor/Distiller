@@ -54,7 +54,7 @@ makeProg funDefinitions = let
 -- check if term name is same as function name
 makeFun :: [String] -> Term -> Term
 makeFun funNames (Free x) = if x `elem` funNames then Fun x else Free x
-makeFun _ (Bound i) = Bound i
+--makeFun _ (Bound i) = Bound i
 makeFun funNames (Lambda x t) = Lambda x (makeFun funNames t)
 makeFun funNames (Con c ts) = Con c (map (makeFun funNames) ts)
 makeFun funNames (Apply t u) = Apply (makeFun funNames t) (makeFun funNames u)

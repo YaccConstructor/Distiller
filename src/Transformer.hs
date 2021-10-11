@@ -4,12 +4,25 @@ import TermType
 import LTSType
 import HelperTypes
 
-transform :: LTS -> Context -> [String] -> [Generalization] -> [FunctionDefinition] -> LTS
-transform lts context funNamesAccum previousGensAccum funsDefs = transform' lts context funNamesAccum previousGensAccum funsDefs
-transform lts context funNamesAccum previousGensAccum funsDefs = lts
+transform :: TermInContext -> [String] -> [Generalization] -> [FunctionDefinition] -> LTS
+transform termInContext funNamesAccum previousGensAccum funsDefs = doLTS0Tr
+transform termInContext funNamesAccum previousGensAccum funsDefs = doLTS0Tr
 
 transform' :: LTS -> Context -> [String] -> [Generalization] -> [FunctionDefinition] -> LTS
-transform' lts context funNamesAccum previousGensAccum funsDefs = lts
+transform' lts EmptyCtx _ _ _ = lts
+transform' t@(LTS lts) (ApplyCtx context expr) funNames previousGensAccum funsDefs = let
+    term = getOldTerm lts
+    newLts = updateLTS t "@" (transform (expr, EmptyCtx) funNames previousGensAccum funsDefs) "#1" (Apply term expr)  
+    in transform' newLts context funNames previousGensAccum funsDefs
+transform' t@(LTS lts) (CaseCtx context branches) funsNames previousGens funsDefs = let
+    root = Case (getOldTerm lts) branches
+    firstBranch = ("case", t)
+    otherBranches = map (\(branchName, _, resultTerm) -> (branchName, transform (resultTerm, context) funsNames previousGens funsDefs)) branches
+    in doLTSManyTr root $ firstBranch : otherBranches 
+-- transform' [x -> (x, 0)]    
+transform' _ _ _ _ _ = error "Got error trying to transform."    
+  
+
 
 -- level n transformer
 

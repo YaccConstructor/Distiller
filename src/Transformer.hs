@@ -4,23 +4,67 @@ import TermType
 import LTSType
 import HelperTypes
 
-transform :: TermInContext -> [String] -> [Generalization] -> [FunctionDefinition] -> LTS
-transform termInContext funNamesAccum previousGensAccum funsDefs = doLTS0Tr
-transform termInContext funNamesAccum previousGensAccum funsDefs = doLTS0Tr
+-- concrete function alternative
+substituteTermWithNewVars :: Term -> [String] -> Term
+substituteTermWithNewVars (Free _) [x'] = Free x'
+substituteTermWithNewVars (Free _) _ = error "Constructor Free has arity 1, but got more variables."
+substituteTermWithNewVars (Lambda x expr) xs = Lambda x $ substituteTermWithNewVars expr xs
+substituteTermWithNewVars (Apply term1 term2) xs = let
+    term1' = substituteTermWithNewVars term1 xs
+    term2' = substituteTermWithNewVars term2 xs
+    in Apply term1' term2'
+substituteTermWithNewVars (Case term branches) xs = let
+    term' = substituteTermWithNewVars term xs
+    branches' = map (\(cons, vars, branchTerm) -> (cons, vars, substituteTermWithNewVars branchTerm xs)) branches
+    in Case term' branches'
+substituteTermWithNewVars (Let x term1 term2) xs = let
+    term1' = substituteTermWithNewVars term1 xs
+    term2' = substituteTermWithNewVars term2 xs
+    in Let x term1' term2'    
+substituteTermWithNewVars (Con constructorName terms) xs = let
+    terms' = map (`substituteTermWithNewVars` xs) terms
+    in Con constructorName terms'     
+substituteTermWithNewVars (MultipleApply e0 funsDefs) xs = let
+    e0' = substituteTermWithNewVars e0 xs
+    funsDefs' = map (\(funName,(args,term)) -> (funName, (args, substituteTermWithNewVars term xs))) funsDefs
+    in MultipleApply e0' funsDefs'    
+substituteTermWithNewVars fun xs = fun         
+    
+    
 
-transform' :: LTS -> Context -> [String] -> [Generalization] -> [FunctionDefinition] -> LTS
-transform' lts EmptyCtx _ _ _ = lts
-transform' t@(LTS lts) (ApplyCtx context expr) funNames previousGensAccum funsDefs = let
+substituteTermWithNewTerms :: Term -> [Term] -> Term
+substituteTermWithNewTerms term _ = term
+
+
+
+transform :: Int ->  TermInContext -> [String] -> [Generalization] -> [FunctionDefinition] -> LTS
+transform index termInContext funNamesAccum previousGensAccum funsDefs = doLTS0Tr
+transform index termInContext funNamesAccum previousGensAccum funsDefs = doLTS0Tr
+
+transform' :: Int -> LTS -> Context -> [String] -> [Generalization] -> [FunctionDefinition] -> LTS
+transform' index lts EmptyCtx _ _ _ = lts
+transform' index t@(LTS lts) (ApplyCtx context expr) funNames previousGensAccum funsDefs = let
     term = getOldTerm lts
-    newLts = updateLTS t "@" (transform (expr, EmptyCtx) funNames previousGensAccum funsDefs) "#1" (Apply term expr)  
-    in transform' newLts context funNames previousGensAccum funsDefs
-transform' t@(LTS lts) (CaseCtx context branches) funsNames previousGens funsDefs = let
+    newLts = updateLTS t "@" (transform index (expr, EmptyCtx) funNames previousGensAccum funsDefs) "#1" (Apply term expr)  
+    in transform' index newLts context funNames previousGensAccum funsDefs
+transform' index t@(LTS lts) (CaseCtx context branches) funsNames previousGens funsDefs = let
     root = Case (getOldTerm lts) branches
     firstBranch = ("case", t)
-    otherBranches = map (\(branchName, _, resultTerm) -> (branchName, transform (resultTerm, context) funsNames previousGens funsDefs)) branches
+    otherBranches = map (\(branchName, _, resultTerm) -> (branchName, transform index (resultTerm, context) funsNames previousGens funsDefs)) branches
     in doLTSManyTr root $ firstBranch : otherBranches 
--- transform' [x -> (x, 0)]    
-transform' _ _ _ _ _ = error "Got error trying to transform."    
+--transform' [x -> (x, 0)]
+transform' index t@(LTS (LTSTransitions term@(Free x) [(xLabel, doLTS0Tr)])) (CaseCtx context branches) funsNames previousGens funsDefs = 
+    if x == xLabel 
+        then let
+            root = Case term branches
+            firstBranch = ("case", t)
+            otherBranches = map (\(branchName, args, resultTerm) -> let
+                resultTerm' = substituteTermWithNewVars resultTerm args
+                transformedTerm = transform index (resultTerm', context) funsNames previousGens funsDefs
+                in (branchName, transformedTerm)) branches
+            in doLTSManyTr root $ firstBranch : otherBranches
+        else error "Error: got branch x -> (x,0), but label is not the same as x"
+transform' _ _ _ _ _ _ = error "Got error trying to transform."    
   
 
 

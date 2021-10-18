@@ -1,15 +1,15 @@
 module Transformer (transform) where
 
-import           Data.Maybe  (fromMaybe, mapMaybe)
-import           HelperTypes
-import           LTSType
-import           TermType
-import           HomeomorphicEmbeddingChecker
-import           Driver
-import           Unfolder
-import           Generalizer
-import           Residualizer
+import Data.Maybe (fromMaybe, mapMaybe)
+import Driver
 import GHC.OldList (find)
+import Generalizer
+import HelperTypes
+import HomeomorphicEmbeddingChecker
+import LTSType
+import Residualizer
+import TermType
+import Unfolder
 
 -- concrete function alternative
 substituteTermWithNewVars :: Term -> [(String, String)] -> Term
@@ -50,57 +50,54 @@ substituteTermWithNewTerms term _ = term
 transform :: Int -> TermInContext -> [LTS] -> [Generalization] -> [FunctionDefinition] -> LTS
 transform index (term@(Free x), context) funNamesAccum previousGensAccum funsDefs =
   transform' index (doLTS1Tr term x doLTS0Tr) context funNamesAccum previousGensAccum funsDefs
-
 transform index lts@(term@(Con conName expressions), EmptyCtx) funNamesAccum previousGensAccum funsDefs =
   let firstBranch = (conName, doLTS0Tr)
       otherBranches = zip createLabels $ map (\e -> transform index (e, EmptyCtx) funNamesAccum previousGensAccum funsDefs) expressions
    in doLTSManyTr term $ (:) firstBranch otherBranches
-
 transform index lts@(term@(Con conName expressions), k@(CaseCtx k' branches)) funNamesAccum previousGensAccum funsDefs =
   case find (\(conName', expressions', _) -> conName == conName' && length expressions' == length expressions) branches of
     Nothing -> error $ "No matching pattern in case for term:\n\n" ++ show (Case (Con conName expressions) branches)
-    Just (conName', expressions', term') -> let
-      oldTerm = place term k
-      newTerm' = substituteTermWithNewTerms term' $ zip expressions' expressions
-      newTerm = transform index (newTerm', k') funNamesAccum previousGensAccum funsDefs
-      in doLTS1Tr oldTerm conName' newTerm
-
+    Just (conName', expressions', term') ->
+      let oldTerm = place term k
+          newTerm' = substituteTermWithNewTerms term' $ zip expressions' expressions
+          newTerm = transform index (newTerm', k') funNamesAccum previousGensAccum funsDefs
+       in doLTS1Tr oldTerm conName' newTerm
 transform index (term@(Lambda x expr), EmptyCtx) funNamesAccum previousGensAccum funsDefs =
   doLTS1Tr term x $ transform index (expr, EmptyCtx) funNamesAccum previousGensAccum funsDefs
-
 transform index (term@(Lambda x e0), k@(ApplyCtx k' e1)) funNamesAccum previousGensAccum funsDefs =
   doLTS1Tr (place term k) "beta" $ transform index (substituteTermWithNewTerms e0 [(x, e1)], k') funNamesAccum previousGensAccum funsDefs
-
-transform index (f@(Fun funName), k) funNamesAccum previousGensAccum funsDefs = let
-  t = drive (place f k) [] funsDefs
-  in case filter (null . isRenaming t) funNamesAccum of
+transform index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum funsDefs =
+  let t =
+        if index == 0
+          then drive (place f k) [] funsDefs
+          else transform (index - 1) termInCtx [] previousGensAccum funsDefs
+   in case filter (null . isRenaming t) funNamesAccum of
         _ : _ -> doLTS1Tr f funName doLTS0Tr
-        [] -> case mapMaybe (\t' -> case isHomeomorphicEmbedding t t' of
-            [] -> Nothing
-            renaming -> Just (renaming, t')) funNamesAccum of
-          (_, t') : _ -> let
-            generalizedLTS = generalize t t' previousGensAccum
-            residualizedLTS = residualize generalizedLTS
-            in transform index (residualizedLTS, EmptyCtx) funNamesAccum previousGensAccum []
-          [] -> let
-            oldTerm = place f k
-            newTerm = transform index (unfold oldTerm funsDefs, EmptyCtx) (t : funNamesAccum) previousGensAccum funsDefs
-            in doLTS1Tr oldTerm funName newTerm
+        [] -> case mapMaybe
+          ( \t' -> case isHomeomorphicEmbedding t t' of
+              [] -> Nothing
+              renaming -> Just (renaming, t')
+          )
+          funNamesAccum of
+          (_, t') : _ ->
+            let generalizedLTS = generalize t t' previousGensAccum
+                residualizedLTS = residualize generalizedLTS
+             in transform index (residualizedLTS, EmptyCtx) funNamesAccum previousGensAccum []
+          [] ->
+            let oldTerm = place f k
+                newTerm = transform index (unfold oldTerm funsDefs, EmptyCtx) (t : funNamesAccum) previousGensAccum funsDefs
+             in doLTS1Tr oldTerm funName newTerm
 transform index (Apply e0 e1, k) funNamesAccum previousGensAccum funsDefs =
   transform index (e0, ApplyCtx k e1) funNamesAccum previousGensAccum funsDefs
-
 transform index (Case e0 branches, k) funNamesAccum previousGensAccum funsDefs =
   transform index (e0, CaseCtx k branches) funNamesAccum previousGensAccum funsDefs
-
-transform index (e@(Let x e0 e1), k) funNamesAccum previousGensAccum funsDefs = let
-  firstBranch = ("let", transform index (substituteTermWithNewTerms e1 [(x, e0)], k) funNamesAccum previousGensAccum funsDefs)
-  secondBranch = (x, transform index (e0, EmptyCtx) funNamesAccum previousGensAccum funsDefs)
-  in doLTSManyTr (place e k) [firstBranch, secondBranch]
-
-transform index (MultipleApply e0 funsDefs', context) funNamesAccum previousGensAccum funsDefs = let
-  in transform index (e0, context) funNamesAccum previousGensAccum $ funsDefs ++ funsDefs'
-
-
+transform index (e@(Let x e0 e1), k) funNamesAccum previousGensAccum funsDefs =
+  let firstBranch = ("let", transform index (substituteTermWithNewTerms e1 [(x, e0)], k) funNamesAccum previousGensAccum funsDefs)
+      secondBranch = (x, transform index (e0, EmptyCtx) funNamesAccum previousGensAccum funsDefs)
+   in doLTSManyTr (place e k) [firstBranch, secondBranch]
+transform index (MultipleApply e0 funsDefs', context) funNamesAccum previousGensAccum funsDefs =
+  let
+   in transform index (e0, context) funNamesAccum previousGensAccum $ funsDefs ++ funsDefs'
 
 transform' :: Int -> LTS -> Context -> [LTS] -> [Generalization] -> [FunctionDefinition] -> LTS
 transform' index lts EmptyCtx _ _ _ = lts
@@ -134,12 +131,7 @@ transform' index t@(LTS (LTSTransitions term@(Free x) [(xLabel, doLTS0Tr)])) (Ca
     else error "Error: got branch x -> (x,0), but label is not the same as x"
 transform' _ _ _ _ _ _ = error "Got error trying to transform."
 
-place t EmptyCtx         = t
-place t (ApplyCtx con u) = place (Apply t u) con
-place t (CaseCtx con bs) = place (Case t bs) con
-
 -- level n transformer
-
 
 {--trans 0 t k fv m d e = return (place t k)
 

@@ -1,5 +1,5 @@
 module TermType (createTermInContext, getTerm, getContext,
-                Context (..), Term (..), TermInContext (..)) where
+                Context (..), Term (..), TermInContext (..), place) where
 
 --import ProgPrinter
 import Prelude hiding ((<>))

@@ -1,15 +1,15 @@
-module HomeomorphicEmbeddingChecker (isRenaming) where
+module HomeomorphicEmbeddingChecker (isRenaming, isHomeomorphicEmbedding) where
 
 
 import TermType
 import LTSType
 import HelperTypes
 
-isRenaming :: LTS -> LTS -> Bool
-isRenaming lts1 lts2 = True
+isRenaming :: LTS -> LTS -> [(String, String)]
+isRenaming lts1 lts2 = []
 
-isHomeomorphicEmbedding :: LTS -> LTS -> Bool
-isHomeomorphicEmbedding lts1 lts2 = True
+isHomeomorphicEmbedding :: LTS -> LTS -> [(String, String)]
+isHomeomorphicEmbedding lts1 lts2 = []
 
 -- homeomorphic embedding of terms
 

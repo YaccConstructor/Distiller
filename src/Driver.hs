@@ -27,6 +27,3 @@ drive term@(Let x e0 e1) funsNames funsDefs =
   doLTSManyTr term [("let", drive e1 funsNames funsDefs), (x, drive e0 funsNames funsDefs)]      
 drive (MultipleApply e0 eiDefinitions) funsNames funsDefs = drive e0 funsNames (funsDefs ++ eiDefinitions)  
   
-
-createLabels :: [String]
-createLabels = map ((++) "#" . show) [1 ..]

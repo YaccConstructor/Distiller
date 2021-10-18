@@ -4,8 +4,8 @@ import TermType
 import LTSType
 import HelperTypes  
   
-residualize :: LTS -> Prog
-residualize lts = (Free "t", [("t",(["t"], Free "t"))])
+residualize :: LTS -> Term
+residualize lts = Free "x"
   
   
 -- Program residualisation

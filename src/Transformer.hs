@@ -16,7 +16,7 @@ substituteTermWithNewVars :: Term -> [(String, String)] -> Term
 substituteTermWithNewVars (Free x) pairs = case lookup x pairs of
   Nothing -> Free x
   Just x' -> Free x'
-substituteTermWithNewVars (Lambda x expr) xs = Lambda x $ substituteTermWithNewVars expr xs
+substituteTermWithNewVars (Lambda x expr) xs = Lambda ("\\" ++ x) $ substituteTermWithNewVars expr xs
 substituteTermWithNewVars (Apply term1 term2) xs =
   let term1' = substituteTermWithNewVars term1 xs
       term2' = substituteTermWithNewVars term2 xs
@@ -63,7 +63,7 @@ transform index (term@(Con conName expressions), k@(CaseCtx k' branches)) funNam
           newTerm = transform index (newTerm', k') funNamesAccum previousGensAccum funsDefs
        in doLTS1Tr oldTerm conName' newTerm
 transform index (term@(Lambda x expr), EmptyCtx) funNamesAccum previousGensAccum funsDefs =
-  doLTS1Tr term x $ transform index (expr, EmptyCtx) funNamesAccum previousGensAccum funsDefs
+  doLTS1Tr term ("\\" ++ x) $ transform index (expr, EmptyCtx) funNamesAccum previousGensAccum funsDefs
 transform index (term@(Lambda x e0), k@(ApplyCtx k' e1)) funNamesAccum previousGensAccum funsDefs =
   doLTS1Tr (place term k) "beta" $ transform index (substituteTermWithNewTerms e0 [(x, e1)], k') funNamesAccum previousGensAccum funsDefs
 transform index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum funsDefs =

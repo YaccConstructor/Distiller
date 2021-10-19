@@ -9,6 +9,11 @@ data LTS = Leaf  | LTS LTSTransitions
 
 data LTSTransitions = LTSTransitions Term [(String, LTS)]
 
+instance Eq LTS where
+  (==) Leaf Leaf = True
+  (==) _ _ = error "Not defined."
+  
+
 doLTS0Tr :: LTS
 doLTS0Tr = Leaf  
 

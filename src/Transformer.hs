@@ -108,9 +108,10 @@ transform' index t@(LTS lts) (ApplyCtx context expr) funNames previousGensAccum 
    in transform' index newLts context funNames previousGensAccum funsDefs
 transform' index t@(LTS lts) (CaseCtx context branches) funsNames previousGens funsDefs =
   let root = Case (getOldTerm lts) branches
-      firstBranch = ("case", t)
-      otherBranches = map (\(branchName, _, resultTerm) -> (branchName, transform index (resultTerm, context) funsNames previousGens funsDefs)) branches
-   in doLTSManyTr root $ firstBranch : otherBranches
+      firstBranch = (("case", []), t)
+      otherBranches = map (\(branchName, args, resultTerm) -> 
+        ((branchName, args), transform index (resultTerm, context) funsNames previousGens funsDefs)) branches
+   in doLTSManyTr' root $ firstBranch : otherBranches
 transform' index t@(LTS (LTSTransitions term@(Free x) [(xLabel, _)])) (CaseCtx context branches) funsNames previousGens funsDefs =
   if x == xLabel
     then

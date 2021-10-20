@@ -100,24 +100,26 @@ createRealWorldTest fileToDistill importsForDistill bindingsInfo =  do
         return $ testCase testCaseName assertion
       Right distilled -> do
         cases <-
-              mapM (\lB -> do
-                        bindings <- lB
-                        case bindings of
-                          Left e -> do
-                            let assertion = assertFailure $ printf "program: %s; imports: %s; exception: %s" fileToDistill importsForDistill (show e)
-                            return $ testCase testCaseName assertion
-                          Right _bindings -> do
-                            let (bindings, bindingsInfo) = unzip _bindings
-                            let ((origRes, origReductions, origAllocations), (distilledRes, distilledReductions, distilledAllocations)) = getEvalResults bindings (fromJust progToDistill) distilled
-                                assertion = origRes @?= distilledRes
-                                testCaseName = printf "Evaluation of %s. Computed for %s. Original reductions %s, allocations %s. Distilled reductions %s, allocations %s." 
-                                                      fileToDistill 
-                                                      (show bindingsInfo)
-                                                      (show origReductions)
-                                                      (show origAllocations)
-                                                      (show distilledReductions)
-                                                      (show distilledAllocations)
-                            return $ testCase testCaseName assertion) loadedBindings
+            mapM (\x -> do
+                      bindings <- x
+                      case bindings of
+                        Left e -> do
+                          let assertion = assertFailure $ printf "program: %s; imports: %s; exception: %s" fileToDistill importsForDistill (show e)
+                          return $ testCase testCaseName assertion
+                        Right _bindings -> do
+                          let (bindings, bindingsInfo) = unzip _bindings
+                          let ((origRes, origReductions, origAllocations), (distilledRes, distilledReductions, distilledAllocations)) = getEvalResults bindings (fromJust progToDistill) distilled
+                              assertion = origRes @?= distilledRes
+                              testCaseName = 
+                                printf "Evaluation of %s. Computed for %s. Original reductions %s, allocations %s. Distilled reductions %s, allocations %s." 
+                                        fileToDistill 
+                                        (show bindingsInfo)
+                                        (show origReductions)
+                                        (show origAllocations)
+                                        (show distilledReductions)
+                                        (show distilledAllocations)
+                          return $ testCase testCaseName assertion) 
+                  loadedBindings
         return $ testGroup fileToDistill cases
   else do
     let testCaseName = printf "Parsing: %s" fileToDistill
@@ -158,6 +160,19 @@ test_matrices_add_kron = do createRealWorldTest "linearAlgebraExamples/addKron2"
         [ [("m1",x), ("m2",y) , ("m3",z)] | x <- m128x128, y <- m2x2, z <- m256x256 ] ++
         [ [("m1",x), ("m2",y) , ("m3",z)] | x <- m128x128, y <- m4x4, z <- m512x512 ] ++
         [ [("m1",x), ("m2",y) , ("m3",z)] | x <- m256x256, y <- m2x2, z <- m512x512 ]
+
+test_matrices_add_kron3 = do createRealWorldTest "linearAlgebraExamples/addKron3" "inputs/" bindings
+    where
+    bindings =           
+        [ [("m1",x), ("m2",y) , ("m3",z)] | x <- m64x64, y <- m2x2, z <- m2x2 ] ++
+        [ [("m1",x), ("m2",y) , ("m3",z)] | x <- m64x64, y <- m4x4, z <- m4x4 ] ++
+        [ [("m1",x), ("m2",y) , ("m3",z)] | x <- m64x64, y <- m64x64, z <- m64x64 ] ++
+        [ [("m1",x), ("m2",y) , ("m3",z)] | x <- m128x128, y <- m2x2, z <- m2x2 ] ++
+        [ [("m1",x), ("m2",y) , ("m3",z)] | x <- m128x128, y <- m4x4, z <- m4x4 ] ++
+        [ [("m1",x), ("m2",y) , ("m3",z)] | x <- m256x256, y <- m2x2, z <- m2x2 ] ++
+        [ [("m1",x), ("m2",y) , ("m3",z)] | x <- m256x256, y <- m4x4, z <- m4x4 ] ++
+        [ [("m1",x), ("m2",y) , ("m3",z)] | x <- m512x512, y <- m2x2, z <- m2x2 ] ++
+        [ [("m1",x), ("m2",y) , ("m3",z)] | x <- m512x512, y <- m4x4, z <- m4x4 ]
 
 --test_matrices_add_kron_kron_football_64x64_small_2x2 = do test <- createRealWorldTest "linearAlgebraExamples/addKron1" "inputs/" getEvaluationResults
 --                                                          return $ ignoreTest test    
@@ -214,3 +229,11 @@ test_matrices_add_mask = do createRealWorldTest "linearAlgebraExamples/addMask" 
         [ [("m1",x), ("m2",y), ("m3",z)] | x <- m128x128, y <- m128x128, z <- m128x128 ] ++
         [ [("m1",x), ("m2",y), ("m3",z)] | x <- m256x256, y <- m256x256, z <- m256x256 ] ++
         [ [("m1",x), ("m2",y), ("m3",z)] | x <- m512x512, y <- m512x512, z <- m512x512 ]
+
+test_matrices_add_kron5_constant_matrix = do createRealWorldTest "linearAlgebraExamples/addKron5_constant_matrix" "inputs/" bindings
+    where
+    bindings =           
+        [ [("m1",x), ("m2",y)] | x <- m64x64, y <- m64x64 ] ++
+        [ [("m1",x), ("m2",y)] | x <- m128x128, y <- m128x128 ] ++
+        [ [("m1",x), ("m2",y)] | x <- m256x256, y <- m256x256 ] ++
+        [ [("m1",x), ("m2",y)] | x <- m512x512, y <- m512x512 ]

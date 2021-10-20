@@ -35,8 +35,16 @@ generalize' (LTS (LTSTransitions e [("@", t0), ("#1", t1)]))
     (tg_1, previousGensAccum_1) = generalize' t1 t1' previousGensAccum boundVariables previousFunsAccum
     newLts = doLTSManyTr e [("@", tg_0), ("#1", tg_1)]
     in (newLts, previousGensAccum_0 ++ previousGensAccum_1)
-generalize' (LTS (LTSTransitions e ("case", t0) : branches))
-            (LTS (LTSTransitions e ("case", t0') : branches')) 
+generalize' (LTS (LTSTransitions' e ((("case", []), t0) : branches)))
+            (LTS (LTSTransitions' e' ((("case", []), t0') : branches')))
+            previousGensAccum boundVariables previousFunsAccum = let
+    (tg_0, previousGensAccum_0) = generalize' t0 t0' previousGensAccum boundVariables previousFunsAccum
+    tgs = zipWith (\(t@(p_i, args), t_i) ((p_i', args'), t_i') -> 
+        (generalize' t_i t_i' previousGensAccum (args ++ boundVariables) previousFunsAccum, t)) branches branches'
+    newPreviousGensAccum = previousGensAccum_0 ++ concatMap (snd . fst) tgs
+    newLtss = map (\((tg_i, _), (p_i, args)) -> ((p_i, args), tg_i)) tgs
+    newLts = doLTSManyTr' e $ (("case", []), tg_0) : newLtss         
+    in (newLts, newPreviousGensAccum)
 
 branchesForConstructor :: [(String, LTS)] -> [(String, LTS)] -> Bool
 branchesForConstructor branches branches' = all (\t -> tail (map fst t) == take (length t) createLabels) [branches, branches']

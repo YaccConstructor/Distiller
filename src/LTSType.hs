@@ -1,18 +1,18 @@
 module LTSType (
-    LTS (..), LTSTransitions (..),
-    doLTS0Tr, doLTS1Tr, doLTSManyTr,
+    LTS (..), LTSTransitions (..), LTSTransitions (..),
+    doLTS0Tr, doLTS1Tr, doLTSManyTr, doLTSManyTr',
     getLabels, getOldTerm, updateLTS) where
   
 import TermType
 
 data LTS = Leaf  | LTS LTSTransitions
 
-data LTSTransitions = LTSTransitions Term [(String, LTS)]
+data LTSTransitions = LTSTransitions Term [(String, LTS)] | LTSTransitions' Term [((String, [String]), LTS)]
 
 instance Eq LTS where
   (==) Leaf Leaf = True
   (==) _ _ = error "Not defined."
-  
+
 
 doLTS0Tr :: LTS
 doLTS0Tr = Leaf  
@@ -22,6 +22,9 @@ doLTS1Tr oldTerm label newTerm = LTS $ LTSTransitions oldTerm [(label, newTerm)]
 
 doLTSManyTr :: Term -> [(String, LTS)] -> LTS
 doLTSManyTr oldTerm pairs = LTS $ LTSTransitions oldTerm pairs
+
+doLTSManyTr' :: Term -> [((String, [String]), LTS)] -> LTS
+doLTSManyTr' oldTerm pairs = LTS $ LTSTransitions' oldTerm pairs
 
 updateLTS :: LTS -> String -> LTS -> String -> Term -> LTS
 updateLTS lts1 label1 lts2 label2 term = doLTSManyTr term [(label1, lts1), (label2, lts2)]

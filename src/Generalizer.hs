@@ -3,13 +3,16 @@ module Generalizer where
 import HelperTypes
 import LTSType
 import TermType
+import Data.List
+import HomeomorphicEmbeddingChecker
+import Data.Bifunctor
 
 generalize :: LTS -> LTS -> [Generalization] -> LTS
 generalize t t' prevGensAccum =
   let (tg, prevGensAccum') = generalize' t t' prevGensAccum [] []
    in _A tg prevGensAccum'
 
-generalize' :: LTS -> LTS -> [Generalization] -> [String] -> [LTS] -> (LTS, [Generalization])
+generalize' :: LTS -> LTS -> [Generalization] -> [String] -> [(String, String)] -> (LTS, [Generalization])
 generalize' t@(LTS (LTSTransitions (Free _) _)) (LTS (LTSTransitions (Free _) _)) _ _ _ = (t, [])
 generalize' (LTS (LTSTransitions e (first@(_, Leaf) : branches)))
             (LTS (LTSTransitions _ ((_, Leaf) : branches')))
@@ -35,16 +38,53 @@ generalize' (LTS (LTSTransitions e [("@", t0), ("#1", t1)]))
     (tg_1, previousGensAccum_1) = generalize' t1 t1' previousGensAccum boundVariables previousFunsAccum
     newLts = doLTSManyTr e [("@", tg_0), ("#1", tg_1)]
     in (newLts, previousGensAccum_0 ++ previousGensAccum_1)
-generalize' (LTS (LTSTransitions' e ((("case", []), t0) : branches)))
-            (LTS (LTSTransitions' e' ((("case", []), t0') : branches')))
+generalize' (LTS (LTSTransitions' e (("case", [], t0) : branches)))
+            (LTS (LTSTransitions' _ (("case", [], t0') : branches')))
             previousGensAccum boundVariables previousFunsAccum = let
     (tg_0, previousGensAccum_0) = generalize' t0 t0' previousGensAccum boundVariables previousFunsAccum
-    tgs = zipWith (\(t@(p_i, args), t_i) ((p_i', args'), t_i') -> 
-        (generalize' t_i t_i' previousGensAccum (args ++ boundVariables) previousFunsAccum, t)) branches branches'
+    tgs = zipWith (\(p_i, args, t_i) (_, _, t_i') ->
+        (generalize' t_i t_i' previousGensAccum (args ++ boundVariables) previousFunsAccum, (p_i, args))) branches branches'
     newPreviousGensAccum = previousGensAccum_0 ++ concatMap (snd . fst) tgs
-    newLtss = map (\((tg_i, _), (p_i, args)) -> ((p_i, args), tg_i)) tgs
-    newLts = doLTSManyTr' e $ (("case", []), tg_0) : newLtss         
+    newLtss = map (\((tg_i, _), (p_i, args)) -> (p_i, args, tg_i)) tgs
+    newLts = doLTSManyTr' e $ ("case", [], tg_0) : newLtss
     in (newLts, newPreviousGensAccum)
+generalize' (LTS (LTSTransitions e (("let", t0) : branches)))
+            (LTS (LTSTransitions _ (("let", t0') : branches')))
+            previousGensAccum boundVariables previousFunsAccum = let
+    (tg_0, previousGensAccum_0) = generalize' t0 t0' previousGensAccum boundVariables previousFunsAccum
+    tgs = zipWith (\(x_i, t_i) (_, t_i') ->
+            (x_i, generalize' t_i t_i' previousGensAccum boundVariables previousFunsAccum)) branches branches'
+    newPreviousGensAccum = previousGensAccum_0 ++ concatMap (snd . snd) tgs
+    newLtss = map (\(x_i, (tg_i, _)) -> (x_i, tg_i)) tgs
+    newLts = doLTSManyTr e $ ("let", tg_0) : newLtss
+    in (newLts, newPreviousGensAccum)
+generalize' lts@(LTS (LTSTransitions e [(funName, t)]))
+            (LTS (LTSTransitions _ [(funName', t')]))
+            previousGensAccum boundVariables previousFunsAccum =
+    if (funName, funName') `elem` previousFunsAccum
+        then (lts, [])
+        else let
+        (tg, newPreviousGensAccum) = generalize' t t' previousGensAccum boundVariables $ (:) (funName, funName') previousFunsAccum
+        in (doLTS1Tr e funName tg, newPreviousGensAccum)
+generalize' (LTS (LTSTransitions e [("unfoldBeta", t)]))
+            (LTS (LTSTransitions _ [("unfoldBeta", t')]))
+            previousGensAccum boundVariables previousFunsAccum = generalize' t t' previousGensAccum boundVariables previousFunsAccum
+generalize' (LTS (LTSTransitions e [("unfoldCons", t)]))
+            (LTS (LTSTransitions _ [("unfoldCons", t')]))
+            previousGensAccum boundVariables previousFunsAccum = generalize' t t' previousGensAccum boundVariables previousFunsAccum
+generalize' t _ previousGensAccum boundVariables _ = let
+    boundVariables' = intersect (getFreeVariables t) boundVariables
+    t2 = _C t boundVariables'
+    in case filter (\(x, t1) -> (not . null) $ isRenaming t1 t2) previousGensAccum of
+        (x', _) : _ -> (_B (doLTS1Tr x' (show x') doLTS0Tr) boundVariables', [])
+        [] -> let
+            fresh = Free "x"
+            in (_B (doLTS1Tr fresh (show fresh) doLTS0Tr) boundVariables', [(fresh, t2)])
+
+getFreeVariables :: LTS -> [String]
+getFreeVariables Leaf = []
+getFreeVariables (LTS lts@(LTSTransitions _ branches)) = free (getOldTerm lts) ++ concatMap (getFreeVariables . snd) branches
+getFreeVariables (LTS lts@(LTSTransitions' _ branches)) = free (getOldTerm lts) ++ concatMap (\(_, _, lts') -> getFreeVariables lts') branches
 
 branchesForConstructor :: [(String, LTS)] -> [(String, LTS)] -> Bool
 branchesForConstructor branches branches' = all (\t -> tail (map fst t) == take (length t) createLabels) [branches, branches']
@@ -53,14 +93,14 @@ branchesForFunctionCall :: [(String, LTS)] -> [(String, LTS)] -> Bool
 branchesForFunctionCall branches branches' = all (\t -> map fst t == ["@", "#1"]) [branches, branches']
 
 branchesForLambda :: [(String, LTS)] -> [(String, LTS)] -> Bool
-branchesForLambda [('\\' : _, _)] [('\\' : x', lts')] = True
+branchesForLambda [('\\' : _, _)] [('\\' : _, _)] = True
 branchesForLambda _ _ = False
 
 _A :: LTS -> [Generalization] -> LTS
-_A lts [] = lts
+_A t@(LTS (LTSTransitions root _)) generalizations = doLTSManyTr root $ (:) ("let", t) $ map (Data.Bifunctor.first show) generalizations
 
-_B :: LTS -> [Generalization] -> LTS
+_B :: LTS -> [String] -> LTS
 _B lts [] = lts
 
-_C :: LTS -> [Generalization] -> LTS
+_C :: LTS -> [String] -> LTS
 _C lts [] = lts

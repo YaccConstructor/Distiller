@@ -1,5 +1,5 @@
 module TermType (createTermInContext, getTerm, getContext,
-                Context (..), Term (..), TermInContext (..), place) where
+                Context (..), Term (..), TermInContext (..), place, free) where
 
 --import ProgPrinter
 import Prelude hiding ((<>))
@@ -8,6 +8,7 @@ import Text.ParserCombinators.Parsec hiding (labels)
 import Text.ParserCombinators.Parsec.Expr
 import qualified Text.ParserCombinators.Parsec.Token as T
 import Text.ParserCombinators.Parsec.Language
+import Data.List
 
 
 type TermInContext = (Term, Context)
@@ -54,6 +55,17 @@ data Context = EmptyCtx
              | ApplyCtx Context Term
              | CaseCtx Context [(String,[String],Term)] deriving Show
 
+
+free t = nub (free' t)
+
+free' (Free x) = [x]
+free' (Lambda x t) = free' t
+free' (Con c ts) = concatMap free' ts
+free' (Apply t u)  = free' t ++ free' u
+free' (Fun f) = []
+free' (Case t bs) = free' t ++ concatMap (\(c,xs,t) -> free' t) bs
+free' (Let x t u) = free' t  ++ free' u
+
 -- place term in context
 
 place t EmptyCtx = t
@@ -61,19 +73,3 @@ place t (ApplyCtx con u) = place (Apply t u) con
 place t (CaseCtx con bs) = place (Case t bs) con
 
 matchCase bs bs' = length bs == length bs' && all (\((c,xs,t),(c',xs',t')) -> c == c' && length xs == length xs') (zip bs bs')
-
--- term instance
-
-inst t u = inst' t u []
-
-inst' (Free x) t s = if   x `elem` map fst s
-                     then [s | (x,t) `elem` s]
-                     else [(x,t):s]
---inst' (Bound i) (Bound i') s | i==i' = [s]
-inst' (Lambda x t) (Lambda x' t') s = inst' t t' s
-inst' (Con c ts) (Con c' ts') s | c==c' = foldr (\(t,t') ss -> concat [inst' t t' s | s <- ss]) [s] (zip ts ts')
-inst' (Apply t u) (Apply t' u') s = concat [inst' u u' s' | s' <- inst' t t' s]
-inst' (Fun f) (Fun f') s | f==f' = [s]
-inst' (Case t bs) (Case t' bs') s | matchCase bs bs' = foldr (\((c,xs,t),(c',xs',t')) ss -> concat [inst' t t' s | s <- ss]) (inst' t t' s) (zip bs bs')
-inst' (Let x t u) (Let x' t' u') s = concat [inst' u u' s' | s' <- inst' t t' s]
-inst' t t' s = []

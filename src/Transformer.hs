@@ -61,11 +61,11 @@ transform index (term@(Con conName expressions), k@(CaseCtx k' branches)) funNam
       let oldTerm = place term k
           newTerm' = substituteTermWithNewTerms term' $ zip expressions' expressions
           newTerm = transform index (newTerm', k') funNamesAccum previousGensAccum funsDefs
-       in doLTS1Tr oldTerm conName' newTerm
+       in doLTS1Tr oldTerm "unfoldCons" newTerm
 transform index (term@(Lambda x expr), EmptyCtx) funNamesAccum previousGensAccum funsDefs =
   doLTS1Tr term ("\\" ++ x) $ transform index (expr, EmptyCtx) funNamesAccum previousGensAccum funsDefs
 transform index (term@(Lambda x e0), k@(ApplyCtx k' e1)) funNamesAccum previousGensAccum funsDefs =
-  doLTS1Tr (place term k) "beta" $ transform index (substituteTermWithNewTerms e0 [(x, e1)], k') funNamesAccum previousGensAccum funsDefs
+  doLTS1Tr (place term k) "unfoldBeta" $ transform index (substituteTermWithNewTerms e0 [(x, e1)], k') funNamesAccum previousGensAccum funsDefs
 transform index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum funsDefs =
   let t =
         if index == 0

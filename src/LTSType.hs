@@ -7,7 +7,7 @@ import TermType
 
 data LTS = Leaf  | LTS LTSTransitions
 
-data LTSTransitions = LTSTransitions Term [(String, LTS)] | LTSTransitions' Term [((String, [String]), LTS)]
+data LTSTransitions = LTSTransitions Term [(String, LTS)] | LTSTransitions' Term [(String, [String], LTS)]
 
 instance Eq LTS where
   (==) Leaf Leaf = True
@@ -23,7 +23,7 @@ doLTS1Tr oldTerm label newTerm = LTS $ LTSTransitions oldTerm [(label, newTerm)]
 doLTSManyTr :: Term -> [(String, LTS)] -> LTS
 doLTSManyTr oldTerm pairs = LTS $ LTSTransitions oldTerm pairs
 
-doLTSManyTr' :: Term -> [((String, [String]), LTS)] -> LTS
+doLTSManyTr' :: Term -> [(String, [String], LTS)] -> LTS
 doLTSManyTr' oldTerm pairs = LTS $ LTSTransitions' oldTerm pairs
 
 updateLTS :: LTS -> String -> LTS -> String -> Term -> LTS

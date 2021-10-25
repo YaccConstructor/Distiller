@@ -98,9 +98,18 @@ branchesForLambda _ _ = False
 
 _A :: LTS -> [Generalization] -> LTS
 _A t@(LTS (LTSTransitions root _)) generalizations = doLTSManyTr root $ (:) ("let", t) $ map (Data.Bifunctor.first show) generalizations
+_A _ _ = error "Unexpected lts or generalizations list got for _A function."
 
 _B :: LTS -> [String] -> LTS
-_B lts [] = lts
+_B lts@(LTS (LTSTransitions t _)) (x1 : xs) = let
+    initializer = doLTSManyTr t [("@", lts), ("#1", doLTS1Tr (Free x1) x1 doLTS0Tr)] 
+    in foldl (\lts' x_i -> doLTSManyTr t [("@", lts'), ("#1", doLTS1Tr (Free x_i) x_i doLTS0Tr)]) initializer xs
+_B _ _ = error "Unexpected lts or bound variables list got for _B function."    
 
 _C :: LTS -> [String] -> LTS
-_C lts [] = lts
+_C lts@(LTS (LTSTransitions t _)) xs = let 
+    xs' = reverse xs
+    x_n = head xs'
+    initializer = doLTS1Tr t ("\\" ++ x_n) lts 
+    in foldl (\lts' x_i -> doLTS1Tr t ("\\" ++ x_i) lts') initializer xs
+_C _ _ = error "Unexpected lts or bound variables list got for _B function."    

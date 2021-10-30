@@ -8,7 +8,7 @@ import HelperTypes
 isRenaming :: LTS -> LTS -> [(String, Term)]
 isRenaming lts1 lts2 = isRenaming' [] lts1 lts2 [] [] []
 
-isRenaming' :: Foldable t => [(String, String)] -> LTS -> LTS -> [String] -> t String -> [(String, Term)] -> [(String, Term)]
+isRenaming' :: [(String, String)] -> LTS -> LTS -> [String] -> [String] -> [(String, Term)] -> [(String, Term)]
 isRenaming' funNamesAccum (LTS (LTSTransitions t@(Free x) _))
                           (LTS (LTSTransitions t'@(Free x') _)) freeVars boundVars renaming
     | x `elem` freeVars && t' == t = renaming
@@ -33,19 +33,27 @@ isRenaming' funNamesAccum (LTS (LTSTransitions _ bs@((conName, Leaf) : branches)
       if conName == conName' then let
         termPairs = zip (map snd branches) (map snd branches')
         in foldr (\(t, t') renaming' -> renaming' ++ isRenaming' funNamesAccum t t' freeVars boundVars renaming') renaming termPairs
-        else []                         
-{--inst' fs (Lambda x t) (Lambda x' t') fv bv s = let x'' = renameVar fv x
-                                               in  inst' fs (concrete x'' t) (concrete x'' t') (x'':fv) (x'':bv) s
-inst' fs (Con c ts) (Con c' ts') fv bv s | c==c' = foldr (\(t,t') ss -> concat [inst' fs t t' fv bv s | s <- ss]) [s] (zip ts ts')
-inst' fs (Apply t u) (Apply t' u') fv bv s = concat [inst' fs u u' fv bv s' | s' <- inst' fs t t' fv bv s]
-inst' fs (Fun f) (Fun f') fv bv s | f==f' = [s]
-inst' fs (Case t bs) (Case t' bs') fv bv s | matchCase bs bs' = foldr (\((c,xs,t),(c',xs',t')) ss -> let fv' = renameVars fv xs
-                                                                                                         xs'' = take (length xs) fv'
-                                                                                                     in  concat [inst' fs (foldr concrete t xs'') (foldr concrete t' xs'') fv' (xs''++bv) s | s <- ss]) (inst' fs t t' fv bv s) (zip bs bs')
-inst' fs (Let x t u) (Let x' t' u') fv bv s = let x'' = renameVar fv x
-                                              in  concat [inst' fs (concrete x'' u) (concrete x'' u') (x'':fv) (x'':bv) s' | s' <- inst' fs t t' fv bv s]-}    
-    
-
+        else []        
+isRenaming' funNamesAccum  (LTS (LTSTransitions _ [("@", t), ("#1", u)])) 
+                           (LTS (LTSTransitions _ [("@", t'), ("#1", u')])) freeVars boundVars renaming = let
+    a = isRenaming' funNamesAccum t t' freeVars boundVars renaming
+    b = isRenaming' funNamesAccum u u' freeVars boundVars a in b      
+isRenaming' funNamesAccum (LTS (LTSTransitions _ [("let", t), (x, u)])) 
+                          (LTS (LTSTransitions _ [("let", t'), (x', u')])) freeVars boundVars renaming = let
+    x'' = renameVar freeVars x
+    a = isRenaming' funNamesAccum t t' freeVars boundVars renaming
+    b = isRenaming' funNamesAccum u u' (x'' : freeVars) (x'' : boundVars) a in b
+isRenaming' funNamesAccum (LTS (LTSTransitions' _ (("case", [], t) : branches)))
+                          (LTS (LTSTransitions' _ (("case", [], t') : branches'))) freeVars boundVars renaming
+    | matchCase branches branches' = let
+        initializer = isRenaming' funNamesAccum t t' freeVars boundVars renaming 
+        branchess = zip branches branches'
+        in foldr (\((c, xs, u), (c', xs', u')) renaming' -> let 
+            freeVars' = renameVars freeVars xs
+            xs'' = take (length xs) freeVars'
+            in isRenaming' funNamesAccum u u' freeVars' (xs'' ++ boundVars) renaming') initializer branchess
+isRenaming' _ _ _ _ _ _ = []                                                                       
+   
 isHomeomorphicEmbedding :: LTS -> LTS -> [(String, String)]
 isHomeomorphicEmbedding lts1 lts2 = []
 

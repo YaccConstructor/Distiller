@@ -66,13 +66,13 @@ transform index (term@(Lambda x expr), EmptyCtx) funNamesAccum previousGensAccum
   doLTS1Tr term ("\\" ++ x) $ transform index (expr, EmptyCtx) funNamesAccum previousGensAccum funsDefs
 transform index (term@(Lambda x e0), k@(ApplyCtx k' e1)) funNamesAccum previousGensAccum funsDefs =
   doLTS1Tr (place term k) "unfoldBeta" $ transform index (substituteTermWithNewTerms e0 [(x, e1)], k') funNamesAccum previousGensAccum funsDefs
-transform index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum funsDefs =
+transform index termInCtx@(f@(Fun funName, k) funNamesAccum previousGensAccum funsDefs =
   let t =
         if index == 0
           then drive (place f k) [] funsDefs
           else transform (index - 1) termInCtx [] previousGensAccum funsDefs
    in case filter (null . isRenaming t) funNamesAccum of
-        _ : _ -> doLTS1Tr f funName doLTS0Tr
+        _ : _ -> doLTS1Tr f ('*' : funName) doLTS0Tr
         [] -> case mapMaybe
           ( \t' -> case isHomeomorphicEmbedding t t' of
               [] -> Nothing
@@ -86,7 +86,7 @@ transform index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum f
           [] ->
             let oldTerm = place f k
                 newTerm = transform index (unfold oldTerm funsDefs, EmptyCtx) (t : funNamesAccum) previousGensAccum funsDefs
-             in doLTS1Tr oldTerm funName newTerm
+             in doLTS1Tr oldTerm ('*' : funName) newTerm
 transform index (Apply e0 e1, k) funNamesAccum previousGensAccum funsDefs =
   transform index (e0, ApplyCtx k e1) funNamesAccum previousGensAccum funsDefs
 transform index (Case e0 branches, k) funNamesAccum previousGensAccum funsDefs =

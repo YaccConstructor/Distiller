@@ -86,9 +86,6 @@ getFreeVariables Leaf = []
 getFreeVariables (LTS lts@(LTSTransitions _ branches)) = free (getOldTerm lts) ++ concatMap (getFreeVariables . snd) branches
 getFreeVariables (LTS lts@(LTSTransitions' _ branches)) = free (getOldTerm lts) ++ concatMap (\(_, _, lts') -> getFreeVariables lts') branches
 
-branchesForConstructor :: [(String, LTS)] -> [(String, LTS)] -> Bool
-branchesForConstructor branches branches' = all (\t -> tail (map fst t) == take (length t) createLabels) [branches, branches']
-
 branchesForFunctionCall :: [(String, LTS)] -> [(String, LTS)] -> Bool
 branchesForFunctionCall branches branches' = all (\t -> map fst t == ["@", "#1"]) [branches, branches']
 

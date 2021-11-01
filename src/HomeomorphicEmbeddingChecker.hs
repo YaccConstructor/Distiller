@@ -54,31 +54,19 @@ isRenaming' funNamesAccum (LTS (LTSTransitions' _ (("case", [], t) : branches)))
             in isRenaming' funNamesAccum u u' freeVars' (xs'' ++ boundVars) renaming') initializer branchess
 isRenaming' _ _ _ _ _ _ = []                                                                       
    
-isHomeomorphicEmbedding :: LTS -> LTS -> [(String, String)]
-isHomeomorphicEmbedding lts1 lts2 = []
+isHomeomorphicEmbedding :: LTS -> LTS -> [(String, Term)]
+isHomeomorphicEmbedding lts1 lts2 = coupled lts1 lts2 [] []
 
--- homeomorphic embedding of terms
+embed :: LTS -> LTS -> [(String, String)] -> [(String, Term)] -> [(String, Term)]
+embed lts1 lts2 funNamesAccum renaming =
+  dived lts1 lts2 funNamesAccum renaming ++ coupled lts1 lts2 funNamesAccum renaming
 
-{--isEmbedding t u = not (null(embedding t u))
+dived :: LTS -> LTS -> [(String, String)] -> [(String, Term)] -> [(String, Term)]
+dived lts1@(LTS (LTSTransitions _ branches)) lts2@(LTS (LTSTransitions _ branches')) funNamesAccum renaming =
+    -- if some i has embedding, than dived is passed
+    concatMap (\(t, t') -> embed t t' funNamesAccum renaming)
+    $ zip (map snd branches) (map snd branches')
 
-embedding t u = couple t u []
-
-embed t u r = couple t u r ++ dive t u r 
-
-couple (Free x) (Free x') r = if x `elem` map fst r then [r | (x,x') `elem` r] else [(x,x'):r]
-couple (Bound i) (Bound i') r | i == i' = [r]
-couple (Lambda x t) (Lambda x' t') r = embed t t' r
-couple (Con c ts) (Con c' ts') r | c==c' = foldr (\(t,t') rs -> concat [embed t t' r | r <- rs]) [r] (zip ts ts')
-couple (Apply t u) (Apply t' u') r = concat [embed u u' r' | r' <- couple t t' r]
-couple (Fun f) (Fun f') r | f==f' = [r]
-couple (Case t bs) (Case t' bs') r | matchCase bs bs' = foldr (\((c,xs,t),(c',xs',t')) rs -> concat [embed t t' r | r <- rs]) (embed t t' r) (zip bs bs')
-couple (Let x t u) (Let x' t' u') r = concat [embed u u' r' | r' <- embed t t' r]
-couple t t' r = []
-
-dive t (Lambda x t') r = embed t (concrete x t') r
-dive t (Con c ts) r = concat [embed t t' r | t' <- ts]
-dive t (Apply t' u) r = embed t t' r ++ embed t u r
-dive t (Case t' bs) r = embed t t' r ++ concatMap (\(c,xs,t') -> embed t (foldr concrete t' xs) r) bs
-dive t (Let x t' u) r = embed t t' r ++ embed t (concrete x u) r
-dive t t' r = []
---}
+coupled :: LTS -> LTS -> p1 -> p2 -> p2
+coupled lts1@(LTS (LTSTransitions _ branches)) lts2@(LTS (LTSTransitions _ branches')) funNamesAccum renaming = renaming
+-- if all i has embedding, than coupled is passed

@@ -18,18 +18,18 @@ isRenaming' funNamesAccum (LTS (LTSTransitions t@(Free x) _))
             then renaming
             else (x,x') : renaming
         else []
--- unfold        
-isRenaming' funNamesAccum (LTS (LTSTransitions _ [('*' : funName, t)]))
-                          (LTS (LTSTransitions _ [('*' : funName', t')])) freeVars boundVars renaming = 
+-- unfold
+isRenaming' funNamesAccum (LTS (LTSTransitions _ [(Unfold' funName, t)]))
+                          (LTS (LTSTransitions _ [(Unfold' funName', t')])) freeVars boundVars renaming =
     if (funName, funName') `elem` funNamesAccum
         then renaming
         else isRenaming' ((funName, funName') : funNamesAccum) t t' freeVars boundVars renaming
--- lambda        
-isRenaming' funNamesAccum (LTS (LTSTransitions _ [('\\' : x, t)]))
-                          (LTS (LTSTransitions _ [('\\' : x', t')])) freeVars boundVars renaming = let 
+-- lambda
+isRenaming' funNamesAccum (LTS (LTSTransitions _ [(Lambda' x, t)]))
+                          (LTS (LTSTransitions _ [(Lambda' x', t')])) freeVars boundVars renaming = let
         x'' = renameVar freeVars x
         in isRenaming' funNamesAccum t t' (x'' : freeVars) boundVars renaming
--- constructor             
+-- constructor
 isRenaming' funNamesAccum (LTS (LTSTransitions _ bs@((conName, Leaf) : branches)))
                           (LTS (LTSTransitions _ bs'@((conName', Leaf) : branches'))) freeVars boundVars renaming
     | branchesForConstructor bs bs' = 
@@ -37,24 +37,24 @@ isRenaming' funNamesAccum (LTS (LTSTransitions _ bs@((conName, Leaf) : branches)
         termPairs = zip (map snd branches) (map snd branches')
         in foldr (\(t, t') renaming' -> renaming' ++ isRenaming' funNamesAccum t t' freeVars boundVars renaming') renaming termPairs
         else []
--- Apply                
-isRenaming' funNamesAccum  (LTS (LTSTransitions _ [("@", t), ("#1", u)])) 
-                           (LTS (LTSTransitions _ [("@", t'), ("#1", u')])) freeVars boundVars renaming = let
+-- Apply
+isRenaming' funNamesAccum  (LTS (LTSTransitions _ [(Apply0', t), (Apply1', u)]))
+                           (LTS (LTSTransitions _ [(Apply0', t'), (Apply1', u')])) freeVars boundVars renaming = let
     a = isRenaming' funNamesAccum t t' freeVars boundVars renaming
     b = isRenaming' funNamesAccum u u' freeVars boundVars a in b
--- let            
-isRenaming' funNamesAccum (LTS (LTSTransitions _ [("let", t), (x, u)])) 
-                          (LTS (LTSTransitions _ [("let", t'), (x', u')])) freeVars boundVars renaming = let
+-- let
+isRenaming' funNamesAccum (LTS (LTSTransitions _ [(Let', t), (LetX' x, u)]))
+                          (LTS (LTSTransitions _ [(Let', t'), (LetX' x', u')])) freeVars boundVars renaming = let
     x'' = renameVar freeVars x
     a = isRenaming' funNamesAccum t t' freeVars boundVars renaming
     b = isRenaming' funNamesAccum u u' (x'' : freeVars) (x'' : boundVars) a in b
--- case      
-isRenaming' funNamesAccum (LTS (LTSTransitions' _ (("case", [], t) : branches)))
-                          (LTS (LTSTransitions' _ (("case", [], t') : branches'))) freeVars boundVars renaming
+-- case
+isRenaming' funNamesAccum (LTS (LTSTransitions _ ((Case', t) : branches)))
+                          (LTS (LTSTransitions _ ((Case', t') : branches'))) freeVars boundVars renaming
     | matchCase branches branches' = let
         initializer = isRenaming' funNamesAccum t t' freeVars boundVars renaming 
         branchess = zip branches branches'
-        in foldr (\((c, xs, u), (c', xs', u')) renaming' -> let 
+        in foldr (\((CaseBranch' name xs, u), (CaseBranch' name' xs', u')) renaming' -> let 
             freeVars' = renameVars freeVars xs
             xs'' = take (length xs) freeVars'
             in isRenaming' funNamesAccum u u' freeVars' (xs'' ++ boundVars) renaming') initializer branchess
@@ -84,44 +84,44 @@ coupled funNamedAccum (LTS (LTSTransitions t@(Free x) _))
             then renaming
             else (x,x') : renaming
         else []
--- unfold    
-coupled funNamesAccum (LTS (LTSTransitions _ [('*' : funName, t)]))
-                      (LTS (LTSTransitions _ [('*' : funName', t')])) freeVars boundVars renaming 
+-- unfold
+coupled funNamesAccum (LTS (LTSTransitions _ [(Unfold' funName, t)]))
+                      (LTS (LTSTransitions _ [(Unfold' funName', t')])) freeVars boundVars renaming
          | (funName, funName') `elem` funNamesAccum = renaming
          | otherwise = embed ((funName, funName') : funNamesAccum) t t' freeVars boundVars renaming
--- lambda           
-coupled funNamesAccum (LTS (LTSTransitions _ [('\\' : x, t)]))
-                          (LTS (LTSTransitions _ [('\\' : x', t')])) freeVars boundVars renaming = let 
+-- lambda
+coupled funNamesAccum (LTS (LTSTransitions _ [(Lambda' x, t)]))
+                          (LTS (LTSTransitions _ [(Lambda' x', t')])) freeVars boundVars renaming = let
         x'' = renameVar freeVars x
         in embed funNamesAccum t t' (x'' : freeVars) boundVars renaming
--- constructor             
-coupled funNamesAccum (LTS (LTSTransitions _ bs@((conName, Leaf) : branches)))
-                          (LTS (LTSTransitions _ bs'@((conName', Leaf) : branches'))) freeVars boundVars renaming
-    | branchesForConstructor bs bs' = 
+-- constructor
+coupled funNamesAccum (LTS (LTSTransitions _ bs@((Con' conName, Leaf) : branches)))
+                          (LTS (LTSTransitions _ bs'@((Con' conName', Leaf) : branches'))) freeVars boundVars renaming
+    | branchesForConstructor bs bs' =
       if conName == conName' then let
         termPairs = zip (map snd branches) (map snd branches')
         in foldr (\(t, t') renaming' -> renaming' ++ embed funNamesAccum t t' freeVars boundVars renaming') renaming termPairs
         else []
--- Apply                
-coupled funNamesAccum  (LTS (LTSTransitions _ [("@", t), ("#1", u)])) 
-                           (LTS (LTSTransitions _ [("@", t'), ("#1", u')])) freeVars boundVars renaming = let
+-- Apply
+coupled funNamesAccum  (LTS (LTSTransitions _ [(Apply0', t), (Apply1', u)]))
+                           (LTS (LTSTransitions _ [(Apply0', t'), (Apply1', u')])) freeVars boundVars renaming = let
     a = embed funNamesAccum t t' freeVars boundVars renaming
     b = embed funNamesAccum u u' freeVars boundVars a in b
--- let            
-coupled funNamesAccum (LTS (LTSTransitions _ [("let", t), (x, u)])) 
-                          (LTS (LTSTransitions _ [("let", t'), (x', u')])) freeVars boundVars renaming = let
+-- let
+coupled funNamesAccum (LTS (LTSTransitions _ [(Let', t), (LetX' x, u)]))
+                          (LTS (LTSTransitions _ [(Let', t'), (LetX' x', u')])) freeVars boundVars renaming = let
     x'' = renameVar freeVars x
     a = embed funNamesAccum t t' freeVars boundVars renaming
     b = embed funNamesAccum u u' (x'' : freeVars) (x'' : boundVars) a in b
--- case      
-coupled funNamesAccum (LTS (LTSTransitions' _ (("case", [], t) : branches)))
-                          (LTS (LTSTransitions' _ (("case", [], t') : branches'))) freeVars boundVars renaming
+-- case
+coupled funNamesAccum (LTS (LTSTransitions _ ((Case', t) : branches)))
+                          (LTS (LTSTransitions _ ((Case', t') : branches'))) freeVars boundVars renaming
     | matchCase branches branches' = let
-        initializer = embed funNamesAccum t t' freeVars boundVars renaming 
+        initializer = embed funNamesAccum t t' freeVars boundVars renaming
         branchess = zip branches branches'
-        in foldr (\((c, xs, u), (c', xs', u')) renaming' -> let 
-            freeVars' = renameVars freeVars xs
-            xs'' = take (length xs) freeVars'
-            in embed funNamesAccum u u' freeVars' (xs'' ++ boundVars) renaming') initializer branchess
-coupled _ _ _ _ _ _ = []                                                                        
-         
+        in foldr (\((CaseBranch' name xs, u), (CaseBranch' name' xs', u')) renaming' -> let
+                    freeVars' = renameVars freeVars xs
+                    xs'' = take (length xs) freeVars'
+                    in embed funNamesAccum u u' freeVars' (xs'' ++ boundVars) renaming') initializer branchess
+coupled _ _ _ _ _ _ = []
+

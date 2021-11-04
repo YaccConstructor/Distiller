@@ -38,8 +38,8 @@ generalize' (LTS (LTSTransitions e [("@", t0), ("#1", t1)]))
     (tg_1, previousGensAccum_1) = generalize' t1 t1' previousGensAccum boundVariables previousFunsAccum
     newLts = doLTSManyTr e [("@", tg_0), ("#1", tg_1)]
     in (newLts, previousGensAccum_0 ++ previousGensAccum_1)
-generalize' (LTS (LTSTransitions' e (("case", [], t0) : branches)))
-            (LTS (LTSTransitions' _ (("case", [], t0') : branches')))
+generalize' (LTS (LTSTransitions e ((Case', t0) : branches)))
+            (LTS (LTSTransitions _ ((Case', t0') : branches')))
             previousGensAccum boundVariables previousFunsAccum = let
     (tg_0, previousGensAccum_0) = generalize' t0 t0' previousGensAccum boundVariables previousFunsAccum
     tgs = zipWith (\(p_i, args, t_i) (_, _, t_i') ->
@@ -84,7 +84,6 @@ generalize' t _ previousGensAccum boundVariables _ = let
 getFreeVariables :: LTS -> [String]
 getFreeVariables Leaf = []
 getFreeVariables (LTS lts@(LTSTransitions _ branches)) = free (getOldTerm lts) ++ concatMap (getFreeVariables . snd) branches
-getFreeVariables (LTS lts@(LTSTransitions' _ branches)) = free (getOldTerm lts) ++ concatMap (\(_, _, lts') -> getFreeVariables lts') branches
 
 branchesForFunctionCall :: [(String, LTS)] -> [(String, LTS)] -> Bool
 branchesForFunctionCall branches branches' = all (\t -> map fst t == ["@", "#1"]) [branches, branches']

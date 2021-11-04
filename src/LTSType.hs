@@ -11,8 +11,11 @@ data LTSTransitions = LTSTransitions Term [(Label, LTS)]
 
 data Label = Con' String
            | ConArg' String
+           | X' String
            | Lambda' String
            | Unfold' String
+           | UnfoldBeta'
+           | UnfoldCons' String
            | Case'
            | CaseBranch' String [String]
            | Let'

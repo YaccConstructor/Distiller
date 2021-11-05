@@ -94,7 +94,11 @@ branchesForLambda _ _ = False
 
 _A :: LTS -> [Generalization] -> LTS
 -- fix bug in wrapping up all terms to X'
-_A t@(LTS (LTSTransitions root _)) generalizations = doLTSManyTr root $ (:) (Let', t) $ map (\t -> (X' $ show (fst t), snd t)) generalizations
+_A t@(LTS (LTSTransitions root _)) generalizations = let
+    branches = map (\t -> case fst t of
+      (Free x) -> (X' x, snd t)
+      _ -> error "Generalization must have only free vars in the first element of pair") generalizations 
+    in doLTSManyTr root $ (:) (Let', t) branches
 _A _ _ = error "Unexpected lts or generalizations list got for _A function."
 
 _B :: LTS -> [String] -> LTS

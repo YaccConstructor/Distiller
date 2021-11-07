@@ -14,10 +14,10 @@ generalize t t' prevGensAccum =
 
 generalize' :: LTS -> LTS -> [Generalization] -> [String] -> [(String, String)] -> (LTS, [Generalization])
 generalize' t@(LTS (LTSTransitions (Free _) _)) (LTS (LTSTransitions (Free _) _)) _ _ _ = (t, [])
-generalize' (LTS (LTSTransitions e (first@(_, Leaf) : branches)))
-            (LTS (LTSTransitions _ ((_, Leaf) : branches')))
+generalize' (LTS (LTSTransitions e bs@(first@(_, Leaf) : branches)))
+            (LTS (LTSTransitions _ bs'@((_, Leaf) : branches')))
             previousGensAccum boundVariables previousFunsAccum
-  | branchesForConstructor branches branches' = let
+  | branchesForConstructor bs bs' = let
     terms = map snd branches
     terms' = map snd branches'
     tgs = zipWith (\t_i t_i' -> generalize' t_i t_i' previousGensAccum boundVariables previousFunsAccum) terms terms'

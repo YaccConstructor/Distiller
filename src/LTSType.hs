@@ -5,9 +5,9 @@ module LTSType (
   
 import TermType
 
-data LTS = Leaf  | LTS LTSTransitions
+data LTS = Leaf  | LTS LTSTransitions deriving Show
 
-data LTSTransitions = LTSTransitions Term [(Label, LTS)]
+data LTSTransitions = LTSTransitions Term [(Label, LTS)] deriving Show
 
 data Label = Con' String
            | ConArg' String
@@ -21,7 +21,7 @@ data Label = Con' String
            | Let'
            | LetX' String
            | Apply0'
-           | Apply1' deriving Eq
+           | Apply1' deriving (Eq, Show)
 
 
 instance Eq LTS where

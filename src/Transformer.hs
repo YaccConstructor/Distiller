@@ -50,6 +50,8 @@ substituteTermWithNewTerms term _ = term
 transform :: Int -> TermInContext -> [LTS] -> [Generalization] -> [FunctionDefinition] -> LTS
 transform index (term@(Free x), context) funNamesAccum previousGensAccum funsDefs =
   transform' index (doLTS1Tr term (X' x) doLTS0Tr) context funNamesAccum previousGensAccum funsDefs
+  
+  
 transform index (term@(Con conName expressions), EmptyCtx) funNamesAccum previousGensAccum funsDefs =
   let firstBranch = (Con' conName, doLTS0Tr)
       otherBranches = zip (map ConArg' createLabels) $ map (\e -> transform index (e, EmptyCtx) funNamesAccum previousGensAccum funsDefs) expressions

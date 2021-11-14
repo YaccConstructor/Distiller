@@ -33,25 +33,19 @@ distill index (term@(Lambda x expr), EmptyCtx) funNamesAccum previousGensAccum f
 distill index (term@(Lambda x e0), k@(ApplyCtx k' e1)) funNamesAccum previousGensAccum funsDefs =
   doLTS1Tr (place term k) UnfoldBeta' $ distill index (substituteTermWithNewTerms e0 [(x, e1)], k') funNamesAccum previousGensAccum funsDefs
 distill index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum funsDefs =
-   let t =
-        if index == 0
-          then drive (place f k) [] funsDefs
-          else distill (index - 1) termInCtx [] previousGensAccum funsDefs
+   let t = distill index termInCtx [] previousGensAccum funsDefs
    in case filter (null . isRenaming t) funNamesAccum of
         _ : _ -> doLTS1Tr f (Unfold' funName) doLTS0Tr
-        [] -> case mapMaybe
-          ( \t' -> case isHomeomorphicEmbedding t t' of
-              [] -> Nothing
-              renaming -> Just (renaming, t')
-          )
-          funNamesAccum of
+        [] -> case mapMaybe ( \t' -> case isHomeomorphicEmbedding t t' of
+                            [] -> Nothing
+                            renaming -> Just (renaming, t')) funNamesAccum of
           (_, t') : _ ->
             let generalizedLTS = generalize t t' previousGensAccum
                 residualizedLTS = residualize generalizedLTS
-             in distill index (residualizedLTS, EmptyCtx) funNamesAccum previousGensAccum []
+             in distill (index + 1) (unfold residualizedLTS funsDefs, EmptyCtx) [generalizedLTS] previousGensAccum []
           [] ->
             let oldTerm = place f k
-                newTerm = distill index (unfold oldTerm funsDefs, EmptyCtx) (t : funNamesAccum) previousGensAccum funsDefs
+                newTerm = distill index (unfold oldTerm [], EmptyCtx) (t : funNamesAccum) previousGensAccum []
              in doLTS1Tr oldTerm (Unfold' funName) newTerm
 distill index (Apply e0 e1, k) funNamesAccum previousGensAccum funsDefs =
   distill index (e0, ApplyCtx k e1) funNamesAccum previousGensAccum funsDefs

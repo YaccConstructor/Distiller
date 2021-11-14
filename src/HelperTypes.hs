@@ -2,6 +2,7 @@ module HelperTypes where
 
 import TermType
 import LTSType
+import Data.Maybe (fromMaybe)
 
 type FunctionDefinition = (String, ([String], Term))
 type Generalization = (Term, LTS)

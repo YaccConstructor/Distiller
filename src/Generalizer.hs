@@ -17,7 +17,7 @@ generalize' t@(LTS (LTSTransitions (Free _) _)) (LTS (LTSTransitions (Free _) _)
 generalize' (LTS (LTSTransitions e bs@(first@(_, Leaf) : branches)))
             (LTS (LTSTransitions _ bs'@((_, Leaf) : branches')))
             previousGensAccum boundVariables previousFunsAccum
-  | branchesForConstructor bs bs' = let
+  | branchesSetsForConstructor bs bs' = let
     terms = map snd branches
     terms' = map snd branches'
     tgs = zipWith (\t_i t_i' -> generalize' t_i t_i' previousGensAccum boundVariables previousFunsAccum) terms terms'

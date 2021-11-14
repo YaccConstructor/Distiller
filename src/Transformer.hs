@@ -10,48 +10,12 @@ import LTSType
 import Residualizer
 import TermType
 import Unfolder
-
--- concrete function alternative
-substituteTermWithNewVars :: Term -> [(String, String)] -> Term
-substituteTermWithNewVars (Free x) pairs = case lookup x pairs of
-  Nothing -> Free x
-  Just x' -> Free x'
-substituteTermWithNewVars (Lambda x expr) xs = Lambda ("\\" ++ x) $ substituteTermWithNewVars expr xs
-substituteTermWithNewVars (Apply term1 term2) xs =
-  let term1' = substituteTermWithNewVars term1 xs
-      term2' = substituteTermWithNewVars term2 xs
-   in Apply term1' term2'
-substituteTermWithNewVars (Case term branches) xs =
-  let term' = substituteTermWithNewVars term xs
-      branches' = map (\(cons, vars, branchTerm) -> (cons, vars, substituteTermWithNewVars branchTerm xs)) branches
-   in Case term' branches'
-substituteTermWithNewVars (Let x term1 term2) xs =
-  let term1' = substituteTermWithNewVars term1 xs
-      term2' = substituteTermWithNewVars term2 xs
-   in Let x term1' term2'
-substituteTermWithNewVars (Con constructorName terms) xs =
-  let terms' = map (`substituteTermWithNewVars` xs) terms
-   in Con constructorName terms'
-substituteTermWithNewVars (MultipleApply e0 funsDefs) xs =
-  let e0' = substituteTermWithNewVars e0 xs
-      funsDefs' =
-        map
-          ( \(funName, (args, term)) ->
-              let renamedArgs = map (\t -> fromMaybe t (lookup t xs)) args
-               in (funName, (renamedArgs, substituteTermWithNewVars term xs))
-          )
-          funsDefs
-   in MultipleApply e0' funsDefs'
-substituteTermWithNewVars fun _ = fun
-
-substituteTermWithNewTerms :: Term -> [(String, Term)] -> Term
-substituteTermWithNewTerms term _ = term
+import HelperTypes
 
 transform :: Int -> TermInContext -> [LTS] -> [Generalization] -> [FunctionDefinition] -> LTS
 transform index (term@(Free x), context) funNamesAccum previousGensAccum funsDefs =
   transform' index (doLTS1Tr term (X' x) doLTS0Tr) context funNamesAccum previousGensAccum funsDefs
-  
-  
+   
 transform index (term@(Con conName expressions), EmptyCtx) funNamesAccum previousGensAccum funsDefs =
   let firstBranch = (Con' conName, doLTS0Tr)
       otherBranches = zip (map ConArg' createLabels) $ map (\e -> transform index (e, EmptyCtx) funNamesAccum previousGensAccum funsDefs) expressions

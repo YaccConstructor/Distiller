@@ -7,6 +7,7 @@ import TermType
 import Transformer
 import Helpers
 import HelperTypes
+import Distiller
 
 import Text.ParserCombinators.Parsec
 import Debug.Trace
@@ -80,8 +81,11 @@ toplevel prog = do
                        Distill f -> case prog of
                                          Nothing -> do putStrLn "No program loaded"
                                                        toplevel prog
-                                         Just (imports, definitions) -> do
-                                                       putStrLn "Not implemented yet"
+                                         Just (funsTerms, definitions) -> do
+                                                       putStrLn "Implementation in progress"
+                                                      -- print definitions
+                                                      -- print funsTerms
+                                                       print $ distillProg (funsTerms, definitions)
                                                        toplevel prog
                        Quit -> return ()
                        Help -> do putStrLn helpMessage

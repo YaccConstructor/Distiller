@@ -7,7 +7,7 @@ import Data.Maybe (fromMaybe)
 type FunctionDefinition = (String, ([String], Term))
 type Generalization = (Term, LTS)
 
-type Prog = (Term,[(String,([String],Term))])
+type Prog = (Term,[FunctionDefinition])
 
 createLabels :: [String]
 createLabels = map ((++) "#" . show) [1 ..]

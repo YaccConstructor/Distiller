@@ -32,7 +32,7 @@ isRenaming' funNamesAccum (LTS (LTSTransitions _ [(Lambda' x, t)]))
 -- constructor
 isRenaming' funNamesAccum (LTS (LTSTransitions _ bs@((conName, Leaf) : branches)))
                           (LTS (LTSTransitions _ bs'@((conName', Leaf) : branches'))) freeVars boundVars renaming
-    | branchesForConstructor bs bs' = 
+    | branchesSetsForConstructor bs bs' =
       if conName == conName' then let
         termPairs = zip (map snd branches) (map snd branches')
         in foldr (\(t, t') renaming' -> renaming' ++ isRenaming' funNamesAccum t t' freeVars boundVars renaming') renaming termPairs
@@ -97,7 +97,7 @@ coupled funNamesAccum (LTS (LTSTransitions _ [(Lambda' x, t)]))
 -- constructor
 coupled funNamesAccum (LTS (LTSTransitions _ bs@((Con' conName, Leaf) : branches)))
                           (LTS (LTSTransitions _ bs'@((Con' conName', Leaf) : branches'))) freeVars boundVars renaming
-    | branchesForConstructor bs bs' =
+    | branchesSetsForConstructor bs bs' =
       if conName == conName' then let
         termPairs = zip (map snd branches) (map snd branches')
         in foldr (\(t, t') renaming' -> renaming' ++ embed funNamesAccum t t' freeVars boundVars renaming') renaming termPairs

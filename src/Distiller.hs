@@ -1,4 +1,4 @@
-module Distiller (distill) where
+module Distiller (distillProg) where
 
 import Data.Maybe (fromMaybe, mapMaybe)
 import Driver
@@ -11,6 +11,9 @@ import Residualizer
 import TermType
 import Unfolder
 import HelperTypes
+
+distillProg :: (Term, [FunctionDefinition]) -> Term
+distillProg (mainFunTerm, funDefinitions) = residualize $ distill 0 (mainFunTerm, EmptyCtx) [] [] funDefinitions
 
 distill :: Int -> TermInContext -> [LTS] -> [Generalization] -> [FunctionDefinition] -> LTS
 distill index (term@(Free x), context) funNamesAccum previousGensAccum funsDefs =

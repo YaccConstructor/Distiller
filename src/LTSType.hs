@@ -21,12 +21,18 @@ data Label = Con' String
            | Let'
            | LetX' String
            | Apply0'
-           | Apply1' deriving (Eq, Show)
-
+           | Apply1' deriving (Eq, Show) 
 
 instance Eq LTS where
   (==) Leaf Leaf = True
-  (==) _ _ = error "Not defined."
+  (==) (LTS (LTSTransitions _ _)) Leaf = False
+  (==) Leaf (LTS (LTSTransitions _ _)) = False
+  (==) (LTS (LTSTransitions term branches)) (LTS (LTSTransitions term' branches')) = let
+    termsEq = term == term'
+    labelsEq = all (\(l, l') -> l == l') $ zip (map fst branches) (map fst branches')
+    terms'Eq = all (\(t, t') -> t == t') $ zip (map fst branches) (map fst branches')
+    result = termsEq && labelsEq && terms'Eq 
+    in result
 
 
 doLTS0Tr :: LTS

@@ -27,12 +27,13 @@ instance Eq LTS where
   (==) Leaf Leaf = True
   (==) (LTS (LTSTransitions _ _)) Leaf = False
   (==) Leaf (LTS (LTSTransitions _ _)) = False
-  (==) (LTS (LTSTransitions term branches)) (LTS (LTSTransitions term' branches')) = let
+  (==) (LTS (LTSTransitions term branches)) (LTS (LTSTransitions term' branches')) = 
+    length branches == length branches' && (let
     termsEq = term == term'
     labelsEq = all (\(l, l') -> l == l') $ zip (map fst branches) (map fst branches')
-    terms'Eq = all (\(t, t') -> t == t') $ zip (map fst branches) (map fst branches')
+    terms'Eq = all (\(t, t') -> t == t') $ zip (map snd branches) (map snd branches')
     result = termsEq && labelsEq && terms'Eq 
-    in result
+    in result)
 
 
 doLTS0Tr :: LTS

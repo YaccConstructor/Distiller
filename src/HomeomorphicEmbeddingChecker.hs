@@ -30,13 +30,13 @@ isRenaming' funNamesAccum (LTS (LTSTransitions _ [(Lambda' x, t)]))
         x'' = renameVar freeVars x
         in isRenaming' funNamesAccum t t' (x'' : freeVars) boundVars renaming
 -- constructor
-isRenaming' funNamesAccum (LTS (LTSTransitions _ bs@((conName, Leaf) : branches)))
-                          (LTS (LTSTransitions _ bs'@((conName', Leaf) : branches'))) freeVars boundVars renaming
+isRenaming' funNamesAccum (LTS (LTSTransitions _ bs@((Con' conName, Leaf) : branches)))
+                          (LTS (LTSTransitions _ bs'@((Con' conName', Leaf) : branches'))) freeVars boundVars renaming
     | branchesSetsForConstructor bs bs' =
       if conName == conName' then let
         termPairs = zip (map snd branches) (map snd branches')
         in foldr (\(t, t') renaming' -> renaming' ++ isRenaming' funNamesAccum t t' freeVars boundVars renaming') renaming termPairs
-        else []
+        else error "During renaming check got branches not matched for constructor."
 -- Apply
 isRenaming' funNamesAccum  (LTS (LTSTransitions _ [(Apply0', t), (Apply1', u)]))
                            (LTS (LTSTransitions _ [(Apply0', t'), (Apply1', u')])) freeVars boundVars renaming = let

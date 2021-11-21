@@ -26,7 +26,7 @@ generalize' (LTS (LTSTransitions e bs@(first@(Con' conname, Leaf) : branches)))
     terms' = map snd branches'
     tgs = zipWith (\t_i t_i' -> generalize' t_i t_i' previousGensAccum boundVariables previousFunsAccum) terms terms'
     newLtss = zip (map ConArg' createLabels) $ map fst tgs
-    newPreviousGensAccum = concatMap snd tgs
+    newPreviousGensAccum = nub $ concatMap snd tgs
     newLts = doLTSManyTr e $ first : newLtss
     in (newLts, newPreviousGensAccum)
   | otherwise = error "Constructor case, but branches have incorrect form."
@@ -49,7 +49,7 @@ generalize' (LTS (LTSTransitions e ((Case', t0) : branches)))
             previousGensAccum boundVariables previousFunsAccum
             | traceShow ("t_i t_i'" ++ show (zipWith (\(CaseBranch' p_i args, t_i) (CaseBranch' p_i' args', t_i') ->
                                  (t_i, t_i')
-                                 ) branches branches')) False = undefined ---}--}
+                                 ) branches branches')) False = undefined
 generalize' (LTS (LTSTransitions e ((Case', t0) : branches)))
             (LTS (LTSTransitions _ ((Case', t0') : branches')))
             previousGensAccum boundVariables previousFunsAccum = let
@@ -57,7 +57,7 @@ generalize' (LTS (LTSTransitions e ((Case', t0) : branches)))
     tgs = zipWith (\(CaseBranch' p_i args, t_i) (CaseBranch' p_i' args', t_i') ->
         (generalize' t_i t_i' previousGensAccum (args ++ boundVariables) previousFunsAccum, (p_i, args))
         ) branches branches'
-    newPreviousGensAccum = previousGensAccum_0 ++ concatMap (snd . fst) tgs
+    newPreviousGensAccum = nub $ previousGensAccum_0 ++ concatMap (snd . fst) tgs
     newLtss = map (\((tg_i, _), (p_i, args)) -> (CaseBranch' p_i args, tg_i)) tgs
     newLts = doLTSManyTr e $ (Case', tg_0) : newLtss
     in (newLts, newPreviousGensAccum)
@@ -68,7 +68,7 @@ generalize' (LTS (LTSTransitions e ((Let', t0) : branches)))
     (tg_0, previousGensAccum_0) = generalize' t0 t0' previousGensAccum boundVariables previousFunsAccum
     tgs = zipWith (\(x_i, t_i) (_, t_i') ->
             (x_i, generalize' t_i t_i' previousGensAccum boundVariables previousFunsAccum)) branches branches'
-    newPreviousGensAccum = previousGensAccum_0 ++ concatMap (snd . snd) tgs
+    newPreviousGensAccum = nub $ previousGensAccum_0 ++ concatMap (snd . snd) tgs
     newLtss = map (\(x_i, (tg_i, _)) -> (x_i, tg_i)) tgs
     newLts = doLTSManyTr e $ (Let', tg_0) : newLtss
     in (newLts, newPreviousGensAccum)
@@ -86,7 +86,7 @@ generalize' (LTS (LTSTransitions e [(UnfoldBeta', t)]))
 generalize' (LTS (LTSTransitions e [(UnfoldCons' _, t)]))
             (LTS (LTSTransitions _ [(UnfoldCons' _, t')]))
             previousGensAccum boundVariables previousFunsAccum = generalize' t t' previousGensAccum boundVariables previousFunsAccum
-generalize' t _ _ _ _ | traceShow ("Nothing mapped in t = " ++ show t) False = undefined
+generalize' t _ previousGensAccum boundVariables _ | traceShow ("Nothing mapped in t = " ++ show t ++ show previousGensAccum) False = undefined
 generalize' t _ previousGensAccum boundVariables _ = let
     boundVariables' = intersect (getFreeVariables t) boundVariables
     t2 = _C t boundVariables'
@@ -131,5 +131,5 @@ _C lts@(LTS (LTSTransitions t _)) xs@(_ : _) = let
     x_n = head xs'
     initializer = doLTS1Tr t (Lambda' x_n) lts 
     in foldl (\lts' x_i -> doLTS1Tr t (Lambda' x_i) lts') initializer xs
-_C lts [] = lts     
-_C _ _ = error "Unexpected lts or bound variables list got for _C function."    
+_C lts [] = lts
+_C _ _ = error "Unexpected lts or bound variables list got for _C function."

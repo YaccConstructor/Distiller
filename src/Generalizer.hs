@@ -16,6 +16,7 @@ generalize t t' prevGensAccum =
    in _A tg prevGensAccum'
 
 generalize' :: LTS -> LTS -> [Generalization] -> [String] -> [(String, String)] -> (LTS, [Generalization])
+generalize' _ _ gens _ _ | traceShow ("gens = " ++ show gens) False = undefined
 generalize' t@(LTS (LTSTransitions (Free x) _)) (LTS (LTSTransitions (Free x') _)) _ _ _ | traceShow ("t=" ++ x ++ ", t'=" ++ x') False = undefined
 generalize' t@(LTS (LTSTransitions (Free _) _)) (LTS (LTSTransitions (Free _) _)) _ _ _ = (t, [])
 generalize' (LTS (LTSTransitions e bs@(first@(Con' _, Leaf) : branches)))
@@ -28,7 +29,7 @@ generalize' (LTS (LTSTransitions e bs@(first@(Con' conname, Leaf) : branches)))
     terms' = map snd branches'
     tgs = zipWith3 (\t_i t_i' number -> (ConArg' number, generalize' t_i t_i' previousGensAccum boundVariables previousFunsAccum)) terms terms' createLabels
     tgs' = orderGeneralizations tgs
-    newPreviousGensAccum = concatMap (snd . snd) tgs'
+    newPreviousGensAccum = nub $ concatMap (snd . snd) tgs'
     newLtss = map (\(label, (lts, _)) -> (label, lts)) tgs'
     newLts = doLTSManyTr e $ first : newLtss
     in (newLts, newPreviousGensAccum)
@@ -48,7 +49,7 @@ generalize' (LTS (LTSTransitions e [(Apply0', t0), (Apply1', t1)]))
     lst = [(Apply0', pair0), (Apply1', pair1)]
     lst' = orderGeneralizations lst
     newLtss = map (\(label, (tg, gen)) -> (label, tg)) lst'
-    newPreviousGensAccum = concatMap (snd . snd) lst'
+    newPreviousGensAccum = nub $ concatMap (snd . snd) lst'
     newLts = doLTSManyTr e newLtss
     in (newLts, newPreviousGensAccum)
 generalize' (LTS (LTSTransitions e ((Case', t0) : branches)))
@@ -65,7 +66,7 @@ generalize' (LTS (LTSTransitions e ((Case', t0) : branches)))
         (CaseBranch' p_i args, generalize' t_i t_i' previousGensAccum (args ++ boundVariables) previousFunsAccum)
         ) branches branches'
     tgs' = orderGeneralizations $ (Case', pair0) : tgs
-    newPreviousGensAccum = concatMap (snd . snd) tgs'
+    newPreviousGensAccum = nub $ concatMap (snd . snd) tgs'
     newLtss = map (\(label, (lts, _)) -> (label, lts)) tgs'
     newLts = doLTSManyTr e newLtss
     in (newLts, newPreviousGensAccum)
@@ -77,7 +78,7 @@ generalize' (LTS (LTSTransitions e ((Let', t0) : branches)))
     tgs = zipWith (\(x_i, t_i) (_, t_i') ->
             (x_i, generalize' t_i t_i' previousGensAccum boundVariables previousFunsAccum)) branches branches'
     tgs' = orderGeneralizations $ (Let', pair) : tgs
-    newPreviousGensAccum = concatMap (snd . snd) tgs'
+    newPreviousGensAccum = nub $ concatMap (snd . snd) tgs'
     newLtss = map (\(x_i, (tg_i, _)) -> (x_i, tg_i)) tgs'
     newLts = doLTSManyTr e newLtss
     in (newLts, newPreviousGensAccum)
@@ -107,26 +108,33 @@ generalize' t _ previousGensAccum boundVariables _ = let
             in (_B (doLTS1Tr fresh (X' x) doLTS0Tr) boundVariables', [(fresh, t2)])
 
 orderGeneralizations :: [(Label, (LTS, [Generalization]))] -> [(Label, (LTS, [Generalization]))]
+orderGeneralizations xs | traceShow ("in order gens, xs = " ++ show xs) False = undefined
 orderGeneralizations xs = let
     allGens = concatMap (\(label, (t_i, gens_i)) -> map (\(Free x, lts) -> (lts, x)) gens_i) xs
-    accum = addCollectionToMap allGens Map.empty
+    numberedAllGens = map (\((lts, x), number) -> (lts, (x, number))) (zip allGens [1..])
+    accum = addCollectionToMap numberedAllGens Map.empty
+    k = Map.size accum
     result = map (\(label, (t_i, gens)) -> let
         substitutions = map (\(Free x, lts) -> let
-            x'' = case Map.lookup lts accum of
-                Just x' -> x'
+            (x'', number'') = case Map.lookup lts accum of
+                Just (x', number) -> (x', number)
                 Nothing -> error "Smething went wrong during ordering generalizations"
-            in (x, x'', lts)) gens
-        gens' = map (\(x, x'', lts) -> (Free x'', lts)) substitutions
-        substitutions' = map (\(x, x'', lts) -> (x, x'')) substitutions    
+            in (x, x'', number'', lts)) gens
+
+        gens' = map (\(x, x'', number, lts) -> (Free ("x" ++ show number), lts)) substitutions
+        substitutions' = map (\(x, x'', number, lts) -> (x, "x" ++ show number)) substitutions
         t_i' = renameVarInLtsRecursively substitutions' t_i
+
         in (label, (t_i', gens'))) xs
     in result
 
 renameVarInLtsRecursively :: [(String, String)] -> LTS -> LTS
+renameVarInLtsRecursively xs lts | traceShow ("in renameVarLtsRec, xs = " ++ show xs ++ ", lts = " ++ show lts) False = undefined
 renameVarInLtsRecursively substitutions lts
   = foldl renameVarInLts lts substitutions
 
-addCollectionToMap :: Ord k => [(k, a)] -> Map k a -> Map k a
+--addCollectionToMap :: (Ord) k => [(k, a)] -> Map k a -> Map k a
+addCollectionToMap (xs) myMap | traceShow ("add coll to map xs = " ++ show xs ++ ", myMap = " ++ show myMap) False = undefined
 addCollectionToMap ((a,b) : xs) myMap = addCollectionToMap xs $ Map.insert a b myMap
 addCollectionToMap [] myMap = myMap
 

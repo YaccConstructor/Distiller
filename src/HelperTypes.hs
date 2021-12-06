@@ -3,6 +3,7 @@ module HelperTypes where
 import TermType
 import LTSType
 import Data.Maybe (fromMaybe)
+import Debug.Trace (traceShow)
 
 type FunctionDefinition = (String, ([String], Term))
 type Generalization = (Term, LTS)
@@ -12,10 +13,18 @@ type Prog = (Term,[FunctionDefinition])
 createLabels :: [String]
 createLabels = map ((++) "#" . show) [1 ..]
 
+renameVar :: Foldable t => t [Char] -> [Char] -> [Char]
 renameVar fv x = if   x `elem` fv
                  then renameVar fv (x++"'")
-                 else x
-renameVars fv xs = foldr (\x fv -> let x' = renameVar fv x in x':fv) fv xs                 
+                 else x            
+renameVars fv xs = foldr (\x fv -> let x' = renameVar fv x in x':fv) fv xs                        
+
+renameVarInLts :: LTS -> (String, String) -> LTS
+renameVarInLts Leaf _ = Leaf
+renameVarInLts (LTS (LTSTransitions e branches)) var = let
+    e' = substituteTermWithNewVars e [var] 
+    branches' = map (\(label, lts) -> (renameLabel label var, renameVarInLts lts var)) branches
+    in LTS (LTSTransitions e' branches')
 
 branchesSetsForConstructor :: [(Label, LTS)] -> [(Label, LTS)] -> Bool
 branchesSetsForConstructor branches branches' = all (\t -> tail (map fst t) == take (length t - 1) (map ConArg' createLabels)) [branches, branches']
@@ -27,8 +36,22 @@ branchesSetForConstructor branch = tail (map fst branch) == take (length branch 
 --matchCase bs bs' = length bs == length bs' && all (\((c,xs,_),(c',xs',_)) -> c == c' && length xs == length xs') (zip bs bs')
 matchCase bs bs' = True
 
+renameLabel :: Label -> (String, String) -> Label
+renameLabel (X' x) (x', x'') = if x == x' then X' x'' else X' x
+renameLabel u@(Lambda' x) (x', x'') = if x == x' then Lambda' x'' else u
+renameLabel u@(ConArg' x) (x', x'') = if x == x' then ConArg' x'' else u
+renameLabel u@(Unfold' x) (x', x'') = if x == x' then Unfold' x'' else u  
+renameLabel u@(UnfoldCons' x) (x', x'') = if x == x' then UnfoldCons' x'' else u
+renameLabel u@(LetX' x) (x', x'') = if x == x' then LetX' x'' else u
+renameLabel (CaseBranch' x args) (x', x'') = let
+    resultX = if x == x' then x'' else x
+    resultArgs = map (\arg -> if arg == x' then x'' else arg) args 
+    in CaseBranch' resultX resultArgs
+renameLabel u _ = u         
+    
 -- concrete function alternative
 substituteTermWithNewVars :: Term -> [(String, String)] -> Term
+substituteTermWithNewVars (Free x) pairs | traceShow ("in subs, x = " ++ x ++ ", pairs = " ++ show pairs) False = undefined
 substituteTermWithNewVars (Free x) pairs = case lookup x pairs of
   Nothing -> Free x
   Just x' -> Free x'

@@ -4,6 +4,7 @@ module LTSType (
     getLabels, getOldTerm, updateLTS) where
   
 import TermType
+import Debug.Trace (traceShow)
 
 data LTS = Leaf  | LTS LTSTransitions deriving Show
 
@@ -36,9 +37,16 @@ instance Eq LTS where
     in result)
 
 instance Ord LTS where
+  (<=) Leaf Leaf = True
+  (<=) Leaf (LTS (LTSTransitions _ _)) = True
+  (<=) (LTS (LTSTransitions _ _)) Leaf = True
+  (<=) l1@(LTS (LTSTransitions _ _)) l2@(LTS (LTSTransitions _ _)) =
+    l1 == l2 || not (l1 > l2)
+  (>) Leaf Leaf = False
   (>) (LTS (LTSTransitions _ _)) Leaf = True
   (>) Leaf (LTS (LTSTransitions _ _)) = False
   (>) (LTS (LTSTransitions term branches)) (LTS (LTSTransitions term' branches'))
+    | traceShow ("in ord1") False = undefined
     | length branches > length branches' = True
     | length branches < length branches' = False
     | term < term' = False

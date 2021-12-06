@@ -7,7 +7,7 @@ import TermType
 
 data LTS = Leaf  | LTS LTSTransitions deriving Show
 
-data LTSTransitions = LTSTransitions Term [(Label, LTS)] deriving Show
+data LTSTransitions = LTSTransitions Term [(Label, LTS)] deriving (Show)
 
 data Label = Con' String
            | ConArg' String
@@ -21,7 +21,7 @@ data Label = Con' String
            | Let'
            | LetX' String
            | Apply0'
-           | Apply1' deriving (Eq, Show) 
+           | Apply1' deriving (Eq, Show, Ord)
 
 instance Eq LTS where
   (==) Leaf Leaf = True
@@ -34,6 +34,15 @@ instance Eq LTS where
     terms'Eq = all (\(t, t') -> t == t') $ zip (map snd branches) (map snd branches')
     result = termsEq && labelsEq && terms'Eq 
     in result)
+
+instance Ord LTS where
+  (>) (LTS (LTSTransitions _ _)) Leaf = True
+  (>) Leaf (LTS (LTSTransitions _ _)) = False
+  (>) (LTS (LTSTransitions term branches)) (LTS (LTSTransitions term' branches'))
+    | length branches > length branches' = True
+    | length branches < length branches' = False
+    | term < term' = False
+    | otherwise = all (\((label, lts), (label', lts')) -> label > label' && lts > lts') (zip branches branches')
 
 
 doLTS0Tr :: LTS

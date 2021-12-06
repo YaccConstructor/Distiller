@@ -23,7 +23,6 @@ getContext :: TermInContext -> Context
 getContext (_, context) = context
 
 data Term = Free String -- free variable
---          | Bound Int -- bound variable with de Bruijn index
           | Lambda String Term -- lambda abstraction
           | Con String [Term] -- constructor application
           | Apply Term Term -- application
@@ -31,10 +30,7 @@ data Term = Free String -- free variable
           | Case Term [(String,[String],Term)] -- case expression
           | Let String Term Term -- let expression
           | MultipleApply Term [(String, ([String], Term))]
---          | Unfold String Term Term -- unfolding
---          | Fold String Term -- folding
---          | Gen Term Term -- generalization node
-          deriving Show
+          deriving (Show, Ord)
 
 -- equality of terms
 

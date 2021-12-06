@@ -7,6 +7,8 @@ import Data.List
 import HomeomorphicEmbeddingChecker
 import Data.Bifunctor
 import Debug.Trace (traceShow)
+import Data.Map (Map)
+import qualified Data.Map as Map
 
 generalize :: LTS -> LTS -> [Generalization] -> LTS
 generalize t t' prevGensAccum =
@@ -24,9 +26,10 @@ generalize' (LTS (LTSTransitions e bs@(first@(Con' conname, Leaf) : branches)))
   | branchesSetsForConstructor bs bs' = let
     terms = map snd branches
     terms' = map snd branches'
-    tgs = zipWith (\t_i t_i' -> generalize' t_i t_i' previousGensAccum boundVariables previousFunsAccum) terms terms'
-    newLtss = zip (map ConArg' createLabels) $ map fst tgs
-    newPreviousGensAccum = nub $ concatMap snd tgs
+    tgs = zipWith3 (\t_i t_i' number -> (ConArg' number, generalize' t_i t_i' previousGensAccum boundVariables previousFunsAccum)) terms terms' createLabels
+    tgs' = orderGeneralizations tgs
+    newPreviousGensAccum = concatMap (snd . snd) tgs'
+    newLtss = map (\(label, (lts, _)) -> (label, lts)) tgs'
     newLts = doLTSManyTr e $ first : newLtss
     in (newLts, newPreviousGensAccum)
   | otherwise = error "Constructor case, but branches have incorrect form."
@@ -40,10 +43,14 @@ generalize' (LTS (LTSTransitions e [(label@(Lambda' x), t)])) (LTS (LTSTransitio
 generalize' (LTS (LTSTransitions e [(Apply0', t0), (Apply1', t1)]))
             (LTS (LTSTransitions _ [(Apply0', t0'), (Apply1', t1')]))
             previousGensAccum boundVariables previousFunsAccum = let
-    (tg_0, previousGensAccum_0) = generalize' t0 t0' previousGensAccum boundVariables previousFunsAccum
-    (tg_1, previousGensAccum_1) = generalize' t1 t1' previousGensAccum boundVariables previousFunsAccum
-    newLts = doLTSManyTr e [(Apply0', tg_0), (Apply1', tg_1)]
-    in (newLts, previousGensAccum_0 ++ previousGensAccum_1)
+    pair0 = generalize' t0 t0' previousGensAccum boundVariables previousFunsAccum
+    pair1 = generalize' t1 t1' previousGensAccum boundVariables previousFunsAccum
+    lst = [(Apply0', pair0), (Apply1', pair1)]
+    lst' = orderGeneralizations lst
+    newLtss = map (\(label, (tg, gen)) -> (label, tg)) lst'
+    newPreviousGensAccum = concatMap (snd . snd) lst'
+    newLts = doLTSManyTr e newLtss
+    in (newLts, newPreviousGensAccum)
 generalize' (LTS (LTSTransitions e ((Case', t0) : branches)))
             (LTS (LTSTransitions _ ((Case', t0') : branches')))
             previousGensAccum boundVariables previousFunsAccum
@@ -53,24 +60,26 @@ generalize' (LTS (LTSTransitions e ((Case', t0) : branches)))
 generalize' (LTS (LTSTransitions e ((Case', t0) : branches)))
             (LTS (LTSTransitions _ ((Case', t0') : branches')))
             previousGensAccum boundVariables previousFunsAccum = let
-    (tg_0, previousGensAccum_0) = generalize' t0 t0' previousGensAccum boundVariables previousFunsAccum
+    pair0 = generalize' t0 t0' previousGensAccum boundVariables previousFunsAccum
     tgs = zipWith (\(CaseBranch' p_i args, t_i) (CaseBranch' p_i' args', t_i') ->
-        (generalize' t_i t_i' previousGensAccum (args ++ boundVariables) previousFunsAccum, (p_i, args))
+        (CaseBranch' p_i args, generalize' t_i t_i' previousGensAccum (args ++ boundVariables) previousFunsAccum)
         ) branches branches'
-    newPreviousGensAccum = nub $ previousGensAccum_0 ++ concatMap (snd . fst) tgs
-    newLtss = map (\((tg_i, _), (p_i, args)) -> (CaseBranch' p_i args, tg_i)) tgs
-    newLts = doLTSManyTr e $ (Case', tg_0) : newLtss
+    tgs' = orderGeneralizations $ (Case', pair0) : tgs
+    newPreviousGensAccum = concatMap (snd . snd) tgs'
+    newLtss = map (\(label, (lts, _)) -> (label, lts)) tgs'
+    newLts = doLTSManyTr e newLtss
     in (newLts, newPreviousGensAccum)
 generalize' (LTS (LTSTransitions e ((Let', t0) : branches))) (LTS (LTSTransitions _ ((Let', t0') : branches'))) _ _ _ | traceShow ("Let " ++ show e) False = undefined
 generalize' (LTS (LTSTransitions e ((Let', t0) : branches)))
             (LTS (LTSTransitions _ ((Let', t0') : branches')))
             previousGensAccum boundVariables previousFunsAccum = let
-    (tg_0, previousGensAccum_0) = generalize' t0 t0' previousGensAccum boundVariables previousFunsAccum
+    pair = generalize' t0 t0' previousGensAccum boundVariables previousFunsAccum
     tgs = zipWith (\(x_i, t_i) (_, t_i') ->
             (x_i, generalize' t_i t_i' previousGensAccum boundVariables previousFunsAccum)) branches branches'
-    newPreviousGensAccum = nub $ previousGensAccum_0 ++ concatMap (snd . snd) tgs
-    newLtss = map (\(x_i, (tg_i, _)) -> (x_i, tg_i)) tgs
-    newLts = doLTSManyTr e $ (Let', tg_0) : newLtss
+    tgs' = orderGeneralizations $ (Let', pair) : tgs
+    newPreviousGensAccum = concatMap (snd . snd) tgs'
+    newLtss = map (\(x_i, (tg_i, _)) -> (x_i, tg_i)) tgs'
+    newLts = doLTSManyTr e newLtss
     in (newLts, newPreviousGensAccum)
 generalize' lts@(LTS (LTSTransitions e [(u@(Unfold' funName), t)]))
             (LTS (LTSTransitions _ [(Unfold' funName', t')]))
@@ -93,8 +102,33 @@ generalize' t _ previousGensAccum boundVariables _ = let
     in case filter (\(x, t1) -> (not . null) $ isRenaming t1 t2) previousGensAccum of
         (x', _) : _ -> (_B (doLTS1Tr x' (X' $ show x') doLTS0Tr) boundVariables', [])
         [] -> let
-            fresh = Free "x"
-            in (_B (doLTS1Tr fresh (X' $ show fresh) doLTS0Tr) boundVariables', [(fresh, t2)])
+            x = renameVar boundVariables' "x"
+            fresh = Free x
+            in (_B (doLTS1Tr fresh (X' x) doLTS0Tr) boundVariables', [(fresh, t2)])
+
+orderGeneralizations :: [(Label, (LTS, [Generalization]))] -> [(Label, (LTS, [Generalization]))]
+orderGeneralizations xs = let
+    allGens = concatMap (\(label, (t_i, gens_i)) -> map (\(Free x, lts) -> (lts, x)) gens_i) xs
+    accum = addCollectionToMap allGens Map.empty
+    result = map (\(label, (t_i, gens)) -> let
+        substitutions = map (\(Free x, lts) -> let
+            x'' = case Map.lookup lts accum of
+                Just x' -> x'
+                Nothing -> error "Smething went wrong during ordering generalizations"
+            in (x, x'', lts)) gens
+        gens' = map (\(x, x'', lts) -> (Free x'', lts)) substitutions
+        substitutions' = map (\(x, x'', lts) -> (x, x'')) substitutions    
+        t_i' = renameVarInLtsRecursively substitutions' t_i
+        in (label, (t_i', gens'))) xs
+    in result
+
+renameVarInLtsRecursively :: [(String, String)] -> LTS -> LTS
+renameVarInLtsRecursively substitutions lts
+  = foldl renameVarInLts lts substitutions
+
+addCollectionToMap :: Ord k => [(k, a)] -> Map k a -> Map k a
+addCollectionToMap ((a,b) : xs) myMap = addCollectionToMap xs $ Map.insert a b myMap
+addCollectionToMap [] myMap = myMap
 
 getFreeVariables :: LTS -> [String]
 getFreeVariables Leaf = []
@@ -108,11 +142,10 @@ branchesForLambda [('\\' : _, _)] [('\\' : _, _)] = True
 branchesForLambda _ _ = False
 
 _A :: LTS -> [Generalization] -> LTS
--- fix bug in wrapping up all terms to X'
 _A t@(LTS (LTSTransitions root lts)) generalizations | traceShow ("in let root =" ++ show root) False = undefined
 _A t@(LTS (LTSTransitions root _)) generalizations = let
-    branches = map (\t -> case fst t of
-      (Free x) -> (X' x, snd t)
+    branches = map (\b -> case fst b of
+      (Free x) -> (X' x, snd b)
       _ -> error "Generalization must have only free vars in the first element of pair") generalizations 
     in doLTSManyTr root $ (:) (Let', t) branches
 _A _ _ = error "Unexpected lts or generalizations list got for _A function."

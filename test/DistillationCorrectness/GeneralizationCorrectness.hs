@@ -43,9 +43,25 @@ test_checkGeneralizationCorrectness_append = let
     expectedLts = LTS (LTSTransitions (Fun "append") [(Let',LTS (LTSTransitions (Fun "append") [(Unfold' "append",LTS (LTSTransitions (Case (Free "xs") [("Nil",[],Free "xs"),("Cons",["x'","xs'"],Con "Cons" [Free "x'",Apply (Apply (Fun "append") (Free "xs'")) (Free "xs")])]) [(Case',LTS (LTSTransitions (Free "xs") [(X' "xs",Leaf)])),(CaseBranch' "Nil" [],LTS (LTSTransitions (Free "x") [(X' "x",Leaf)])),(CaseBranch' "Cons" ["x'","xs'"],LTS (LTSTransitions (Con "Cons" [Free "x'",Apply (Apply (Fun "append") (Free "xs'")) (Free "xs")]) [(Con' "Cons",Leaf),(ConArg' "#1",LTS (LTSTransitions (Free "x'") [(X' "x'",Leaf)])),(ConArg' "#2",LTS (LTSTransitions (Apply (Apply (Fun "append") (Free "xs'")) (Free "xs")) [(Apply0',LTS (LTSTransitions (Apply (Fun "append") (Free "xs'")) [(Apply0',LTS (LTSTransitions (Fun "append") [(Unfold' "append",Leaf)])),(Apply1',LTS (LTSTransitions (Free "xs'") [(X' "xs'",Leaf)]))])),(Apply1',LTS (LTSTransitions (Free "x") [(X' "x",Leaf)]))]))]))]))])),(X' "x",LTS (LTSTransitions (Free "xs") [(X' "xs",Leaf)]))])
     in do return $ testGroup "Tests" [testCase "append xs xs & append xs Cons(x,xs)" $ generalize appendLts appendLts' [] @?= expectedLts]
 
+neil3Term = Case (Apply (Fun "f") (Free "xs'"))    
+                     [("True", [],Apply (Fun "f") (Free "xs'"))
+                     ,("False", [], Con "False" [])]
+fDef = Case (Free "xs") 
+    [("Nil",[], Con "True" [])
+    ,("Cons",["x","xs"],Case (Apply (Fun "f") (Free "xs")) [("True", [], Apply (Fun "f") (Free "xs")), ("False",[], Con "False" [])])
+    ]
+neil3Lts = drive neil3Term [] [("f", (["xs"], fDef))]
+neil3Term' = Case (Case (Apply (Fun "f") (Free "xs''"))    
+                                        [("True", [],Apply (Fun "f") (Free "xs''"))
+                                        ,("False", [], Con "False" [])])    
+                     [("True", [],Apply (Fun "f") (Con "Con" [Free "x'", Free "xs''"]))
+                     ,("False", [], Con "False" [])]
+neil3Lts' = drive neil3Term' [] [("f", ([], fDef))]                     
+
+
 test_checkGeneralizationCorrectness_neil3 :: IO TestTree
 test_checkGeneralizationCorrectness_neil3 = let 
     expectedLts = doLTS0Tr
-    in do return $ testGroup "Tests" [testCase "append xs xs & append xs Cons(x,xs)" $ generalize appendLts appendLts' [] @?= expectedLts]
+    in do return $ testGroup "Tests" [testCase "append xs xs & append xs Cons(x,xs)" $ generalize neil3Lts neil3Lts' [] @?= expectedLts]
 
 

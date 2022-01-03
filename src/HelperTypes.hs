@@ -4,6 +4,7 @@ import TermType
 import LTSType
 import Data.Maybe (fromMaybe)
 import Debug.Trace (traceShow)
+import Data.List (delete)
 
 type FunctionDefinition = (String, ([String], Term))
 type Generalization = (Term, LTS)
@@ -85,3 +86,37 @@ substituteTermWithNewVars fun _ = fun
 
 substituteTermWithNewTerms :: Term -> [(String, Term)] -> Term
 substituteTermWithNewTerms term _ = term
+
+-- is term t renaming of u
+renaming :: Term -> Term -> [[(String, Term)]]
+renaming t u = renaming' [] t u (free t ++ free u) [] []
+
+renaming' :: t -> Term -> Term -> [String] -> [String] -> [(String, Term)] -> [[(String, Term)]]
+renaming' fs (Free x) t fv bv s | x `elem` bv = [s | t==Free x]
+renaming' fs (Lambda x t) (Lambda x' t') fv bv s = let x'' = renameVar fv x
+                                               in  renaming' fs t t' (x'':fv) (x'':bv) s
+renaming' fs (Con c ts) (Con c' ts') fv bv s | c==c' = foldr (\(t,t') ss -> concat [renaming' fs t t' fv bv s | s <- ss]) [s] (zip ts ts')
+renaming' fs (Apply t u) (Apply t' u') fv bv s = concat [renaming' fs u u' fv bv s' | s' <- renaming' fs t t' fv bv s]
+renaming' fs (Fun f) (Fun f') fv bv s | f==f' = [s]
+renaming' fs (Case t bs) (Case t' bs') fv bv s | matchCase bs bs' = foldr (\((c,xs,t),(c',xs',t')) ss -> let 
+        fv' = renameVars fv xs
+        xs'' = take (length xs) fv'
+    in  concat [renaming' fs t t' fv' (xs''++bv) s | s <- ss]) (renaming' fs t t' fv bv s) (zip bs bs')
+renaming' fs (Let x t u) (Let x' t' u') fv bv s = let x'' = renameVar fv x
+                                              in  concat [renaming' fs u u' (x'':fv) (x'':bv) s' | s' <- renaming' fs t t' fv bv s]
+renaming' fs t u fv bv s | varApp fv t = let 
+                                            (Free x) = redex t
+                                            xs = delete x (free t)
+                                            u' = foldr Lambda u xs
+                                         in  if   x `elem` map fst s
+                                            then [s | (x,u') `elem` s]
+                                            else [(x,u'):s]
+renaming' fs t u fv bv s = []
+
+varApp xs (Free x) = x `elem` xs
+varApp xs (Apply t (Free x)) = varApp xs t
+varApp xs t = False
+
+redex (Case t bs) = redex t 
+redex (Apply t u) = redex t
+redex t = t

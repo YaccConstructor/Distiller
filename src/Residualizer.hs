@@ -9,7 +9,7 @@ residualize lts = residualize' lts []
 
 -- lts --> [((funname, vars),expr)] -> prog
 residualize' :: LTS -> [((String, [String]), Term)] -> Term
-residualize' (LTS (LTSTransitions x'@(Free _) _)) _ = x'
+residualize' (LTS (LTSTransitions _ [(X' x, Leaf)])) _ = Free x
 residualize' (LTS (LTSTransitions _ bs@((Con' conName, Leaf) : branches))) eps
     | branchesSetForConstructor bs = Con conName $ map ((`residualize'` eps) . snd) branches
     | otherwise = error $ "Trying to residualize: " ++ conName ++ " constructor case, but branches have incorrect form."

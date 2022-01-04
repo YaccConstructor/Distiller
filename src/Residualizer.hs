@@ -23,7 +23,7 @@ residualize' (LTS (LTSTransitions _ ((Let', t0) : branches))) eps = let
   branches' = reverse branches
   (X' x_n, t_n) = head branches'
   initializer = Let x_n (residualize' t_n eps) t0' 
-  in foldl (\accum (X' x_i, t_i) -> Let x_i (residualize' t_i eps) accum) initializer branches'
+  in foldl (\accum (X' x_i, t_i) -> Let x_i (residualize' t_i eps) accum) initializer $ tail branches'
 residualize' (LTS (LTSTransitions e [(Unfold' funName, t)])) eps =
   case filter (\((_, _), fundef) -> not $ null $ renaming fundef e) eps of
     ((funname, vars), fundef) : _ -> let

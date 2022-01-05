@@ -7,6 +7,8 @@ import TermType
 import HelperTypes (renaming)
 import LTSType
 import Residualizer
+import Driver (drive)
+import InputData
 
 test_checkResidualizer_case :: IO TestTree
 test_checkResidualizer_case = let
@@ -34,3 +36,16 @@ test_checkResidualizer_let = let
         ,(X' "x2", doLTSManyTr (Con "Nil" []) [(Con' "Nil", doLTS0Tr)])])
     expected = Let "x1" (Con "Cons" [Free "x'",Free "x'"]) (Let "x2" (Con "Nil" []) (Apply (Apply (Con "Nil" []) (Free "x1")) (Free "x2")))
     in return $ testGroup "Residualizer" [testCase "let x1 = Cons(x',xs') in x2 = Nil in f x1 x2" $ residualize lts @?= expected]
+
+test_checkResidualizer_fun :: IO TestTree
+test_checkResidualizer_fun = let
+    lts = drive (Apply (Fun "f") (Free "xs")) [] [("f", (["xs"], fDef))]
+    expected = Apply 
+        (Lambda "xs" (Case (Free "xs") 
+            [("Nil",[],Con "True" [])
+            ,("Cons",["x","xs"],Case (Apply (Fun "f") (Free "xs")) [("True",[],Apply (Fun "f") (Free "xs")),("False",[],Con "False" [])])
+            ])) 
+        (Free "xs")
+    in return $ testGroup "Residualizer" [testCase "f xs" $ residualize lts @?= expected]
+    
+    

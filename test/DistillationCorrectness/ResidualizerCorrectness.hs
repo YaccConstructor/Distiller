@@ -37,15 +37,53 @@ test_checkResidualizer_let = let
     expected = Let "x1" (Con "Cons" [Free "x'",Free "x'"]) (Let "x2" (Con "Nil" []) (Apply (Apply (Con "Nil" []) (Free "x1")) (Free "x2")))
     in return $ testGroup "Residualizer" [testCase "let x1 = Cons(x',xs') in x2 = Nil in f x1 x2" $ residualize lts @?= expected]
 
-test_checkResidualizer_fun :: IO TestTree
-test_checkResidualizer_fun = let
-    lts = drive (Apply (Fun "f") (Free "xs")) [] [("f", (["xs"], fDef))]
-    expected = Apply 
-        (Lambda "xs" (Case (Free "xs") 
+test_checkResidualizer_fun_neil3 :: IO TestTree
+test_checkResidualizer_fun_neil3 = let
+    lts = drive (Apply (Fun "f") (Free "xs")) [] [("f", (["xs"], neil3Def))]
+    expected = Apply
+        (Lambda "xs" (Case (Free "xs")
             [("Nil",[],Con "True" [])
             ,("Cons",["x","xs"],Case (Apply (Fun "f") (Free "xs")) [("True",[],Apply (Fun "f") (Free "xs")),("False",[],Con "False" [])])
-            ])) 
+            ]))
         (Free "xs")
-    in return $ testGroup "Residualizer" [testCase "f xs" $ residualize lts @?= expected]
-    
-    
+    in return $ testGroup "Residualizer" [testCase "neil3 xs" $ residualize lts @?= expected]
+
+test_checkResidualizer_fun_qrev :: IO TestTree
+test_checkResidualizer_fun_qrev = let
+    lts = drive (Fun "qrev") [] [("qrev", (["xs", "ys"], qrevTerm))]
+    expected =  Lambda "x" (Lambda "ys" (Lambda "xs" (Case (Free "xs")
+        [("Nil",[],Free "ys")
+        ,("Cons",["x","xs"],Apply (Apply (Fun "f") (Free "xs")) (Con "Cons" [Free "x",Free "ys"]))
+        ])))
+    in return $ testGroup "Residualizer" [testCase "qrev xs" $ residualize lts @?= expected]
+
+test_checkResidualizer_fun_qrev_with_accum :: IO TestTree
+test_checkResidualizer_fun_qrev_with_accum = let
+    lts = drive (Fun "qrev") [] [("qrev", (["xs", "ys"], qrevTerm))]
+    lts' = doLTSManyTr (Apply (Apply (Fun "qrev") (Free "xs")) (Apply (Apply (Fun "qrev") (Free "xs")) (Free "xs")))
+        [(Apply0', doLTSManyTr (Apply (Fun "qrev") (Free "xs"))
+            [(Apply0', lts)
+            ,(Apply1', doLTS1Tr (Free "xs") (X' "xs") doLTS0Tr)])
+        ,(Apply1', doLTSManyTr (Apply (Apply (Fun "qrev") (Free "xs")) (Free "xs"))
+            [(Apply0', doLTSManyTr (Apply (Fun "qrev") (Free "xs"))
+                [(Apply0', lts)
+                ,(Apply1', doLTS1Tr (Free "xs") (X' "xs") doLTS0Tr)])
+            ,(Apply1', doLTS1Tr (Free "xs") (X' "xs") doLTS0Tr)])]
+
+    {---Apply (Apply (Lambda "x" (Lambda "ys" (Lambda "xs"
+        (Case (Free "xs")
+            [("Nil",[],Free "ys")
+            ,("Cons",["x","xs"],Apply (Apply (Fun "f") (Free "xs")) (Con "Cons" [Free "x",Free "ys"]))
+            ]))))
+        (Free "xs"))
+    (Apply (Apply (Lambda "x" (Lambda "ys" (Lambda "xs"
+        (Case (Free "xs") [("Nil",[],Free "ys"),("Cons",["x","xs"],Apply (Apply (Fun "f") (Free "xs")) (Con "Cons" [Free "x",Free "ys"]))])
+        )))
+        (Free "xs"))
+    (Free "xs"))--}
+
+    expected =  Lambda "x" (Lambda "ys" (Lambda "xs" (Case (Free "xs")
+                [("Nil",[],Free "ys")
+                ,("Cons",["x","xs"],Apply (Apply (Fun "f") (Free "xs")) (Con "Cons" [Free "x",Free "ys"]))
+                ])))
+    in return $ testGroup "Residualizer" [testCase "qrev xs" $ residualize lts' @?= Fun "f", testCase "qrev xs" $ lts @?= doLTS0Tr]

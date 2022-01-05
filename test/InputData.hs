@@ -28,16 +28,16 @@ appendLts = drive (Fun "append") [] [("append", (["xs", "xs"], appendTerm))]
 neil3Term = Case (Apply (Fun "f") (Free "xs'"))    
                      [("True", [],Apply (Fun "f") (Free "xs'"))
                      ,("False", [], Con "False" [])]
-fDef = Case (Free "xs") 
+neil3Def = Case (Free "xs")
     [("Nil",[], Con "True" [])
     ,("Cons",["x","xs"],Case (Apply (Fun "f") (Free "xs")) [("True", [], Apply (Fun "f") (Free "xs")), ("False",[], Con "False" [])])
     ]
-neil3Lts = drive neil3Term [] [("f", (["xs"], fDef))]
+neil3Lts = drive neil3Term [] [("f", (["xs"], neil3Def))]
 neil3Term' = Case (Case (Apply (Fun "f") (Free "xs''"))    
                                         [("True", [],Apply (Fun "f") (Free "xs''"))
                                         ,("False", [], Con "False" [])])    
                      [("True", [],Apply (Fun "f") (Con "Con" [Free "x'", Free "xs''"]))
                      ,("False", [], Con "False" [])]
-neil3Lts' = drive neil3Term' [] [("f", ([], fDef))] 
+neil3Lts' = drive neil3Term' [] [("f", ([], neil3Def))]
 
   

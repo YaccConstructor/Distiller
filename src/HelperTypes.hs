@@ -44,10 +44,6 @@ renameLabel u@(ConArg' x) (x', x'') = if x == x' then ConArg' x'' else u
 renameLabel u@(Unfold' x) (x', x'') = if x == x' then Unfold' x'' else u  
 renameLabel u@(UnfoldCons' x) (x', x'') = if x == x' then UnfoldCons' x'' else u
 renameLabel u@(LetX' x) (x', x'') = if x == x' then LetX' x'' else u
-renameLabel (CaseBranch' x args) (x', x'') = let
-    resultX = if x == x' then x'' else x
-    resultArgs = map (\arg -> if arg == x' then x'' else arg) args 
-    in CaseBranch' resultX resultArgs
 renameLabel u _ = u         
     
 -- concrete function alternative

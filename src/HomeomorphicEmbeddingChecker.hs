@@ -72,10 +72,11 @@ embed funNamesAccum lts1 lts2 freeVars boundVars renaming =
   dived funNamesAccum lts1 lts2 freeVars boundVars renaming ++ coupled funNamesAccum lts1 lts2 freeVars boundVars renaming
 
 dived ::  [(String, String)] -> LTS -> LTS -> [String] -> [String] -> [(String, String)] -> [(String, String)]
-dived funNamesAccum lts1@(LTS (LTSTransitions _ branches)) lts2@(LTS (LTSTransitions _ branches')) freeVars boundVars renaming =
+dived funNamesAccum lts1 lts2@(LTS (LTSTransitions _ branches')) freeVars boundVars renaming =
     -- if some i has embedding, than dived is passed
-    concatMap (\(t, t') -> embed funNamesAccum t t' freeVars boundVars renaming)
-    $ zip (map snd branches) (map snd branches')
+    concatMap (\t -> embed funNamesAccum lts1 t freeVars boundVars renaming) (map snd branches')
+dived _ _ _ _ _ _ = []    
+    
 
 -- if all i has embedding, than coupled is passed
 coupled :: [(String, String)] -> LTS -> LTS -> [String] -> [String] -> [(String, String)] -> [(String, String)]

@@ -1,23 +1,27 @@
 module HomeomorphicEmbeddingChecker (isRenaming, isHomeomorphicEmbedding) where
 
-
 import TermType
 import LTSType
 import HelperTypes
+import Debug.Trace (traceShow)
+import Data.List
 
 isRenaming :: LTS -> LTS -> [(String, String)]
-isRenaming lts1 lts2 = isRenaming' [] lts1 lts2 [] [] []
+isRenaming Leaf (LTS _) = []
+isRenaming (LTS _) Leaf = []
+isRenaming Leaf Leaf = []
+isRenaming lts1@(LTS (LTSTransitions e1 _)) lts2@(LTS (LTSTransitions e2 _))= nub $ isRenaming' [] lts1 lts2 (free e1 ++ free e2) [] []
 
 isRenaming' :: [(String, String)] -> LTS -> LTS -> [String] -> [String] -> [(String, String)] -> [(String, String)]
+isRenaming' funNamesAccum t u freeVars boundVars renaming | traceShow ("isRenaming':" ++ show t ++ show u ++ show freeVars ++ show boundVars ++ show renaming) False = undefined
 isRenaming' funNamesAccum (LTS (LTSTransitions t@(Free x) _))
-                          (LTS (LTSTransitions t'@(Free x') _)) freeVars boundVars renaming
-    | x `elem` freeVars && t' == t = renaming
-    | x `elem` freeVars = []
-    | x `elem` boundVars = if x `elem` map fst renaming
-        then if (x,x') `elem` renaming
-            then renaming
-            else (x,x') : renaming
-        else []
+                                     (LTS (LTSTransitions t'@(Free x') _)) freeVars boundVars renaming
+               | x == x' = renaming                      
+               | x `elem` boundVars && t' == t = renaming
+               | x `elem` boundVars && t' /= t = []
+               | x `elem` freeVars = if (x,x') `elem` renaming
+                       then renaming
+                       else (x,x') : renaming
 -- unfold
 isRenaming' funNamesAccum (LTS (LTSTransitions _ [(Unfold' funName, t)]))
                           (LTS (LTSTransitions _ [(Unfold' funName', t')])) freeVars boundVars renaming =
@@ -58,7 +62,7 @@ isRenaming' funNamesAccum (LTS (LTSTransitions _ ((Case', t) : branches)))
             freeVars' = renameVars freeVars xs
             xs'' = take (length xs) freeVars'
             in isRenaming' funNamesAccum u u' freeVars' (xs'' ++ boundVars) renaming') initializer branchess
-isRenaming' _ _ _ _ _ _ = []                                                                       
+isRenaming' _ t u _ _ renaming = []--error $ "Error occured during renaming ltss check: lts " ++ show t ++ " and lts = u " ++ show u ++ " matched nothing."
    
 isHomeomorphicEmbedding :: LTS -> LTS -> [(String, String)]
 isHomeomorphicEmbedding lts1 lts2 = coupled [] lts1 lts2 [] [] []

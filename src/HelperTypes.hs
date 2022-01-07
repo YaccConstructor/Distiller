@@ -44,6 +44,10 @@ renameLabel u@(ConArg' x) (x', x'') = if x == x' then ConArg' x'' else u
 renameLabel u@(Unfold' x) (x', x'') = if x == x' then Unfold' x'' else u  
 renameLabel u@(UnfoldCons' x) (x', x'') = if x == x' then UnfoldCons' x'' else u
 renameLabel u@(LetX' x) (x', x'') = if x == x' then LetX' x'' else u
+renameLabel (CaseBranch' x args) (x', x'') = let
+    resultX = if x == x' then x'' else x
+    resultArgs = map (\arg -> if arg == x' then x'' else arg) args 
+    in CaseBranch' resultX resultArgs  
 renameLabel u _ = u         
     
 -- concrete function alternative
@@ -58,8 +62,10 @@ substituteTermWithNewVars (Apply term1 term2) xs =
       term2' = substituteTermWithNewVars term2 xs
    in Apply term1' term2'
 substituteTermWithNewVars (Case term branches) xs =
-  let term' = substituteTermWithNewVars term xs
-      branches' = map (\(cons, vars, branchTerm) -> (cons, vars, substituteTermWithNewVars branchTerm xs)) branches
+  let term' = substituteTermWithNewVars term xs  
+      branches' = map (\(cons, vars, branchTerm) -> let
+        vars' = map (\var -> fromMaybe var (lookup var xs)) vars
+        in (cons, vars', substituteTermWithNewVars branchTerm xs)) branches
    in Case term' branches'
 substituteTermWithNewVars (Let x term1 term2) xs =
   let term1' = substituteTermWithNewVars term1 xs

@@ -9,7 +9,7 @@ import LTSType
 import Residualizer
 import Driver (drive)
 import InputData  
-import HomeomorphicEmbeddingChecker (isRenaming)
+import HomeomorphicEmbeddingChecker (isRenaming, isHomeomorphicEmbedding)
     
 test_checkRenaming_qrev :: IO TestTree
 test_checkRenaming_qrev = let
@@ -23,16 +23,24 @@ test_checkRenaming_qrev = let
 
 test_checkRenaming_lambda :: IO TestTree
 test_checkRenaming_lambda = let
-    lts1 = drive (Apply 
-                   (Apply 
-                        (Lambda "x" (Lambda "ys" (Lambda "xs" (Case (Free "xs") 
+    lts1 = drive (Apply
+                   (Apply
+                        (Lambda "x" (Lambda "ys" (Lambda "xs" (Case (Free "xs")
                             [("Nil",[],Free "ys")
-                            ,("Cons",["x","xs"],(Free "xs"))])))) 
-                        (Con "Cons" [Free "x",Free "ys"])) 
-                   (Apply 
-                        (Apply 
+                            ,("Cons",["x","xs"],(Free "xs"))]))))
+                        (Con "Cons" [Free "x",Free "ys"]))
+                   (Apply
+                        (Apply
                             (Lambda "x" (Lambda "xs" (Case (Free "xs") [("Nil",[],Con "Nil" []),("Cons",["x","xs"],(Free "xs"))])))
-                            (Free "xs")) 
+                            (Free "xs"))
                         (Con "Nil" []))) [] []
     lts2 = renameVarInLtsRecursively [("xs", "xs1"), ("ys", "ys1")] lts1
     in return $ testGroup "HEChecker" [testCase "Renaming: lambda x ys xs x xs and lambda x ys1 xs1 x xs1" $ isRenaming lts1 lts2 @?= [("xs", "xs1"), ("ys", "ys1")]]
+
+test_checkEmbedding_qrev :: IO TestTree
+test_checkEmbedding_qrev = let
+    lts1 = qrevLts
+    lts2 = qrevLts'
+    in return $ testGroup "HEChecker" [testCase "HEmbedding: qrev" $ isHomeomorphicEmbedding lts1 lts2 @?= [("xs", "xs1"), ("ys", "ys1")]
+                                      ,testCase "HEmbedding: qrev" $ lts1 @?= doLTS0Tr
+                                      ,testCase "HEmbedding: qrev" $ lts2 @?= doLTS0Tr]

@@ -128,11 +128,6 @@ orderGeneralizations xs = let
         in (label, (t_i', gens'))) xs
     in result
 
-renameVarInLtsRecursively :: [(String, String)] -> LTS -> LTS
-renameVarInLtsRecursively xs lts | traceShow ("in renameVarLtsRec, xs = " ++ show xs ++ ", lts = " ++ show lts) False = undefined
-renameVarInLtsRecursively substitutions lts
-  = foldl renameVarInLts lts substitutions
-
 --addCollectionToMap :: (Ord) k => [(k, a)] -> Map k a -> Map k a
 addCollectionToMap (xs) myMap | traceShow ("add coll to map xs = " ++ show xs ++ ", myMap = " ++ show myMap) False = undefined
 addCollectionToMap ((a,b) : xs) myMap = addCollectionToMap xs $ Map.insert a b myMap

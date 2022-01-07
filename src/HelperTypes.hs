@@ -27,6 +27,11 @@ renameVarInLts (LTS (LTSTransitions e branches)) var = let
     branches' = map (\(label, lts) -> (renameLabel label var, renameVarInLts lts var)) branches
     in LTS (LTSTransitions e' branches')
 
+renameVarInLtsRecursively :: [(String, String)] -> LTS -> LTS
+renameVarInLtsRecursively xs lts | traceShow ("in renameVarLtsRec, xs = " ++ show xs ++ ", lts = " ++ show lts) False = undefined
+renameVarInLtsRecursively substitutions lts
+  = foldl renameVarInLts lts substitutions
+
 branchesSetsForConstructor :: [(Label, LTS)] -> [(Label, LTS)] -> Bool
 branchesSetsForConstructor branches branches' = all (\t -> tail (map fst t) == take (length t - 1) (map ConArg' createLabels)) [branches, branches']
 

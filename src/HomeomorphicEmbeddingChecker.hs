@@ -10,7 +10,7 @@ isRenaming :: LTS -> LTS -> [(String, String)]
 isRenaming Leaf (LTS _) = []
 isRenaming (LTS _) Leaf = []
 isRenaming Leaf Leaf = []
-isRenaming lts1@(LTS (LTSTransitions e1 _)) lts2@(LTS (LTSTransitions e2 _))= nub $ isRenaming' [] lts1 lts2 (free e1 ++ free e2) [] []
+isRenaming lts1@(LTS (LTSTransitions e1 _)) lts2@(LTS (LTSTransitions e2 _))= sort $ nub $ isRenaming' [] lts1 lts2 (free e1 ++ free e2) [] []
 
 isRenaming' :: [(String, String)] -> LTS -> LTS -> [String] -> [String] -> [(String, String)] -> [(String, String)]
 isRenaming' funNamesAccum t u freeVars boundVars renaming | traceShow ("isRenaming':" ++ show t ++ show u ++ show freeVars ++ show boundVars ++ show renaming) False = undefined

@@ -24,7 +24,7 @@ generalize' (LTS (LTSTransitions e bs@(first@(Con' _, Leaf) : branches)))
 generalize' (LTS (LTSTransitions e bs@(first@(Con' conname, Leaf) : branches)))
             (LTS (LTSTransitions _ bs'@((Con' conname', Leaf) : branches')))
             previousGensAccum boundVariables previousFunsAccum
-  | branchesSetsForConstructor bs bs' = let
+  | branchesSetsForConstructor bs bs' && length bs == length bs' = let
     terms = map snd branches
     terms' = map snd branches'
     tgs = zipWith3 (\t_i t_i' number -> (ConArg' number, generalize' t_i t_i' previousGensAccum boundVariables previousFunsAccum)) terms terms' createLabels
@@ -33,7 +33,7 @@ generalize' (LTS (LTSTransitions e bs@(first@(Con' conname, Leaf) : branches)))
     newLtss = map (\(label, (lts, _)) -> (label, lts)) tgs'
     newLts = doLTSManyTr e $ first : newLtss
     in (newLts, newPreviousGensAccum)
-  | otherwise = error "Constructor case, but branches have incorrect form."
+ -- | otherwise = error "Constructor case, but branches have incorrect form."
 generalize' (LTS (LTSTransitions e [(label@(Lambda' x), t)])) (LTS (LTSTransitions _ [(Lambda' _, t')])) _ _ _ | traceShow ("in lambda " ++ show e) False = undefined
 generalize' (LTS (LTSTransitions e [(label@(Lambda' x), t)]))
             (LTS (LTSTransitions _ [(Lambda' _, t')]))
@@ -96,7 +96,7 @@ generalize' (LTS (LTSTransitions e [(UnfoldBeta', t)]))
 generalize' (LTS (LTSTransitions e [(UnfoldCons' _, t)]))
             (LTS (LTSTransitions _ [(UnfoldCons' _, t')]))
             previousGensAccum boundVariables previousFunsAccum = generalize' t t' previousGensAccum boundVariables previousFunsAccum
-generalize' t _ previousGensAccum boundVariables _ | traceShow ("Nothing mapped in t = " ++ show t ++ show previousGensAccum) False = undefined
+generalize' t _ previousGensAccum boundVariables _ | traceShow ("Nothing mapped in t = " ++ show t ++ show previousGensAccum ++ show boundVariables ++ show (getFreeVariables t)) False = undefined
 generalize' t _ previousGensAccum boundVariables _ = let
     boundVariables' = intersect (getFreeVariables t) boundVariables
     t2 = _C t boundVariables'
@@ -135,7 +135,7 @@ addCollectionToMap [] myMap = myMap
 
 getFreeVariables :: LTS -> [String]
 getFreeVariables Leaf = []
-getFreeVariables (LTS lts@(LTSTransitions _ branches)) = free (getOldTerm lts) ++ concatMap (getFreeVariables . snd) branches
+getFreeVariables (LTS lts@(LTSTransitions _ branches)) = free (getOldTerm lts)
 
 branchesForFunctionCall :: [(Label, LTS)] -> [(Label, LTS)] -> Bool
 branchesForFunctionCall branches branches' = all (\t -> map fst t == [Apply0', Apply1']) [branches, branches']

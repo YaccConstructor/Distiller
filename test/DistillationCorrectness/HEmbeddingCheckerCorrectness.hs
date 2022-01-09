@@ -4,7 +4,7 @@ import Test.Tasty.Providers (TestTree)
 import Test.Tasty (testGroup)
 import Test.Tasty.HUnit (testCase, (@?=))
 import TermType
-import HelperTypes (renaming, renameVarInLts, renameVarInLtsRecursively)
+import HelperTypes (termRenaming, renameVarInLts, renameVarInLtsRecursively)
 import LTSType
 import Residualizer
 import Driver (drive)
@@ -41,6 +41,4 @@ test_checkEmbedding_qrev :: IO TestTree
 test_checkEmbedding_qrev = let
     lts1 = qrevLts
     lts2 = qrevLts'
-    in return $ testGroup "HEChecker" [testCase "HEmbedding: qrev" $ isHomeomorphicEmbedding lts2 lts1 @?= [("xs", "xs1"), ("ys", "ys1")]
-                                      ,testCase "HEmbedding: qrev" $ lts1 @?= doLTS0Tr
-                                      ,testCase "HEmbedding: qrev" $ lts2 @?= doLTS0Tr]
+    in return $ testGroup "HEChecker" [testCase "HEmbedding: qrev" $ isHomeomorphicEmbedding lts2 lts1 @?= [("x","x"),("x","x'"),("xs","xs")]]

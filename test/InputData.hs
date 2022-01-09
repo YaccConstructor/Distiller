@@ -8,7 +8,7 @@ import Test.Tasty
 import Test.Tasty.HUnit
 import Debug.Trace (trace)  
   
-qrevTerm = Case (Free "xs") [("Nil",[],Free "ys"),("Cons",["x","xs"],Apply (Apply (Fun "qrev") (Free "xs")) (Con "Cons" [Free "x",Free "ys"]))]
+qrevTerm = Case (Free "xs") [("Nil",[],Con "Cons" [Free "x", Con "Nil" []]),("Cons",["x","xs"],Apply (Apply (Fun "qrev") (Free "xs")) (Con "Cons" [Free "x'",Con "Cons" [Free "x", Con "Nil" []]]))]
 qrevLts = drive (Fun "qrev") [] [("qrev", (["xs", "ys"], qrevTerm))]
 qrevTerm' = Case (Free "xs") [("Nil",[],Con "Nil" []),("Cons",["x","xs"],Apply (Apply (Fun "qrev") (Free "xs")) (Con "Cons" [Free "x",Con "Nil" []]))]
 qrevLts' = drive (Fun "qrev") [] [("qrev", (["xs", "Nil"], qrevTerm'))]

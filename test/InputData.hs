@@ -13,7 +13,7 @@ qrevLts = drive (Fun "qrev") [] [("qrev", (["xs", "ys"], qrevTerm))]
 qrevTerm' = Case (Free "xs") [("Nil",[],Con "Nil" []),("Cons",["x","xs"],Apply (Apply (Fun "qrev") (Free "xs")) (Con "Cons" [Free "x",Con "Nil" []]))]
 qrevLts' = drive (Fun "qrev") [] [("qrev", (["xs", "Nil"], qrevTerm'))]
 
-swapQrevTerm = Case (Free "ys") [("Nil",[],Free "xs"),("Cons",["y","ys"],Apply (Apply (Fun "qrev") (Free "ys")) (Con "Cons" [Free "y",Free "xs"]))]
+swapQrevTerm = Case (Free "ys") [("Nil",[],Con "Cons" [Free "y", Con "Nil" []]),("Cons",["y","ys"],Apply (Apply (Fun "qrev") (Free "ys")) (Con "Cons" [Free "y'",Con "Cons" [Free "y", Con "Nil" []]]))]
 swapQrevLts = drive (Fun "qrev") [] [("qrev", (["xs", "ys"], swapQrevTerm))]
 swapQrevTerm' = Case (Free "ys") [("Nil",[],Con "Nil" []),("Cons",["y","ys"],Apply (Apply (Fun "qrev") (Free "ys")) (Con "Cons" [Free "y",Con "Nil" []]))]
 swapQrevLts' = drive (Fun "qrev") [] [("qrev", (["Nil", "ys"], swapQrevTerm'))]

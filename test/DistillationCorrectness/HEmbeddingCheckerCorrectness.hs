@@ -42,3 +42,9 @@ test_checkEmbedding_qrev = let
     lts1 = qrevLts
     lts2 = qrevLts'
     in return $ testGroup "HEChecker" [testCase "HEmbedding: qrev" $ isHomeomorphicEmbedding lts2 lts1 @?= [("x","x"),("x","x'"),("xs","xs")]]
+    
+test_checkEmbedding_swap_qrev :: IO TestTree
+test_checkEmbedding_swap_qrev = let 
+    lts1 = swapQrevLts
+    lts2 = swapQrevLts'
+    in return $ testGroup "HEChecker" [testCase "HEmbedding: qrev" $ isHomeomorphicEmbedding lts2 lts1 @?= [("y","y"),("y","y'"),("ys","ys")]]        

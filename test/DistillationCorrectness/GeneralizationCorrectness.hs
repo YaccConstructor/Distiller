@@ -28,14 +28,18 @@ test_checkGeneralizationCorrectness  = let
 
 test_checkGeneralizationCorrectness_qrev_swap :: IO TestTree
 test_checkGeneralizationCorrectness_qrev_swap = let
-  expectedLts = LTS (LTSTransitions (Fun "qrev")
-    [(Let',LTS (LTSTransitions (Fun "qrev") [(Unfold' "qrev",LTS (LTSTransitions (Case (Free "ys") [("Nil",[],Free "xs"),("Cons",["y","ys"],Apply (Apply (Fun "qrev") (Free "ys"))
-    (Con "Cons" [Free "y",Free "xs"]))]) [(Case',LTS (LTSTransitions (Free "ys") [(X' "ys",Leaf)])),(CaseBranch' "Nil" [],LTS (LTSTransitions (Free "x2") [(X' "x2",Leaf)]))
-    ,(CaseBranch' "Cons" ["y","ys"],LTS (LTSTransitions (Apply (Apply (Fun "qrev") (Free "ys")) (Con "Cons" [Free "y",Free "xs"])) [(Apply0',LTS (LTSTransitions (Apply (Fun "qrev") (Free "ys"))
-    [(Apply0',LTS (LTSTransitions (Fun "qrev") [(Unfold' "qrev",Leaf)])),(Apply1',LTS (LTSTransitions (Free "ys") [(X' "ys",Leaf)]))])),(Apply1',LTS (LTSTransitions (Con "Cons"
-    [Free "y",Free "xs"]) [(Con' "Cons",Leaf),(ConArg' "#1",LTS (LTSTransitions (Free "y") [(X' "y",Leaf)])),(ConArg' "#2",LTS (LTSTransitions (Free "x2") [(X' "x2",Leaf)]))]))]))]))])),
-    (X' "x2",LTS (LTSTransitions (Free "xs") [(X' "xs",Leaf)]))])
-  in return $ testGroup "Tests" [testCase "qrev [] ys & qrev xs ys" $ generalize swapQrevLts swapQrevLts' [] @?= expectedLts]
+  expectedLts = LTS (LTSTransitions (Fun "qrev") 
+        [(Let',LTS (LTSTransitions (Fun "qrev") 
+            [(Unfold' "qrev",LTS (LTSTransitions (Case (Free "ys") [("Nil",[],Con "Nil" []),("Cons",["y","ys"],Apply (Apply (Fun "qrev") (Free "ys")) (Con "Cons" [Free "y",Con "Nil" []]))]) 
+                [(Case',LTS (LTSTransitions (Free "ys") [(X' "ys",Leaf)])),(CaseBranch' "Nil" [],LTS (LTSTransitions (Free "x2") [(X' "x2",Leaf)]))
+                ,(CaseBranch' "Cons" ["y","ys"],LTS (LTSTransitions (Apply (Apply (Fun "qrev") (Free "ys")) (Con "Cons" [Free "y",Con "Nil" []])) 
+                    [(Apply0',LTS (LTSTransitions (Apply (Fun "qrev") (Free "ys")) [(Apply0',LTS (LTSTransitions (Fun "qrev") [(Unfold' "qrev",Leaf)])),(Apply1',LTS (LTSTransitions (Free "ys") [(X' "ys",Leaf)]))]))
+                    ,(Apply1',LTS (LTSTransitions (Con "Cons" [Free "y",Con "Nil" []]) 
+                        [(Con' "Cons",Leaf)
+                        ,(ConArg' "#1",LTS (LTSTransitions (Free "y") [(X' "y",Leaf)]))
+                        ,(ConArg' "#2",LTS (LTSTransitions (Free "x2") [(X' "x2",Leaf)]))]))]))]))]))
+        ,(X' "x2",LTS (LTSTransitions (Con "Nil" []) [(Con' "Nil",Leaf)]))])
+  in return $ testGroup "Tests" [testCase "qrev [] ys & qrev xs ys" $ generalize swapQrevLts' swapQrevLts [] @?= expectedLts]
 
 test_checkGeneralizationCorrectness_append :: IO TestTree
 test_checkGeneralizationCorrectness_append = let

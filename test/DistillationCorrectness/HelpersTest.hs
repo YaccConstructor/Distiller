@@ -4,7 +4,7 @@ import Test.Tasty.Providers (TestTree)
 import Test.Tasty (testGroup)
 import Test.Tasty.HUnit (testCase, (@?=))
 import TermType
-import HelperTypes (renaming)
+import HelperTypes (termRenaming)
 
   
 test_checkTermsRenaming1 :: IO TestTree
@@ -12,23 +12,23 @@ test_checkTermsRenaming1 = let
     term1 = Apply (Apply (Fun "f") (Free "xs'")) (Con "Cons" [Free "x", Free "x'"])
     term2 = Apply (Apply (Fun "f") (Free "xs")) (Free "x'")
     expected = [("x'",Con "Cons" [Free "x", Free "x'"]),("xs",Free "xs'")]
-    in return $ testGroup "Helpers" [testCase "Renaming: f xs' Cons(x,x') and f xs x'" $ concat (renaming term2 term1) @?= expected]     
+    in return $ testGroup "Helpers" [testCase "Renaming: f xs' Cons(x,x') and f xs x'" $ concat (termRenaming term2 term1) @?= expected]
 
 test_checkTermsRenaming2 :: IO TestTree
 test_checkTermsRenaming2 = let 
     term1 = Apply (Apply (Fun "f") (Apply (Fun "f'") (Free "y"))) (Con "Cons" [Free "x", Free "x'"])
     term2 = Apply (Apply (Fun "f") (Free "xs")) (Free "x")
     expected = [("x",Con "Cons" [Free "x", Free "x'"]),("xs", Apply (Fun "f'") (Free "y"))]
-    in return $ testGroup "Helpers" [testCase "Renaming: f (f' y) Cons(x,x') and f xs x" $ concat (renaming term2 term1) @?= expected]
+    in return $ testGroup "Helpers" [testCase "Renaming: f (f' y) Cons(x,x') and f xs x" $ concat (termRenaming term2 term1) @?= expected]
     
 test_checkTermsRenaming3 :: IO TestTree
 test_checkTermsRenaming3 = let 
     term1 = Apply (Fun "f") (Con "Cons" [Free "x", Free "x'"])
     term2 = Apply (Apply (Fun "f") (Free "xs")) (Free "x")
-    in return $ testGroup "Helpers" [testCase "Renaming: f Cons(x,x') and f xs x" $ concat (renaming term2 term1) @?= []]
+    in return $ testGroup "Helpers" [testCase "Renaming: f Cons(x,x') and f xs x" $ concat (termRenaming term2 term1) @?= []]
         
 test_checkTermsRenaming4 :: IO TestTree
 test_checkTermsRenaming4 = let 
     term1 = Apply (Fun "f") (Con "Cons" [Free "x", Free "x'"])
     term2 = Apply (Fun "f'") (Con "Cons" [Free "x", Free "x'"])
-    in return $ testGroup "Helpers" [testCase "Renaming: f Cons(x,x') and f' Cons(x,x')" $ concat (renaming term2 term1) @?= []]        
+    in return $ testGroup "Helpers" [testCase "Renaming: f Cons(x,x') and f' Cons(x,x')" $ concat (termRenaming term2 term1) @?= []]

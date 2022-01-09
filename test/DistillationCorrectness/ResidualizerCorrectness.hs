@@ -4,7 +4,7 @@ import Test.Tasty.Providers (TestTree)
 import Test.Tasty (testGroup)
 import Test.Tasty.HUnit (testCase, (@?=))
 import TermType
-import HelperTypes (renaming)
+import HelperTypes (termRenaming)
 import LTSType
 import Residualizer
 import Driver (drive)

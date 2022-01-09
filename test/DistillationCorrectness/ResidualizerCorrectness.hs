@@ -51,10 +51,9 @@ test_checkResidualizer_fun_neil3 = let
 test_checkResidualizer_fun_qrev :: IO TestTree
 test_checkResidualizer_fun_qrev = let
     lts = drive (Fun "qrev") [] [("qrev", (["xs", "ys"], qrevTerm))]
-    expected =  Lambda "x" (Lambda "ys" (Lambda "xs" (Case (Free "xs")
-        [("Nil",[],Free "ys")
-        ,("Cons",["x","xs"],Apply (Apply (Fun "f") (Free "xs")) (Con "Cons" [Free "x",Free "ys"]))
-        ])))
+    expected =  Lambda "x'" (Lambda "x" (Lambda "xs" (Case (Free "xs")
+        [("Nil",[],Con "Cons" [Free "x",Con "Nil" []])
+        ,("Cons",["x","xs"],Apply (Apply (Fun "f") (Free "xs")) (Con "Cons" [Free "x'",Con "Cons" [Free "x",Con "Nil" []]]))])))
     in return $ testGroup "Residualizer" [testCase "qrev xs" $ residualize lts @?= expected]
 
 test_checkResidualizer_fun_qrev_with_accum :: IO TestTree
@@ -72,10 +71,14 @@ test_checkResidualizer_fun_qrev_with_accum = let
             ,(Apply1', doLTS1Tr (Con "Nil" []) (Con' "Nil") doLTS0Tr)])]
 
     expected = Apply 
-        (Apply (Lambda "x" (Lambda "ys" (Lambda "xs" (Case (Free "xs") 
-            [("Nil",[],Free "ys")
-            ,("Cons",["x","xs"],Apply (Apply (Fun "f") (Free "xs")) (Con "Cons" [Free "x",Free "ys"]))])))) (Free "xs")) 
-        (Apply (Apply (Lambda "x" (Lambda "xs" (Case (Free "xs") 
-            [("Nil",[],Con "Nil" [])
-            ,("Cons",["x","xs"],Apply (Apply (Fun "f") (Free "xs")) (Con "Cons" [Free "x",Con "Nil" []]))]))) (Free "xs")) (Con "Nil" []))
+        (Apply 
+            (Lambda "x'" (Lambda "x" (Lambda "xs" (Case (Free "xs") 
+                [("Nil",[],Con "Cons" [Free "x",Con "Nil" []])
+                ,("Cons",["x","xs"],Apply (Apply (Fun "f") (Free "xs")) (Con "Cons" [Free "x'",Con "Cons" [Free "x",Con "Nil" []]]))])))) 
+            (Free "xs")) 
+        (Apply 
+            (Apply (Lambda "x" (Lambda "xs" (Case (Free "xs") 
+                [("Nil",[],Con "Nil" [])
+                ,("Cons",["x","xs"],Apply (Apply (Fun "f") (Free "xs")) (Con "Cons" [Free "x",Con "Nil" []]))]))) (Free "xs")) 
+            (Con "Nil" []))
     in return $ testGroup "Residualizer" [testCase "qrev xs" $ residualize lts' @?= expected]

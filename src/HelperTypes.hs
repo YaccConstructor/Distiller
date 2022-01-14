@@ -38,9 +38,12 @@ branchesSetsForConstructor branches branches' = all (\t -> tail (map fst t) == t
 branchesSetForConstructor :: [(Label, LTS)] -> Bool
 branchesSetForConstructor branch = tail (map fst branch) == take (length branch - 1) (map ConArg' createLabels)
 
---matchCase :: (Eq a1, Foldable t1, Foldable t2) => [(a1, t1 a2, c1)] -> [(a1, t2 a3, c2)] -> Bool
---matchCase bs bs' = length bs == length bs' && all (\((c,xs,_),(c',xs',_)) -> c == c' && length xs == length xs') (zip bs bs')
-matchCase bs bs' = True
+
+matchCase :: [(Label, LTS)] -> [(Label, LTS)] -> Bool
+matchCase bs bs' = length bs == length bs' && all (\((CaseBranch' c xs),(CaseBranch' c' xs')) 
+    -> c == c' && length xs == length xs') (zip (map fst bs) (map fst bs'))
+
+matchCase' bs bs' = length bs == length bs' && all (\((c,xs,t),(c',xs',t')) -> c == c' && length xs == length xs') (zip bs bs')
 
 renameLabel :: Label -> (String, String) -> Label
 renameLabel (X' x) (x', x'') = if x == x' then X' x'' else X' x
@@ -106,7 +109,7 @@ termRenaming' fs (Lambda x t) (Lambda x' t') fv bv s = let x'' = renameVar fv x
 termRenaming' fs (Con c ts) (Con c' ts') fv bv s | c==c' = foldr (\(t,t') ss -> concat [termRenaming' fs t t' fv bv s | s <- ss]) [s] (zip ts ts')
 termRenaming' fs (Apply t u) (Apply t' u') fv bv s = concat [termRenaming' fs u u' fv bv s' | s' <- termRenaming' fs t t' fv bv s]
 termRenaming' fs (Fun f) (Fun f') fv bv s | f==f' = [s]
-termRenaming' fs (Case t bs) (Case t' bs') fv bv s | matchCase bs bs' = foldr (\((c,xs,t),(c',xs',t')) ss -> let
+termRenaming' fs (Case t bs) (Case t' bs') fv bv s | matchCase' bs bs' = foldr (\((c,xs,t),(c',xs',t')) ss -> let
         fv' = renameVars fv xs
         xs'' = take (length xs) fv'
     in  concat [termRenaming' fs t t' fv' (xs''++bv) s | s <- ss]) (termRenaming' fs t t' fv bv s) (zip bs bs')

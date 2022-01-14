@@ -59,4 +59,16 @@ test_checkEmbedding_append :: IO TestTree
 test_checkEmbedding_append = let
     lts1 = appendLts
     lts2 = appendLts'
-    in return $ testGroup "HEChecker" [testCase "HEmbedding: append" $ isHomeomorphicEmbedding lts1 lts2 @?= [("xs","xs"),("xs'","x'"),("xs'","xs"),("xs'","xs''")]]
+    in return $ testGroup "HEChecker" [testCase "HEmbedding: append" $ isHomeomorphicEmbedding lts1 lts2 @?= [("x'","x''"),("xs","x'"),("xs","xs'"),("xs","xs''"),("xs'","xs''")]]
+    
+test_checkEmbedding_revrev :: IO TestTree
+test_checkEmbedding_revrev = let 
+    lts1 = revrevTermLts
+    lts2 = revrevTermLts'
+    in return $ testGroup "HEChecker" [testCase "HEmbedding: revrev" $ isHomeomorphicEmbedding lts1 lts2 @?= [("x","x"),("x","x'"),("x'","x'"),("x'","x''"),("xs","xs")]]
+
+test_checkEmbedding_nested_cases :: IO TestTree
+test_checkEmbedding_nested_cases = let
+    lts1 = term1Lts
+    lts2 = term2Lts
+    in return $ testGroup "HEChecker" [testCase "HEmbedding: nested cases" $ isHomeomorphicEmbedding lts1 lts2 @?= [("v'","v'"),("vs'","vs'"),("x'","x'"),("xs'","xs''")]]

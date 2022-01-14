@@ -79,25 +79,65 @@ test_checkGeneralizationCorrectness_neil3 = let
         ,(X' "x2",LTS (LTSTransitions (Free "xs'") [(X' "xs'",Leaf)]))])
     in do return $ testGroup "Tests" [testCase "neil3" $ generalize neil3Lts neil3Lts' [] @?= expectedLts]
 
-revrevTerm = Case (Apply (Apply (Fun "revrev") (Free "xs'")) (Con "Con" [Free "x", Con "Nil" []]))
-        [("Nil", [], (Con "Con" [Free "x", Con "Nil" []]))
-        ,("Cons",["x","xs"], Con "Cons" [Free "x", Apply (Apply (Fun "append") (Free "xs")) (Con "Con" [Free "x", Con "Nil" []])])]
-  {-case (revrev xs' [x']) of
-                 Nil -> [x']\n
-               | Cons(x,xs) -> Cons(x,append xs [x'])-}
-revrevTermLts = drive revrevTerm ["revrev", "append"] []
-revrevTerm' = Case (Apply
-                        (Apply (Fun "append") (Apply (Fun "revrev") (Con "Cons" [Free "x''", Free "x'"])))
-                        (Con "Con" [Free "x", Con "Nil" []]))
-        [("Nil", [], (Con "Con" [Free "x", Con "Nil" []]))
-        ,("Cons",["x","xs"], Con "Cons" [Free "x", Apply (Apply (Fun "append") (Free "xs")) (Con "Con" [Free "x", Con "Nil" []])])]
--- (append (revrev xs'' [x'',x']) [x''])
-revrevTermLts' = drive revrevTerm' ["revrev", "append"] []
-
 test_checkGeneralizationCorrectness_revrev :: IO TestTree
 test_checkGeneralizationCorrectness_revrev  = let
-    expectedLts = doLTS0Tr
+    expectedLts = LTS (LTSTransitions (Case (Apply (Apply (Fun "append") (Apply (Apply (Fun "revrev") (Free "xs''")) 
+        (Con "Cons" [Free "x''",Free "x'"]))) (Con "Con" [Free "x''",Con "Nil" []])) [("Nil",[],Con "Con" [Free "x'",Con "Nil" []])
+        ,("Con",["x","xs"],Con "Con" [Free "x",Apply (Apply (Fun "append") (Free "xs")) (Con "Con" [Free "x'",Con "Nil" []])])]) 
+        [(Let',LTS (LTSTransitions (Case (Apply (Apply (Fun "append") (Apply (Apply (Fun "revrev") (Free "xs''")) (Con "Cons" 
+        [Free "x''",Free "x'"]))) (Con "Con" [Free "x''",Con "Nil" []])) [("Nil",[],Con "Con" [Free "x'",Con "Nil" []]),("Con",["x","xs"]
+        ,Con "Con" [Free "x",Apply (Apply (Fun "append") (Free "xs")) (Con "Con" [Free "x'",Con "Nil" []])])]) [(Case',LTS (LTSTransitions 
+        (Apply (Apply (Fun "append") (Apply (Apply (Fun "revrev") (Free "xs''")) (Con "Cons" [Free "x''",Free "x'"]))) (Con "Con"
+         [Free "x''",Con "Nil" []])) [(Apply0',LTS (LTSTransitions (Apply (Fun "append") (Apply (Apply (Fun "revrev") (Free "xs''")) 
+         (Con "Cons" [Free "x''",Free "x'"]))) [(Apply0',LTS (LTSTransitions (Fun "append") [(Unfold' "append",LTS (LTSTransitions (Free "x3")
+          [(X' "x3",Leaf)]))])),(Apply1',LTS (LTSTransitions (Free "x2") [(X' "x2",Leaf)]))])),(Apply1',LTS (LTSTransitions (Con "Con" 
+          [Free "x''",Con "Nil" []]) [(Con' "Con",Leaf),(ConArg' "#1",LTS (LTSTransitions (Free "x''") [(X' "x''",Leaf)])),(ConArg' "#2",LTS 
+          (LTSTransitions (Con "Nil" []) [(Con' "Nil",Leaf)]))]))])),(CaseBranch' "Nil" [],LTS (LTSTransitions (Con "Con" [Free "x'",Con "Nil" []])
+           [(Con' "Con",Leaf),(ConArg' "#1",LTS (LTSTransitions (Free "x'") [(X' "x'",Leaf)])),(ConArg' "#2",LTS (LTSTransitions (Con "Nil" []) 
+           [(Con' "Nil",Leaf)]))])),(CaseBranch' "Con" ["x","xs"],LTS (LTSTransitions (Con "Con" [Free "x",Apply (Apply (Fun "append") (Free "xs")) 
+           (Con "Con" [Free "x'",Con "Nil" []])]) [(Con' "Con",Leaf),(ConArg' "#1",LTS (LTSTransitions (Free "x") [(X' "x",Leaf)])),(ConArg' "#2"
+           ,LTS (LTSTransitions (Apply (Apply (Fun "append") (Free "xs")) (Con "Con" [Free "x'",Con "Nil" []])) [(Apply0',LTS (LTSTransitions (Apply 
+           (Fun "append") (Free "xs")) [(Apply0',LTS (LTSTransitions (Fun "append") [(Unfold' "append",LTS (LTSTransitions (Free "x3")
+            [(X' "x3",Leaf)]))])),(Apply1',LTS (LTSTransitions (Free "xs") [(X' "xs",Leaf)]))])),(Apply1',LTS (LTSTransitions (Con "Con"
+             [Free "x'",Con "Nil" []]) [(Con' "Con",Leaf),(ConArg' "#1",LTS (LTSTransitions (Free "x'") [(X' "x'",Leaf)])),(ConArg' "#2",LTS 
+             (LTSTransitions (Con "Nil" []) [(Con' "Nil",Leaf)]))]))]))]))]))
+             
+             ,(X' "x3",Leaf)
+             ,(X' "x2",LTS (LTSTransitions (Apply (Apply 
+             (Fun "revrev") (Free "xs''")) (Con "Cons" [Free "x''",Free "x'"])) [(Apply0',LTS (LTSTransitions (Apply (Fun "revrev") (Free "xs''"))
+              [(Apply0',LTS (LTSTransitions (Fun "revrev") [(Unfold' "revrev",Leaf)])),(Apply1',LTS (LTSTransitions (Free "xs''") 
+              [(X' "xs''",Leaf)]))])),(Apply1',LTS (LTSTransitions (Con "Cons" [Free "x''",Free "x'"]) [(Con' "Cons",Leaf)
+        ,(ConArg' "#1",LTS (LTSTransitions (Free "x''") [(X' "x''",Leaf)])),(ConArg' "#2",LTS (LTSTransitions (Free "x'") [(X' "x'",Leaf)]))]))]))])
     in do return $ testGroup "Tests" [testCase "revrev" $ generalize revrevTermLts' revrevTermLts [] @?= expectedLts]
 
+test_checkGeneralizationCorrectness_nested_cases :: IO TestTree
+test_checkGeneralizationCorrectness_nested_cases  = let
+    expectedTS = 
+      LTS (LTSTransitions (Case (Case (Apply (Fun "f") (Free "xs''")) [("Nil",[],Con "Con" [Free "x''",Con "Nil" []]),("Cons",["v'","vs'"] ,Con "Con" [Free "v'",Apply (Fun "g") (Free "vs'")])]) [("Nil",[],Con "Con" [Free "x'",Con "Nil" []]),("Cons",["v'","vs'"],
+        Con "Con" [Free "v'",Apply (Fun "g") (Free "vs'")])]) 
+    
+        [(Let',LTS (LTSTransitions (Case (Case (Apply (Fun "f") (Free "xs''")) 
+        [("Nil",[],Con "Con" [Free "x''",Con "Nil" []]),("Cons",["v'","vs'"],Con "Con" [Free "v'",Apply (Fun "g") (Free "vs'")])]) 
+        [("Nil",[],Con "Con" [Free "x'",Con "Nil" []]),("Cons",["v'","vs'"],Con "Con" [Free "v'",Apply (Fun "g") (Free "vs'")])])
+        [(Case',LTS (LTSTransitions (Free "x1") [(X' "x1",Leaf)])),(CaseBranch' "Nil" [],LTS (LTSTransitions (Con "Con" [Free "x'",Con "Nil" []])
+        [(Con' "Con",Leaf),(ConArg' "#1",LTS (LTSTransitions (Free "x'") [(X' "x'",Leaf)])),(ConArg' "#2",LTS (LTSTransitions (Con "Nil" [])
+        [(Con' "Nil",Leaf)]))])),(CaseBranch' "Cons" ["v'","vs'"],LTS (LTSTransitions (Con "Con" [Free "v'",Apply (Fun "g") (Free "vs'")]) 
+        [(Con' "Con",Leaf),(ConArg' "#1",LTS (LTSTransitions (Free "v'") [(X' "v'",Leaf)])),(ConArg' "#2",LTS (LTSTransitions (Apply (Fun "g") 
+        (Free "vs'")) [(Apply0',LTS (LTSTransitions (Fun "g") [(Unfold' "g",LTS (LTSTransitions (Free "x2") [(X' "x2",Leaf)]))]))
+        ,(Apply1',LTS (LTSTransitions (Free "vs'") [(X' "vs'",Leaf)]))]))]))]))
+       
+       ,(X' "x1",LTS (LTSTransitions (Case (Apply (Fun "f") (Free "xs''")) 
+       [("Nil",[],Con "Con" [Free "x''",Con "Nil" []]),("Cons",["v'","vs'"],Con "Con" [Free "v'",Apply (Fun "g") (Free "vs'")])]) 
+       [(Case',LTS (LTSTransitions (Apply (Fun "f") (Free "xs''")) [(Apply0',LTS (LTSTransitions (Fun "f") [(Unfold' "f",Leaf)]))
+       ,(Apply1',LTS (LTSTransitions (Free "xs''") [(X' "xs''",Leaf)]))]))
+       ,(CaseBranch' "Nil" [],LTS (LTSTransitions 
+       (Con "Con" [Free "x''",Con "Nil" []]) [(Con' "Con",Leaf),(ConArg' "#1",LTS (LTSTransitions (Free "x''") [(X' "x''",Leaf)]))
+       ,(ConArg' "#2",LTS (LTSTransitions (Con "Nil" []) [(Con' "Nil",Leaf)]))]))
+       ,(CaseBranch' "Cons" ["v'","vs'"],LTS (LTSTransitions 
+       (Con "Con" [Free "v'",Apply (Fun "g") (Free "vs'")]) [(Con' "Con",Leaf),(ConArg' "#1",LTS (LTSTransitions (Free "v'") [(X' "v'",Leaf)]))
+       ,(ConArg' "#2",LTS (LTSTransitions (Apply (Fun "g") (Free "vs'")) [(Apply0',LTS (LTSTransitions (Fun "g") [(Unfold' "g",Leaf)]))
+       ,(Apply1',LTS (LTSTransitions (Free "vs'") [(X' "vs'",Leaf)]))]))]))]))
+       ,(X' "x2",Leaf)])        
+    in do return $ testGroup "Tests" [testCase "nested cases" $ generalize term2Lts term1Lts [] @?= expectedTS]
 
 

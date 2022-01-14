@@ -40,4 +40,35 @@ neil3Term' = Case (Case (Apply (Fun "f") (Free "xs''"))
                      ,("False", [], Con "False" [])]
 neil3Lts' = drive neil3Term' [] [("f", ([], neil3Def))]
 
-  
+revrevTerm = Case (Apply
+                        (Apply
+                            (Fun "revrev")
+                            (Free "xs'"))
+                        (Con "Con" [Free "x'", Con "Nil" []]))
+        [("Nil", [], (Con "Con" [Free "x'", Con "Nil" []]))
+        ,("Con",["x","xs"], Con "Con" [Free "x", Apply (Apply (Fun "append") (Free "xs")) (Con "Con" [Free "x'", Con "Nil" []])])]
+revrevTermLts = drive revrevTerm ["revrev", "append"] []
+revrevTerm' = Case (Apply
+                        (Apply
+                            (Fun "append")
+                            (Apply
+                                (Apply
+                                    (Fun "revrev")
+                                    (Free "xs''"))
+                                (Con "Cons" [Free "x''", Free "x'"])))
+                        (Con "Con" [Free "x''", Con "Nil" []]))
+        [("Nil", [], (Con "Con" [Free "x'", Con "Nil" []]))
+        ,("Con",["x","xs"], Con "Con" [Free "x", Apply (Apply (Fun "append") (Free "xs")) (Con "Con" [Free "x'", Con "Nil" []])])]
+revrevTermLts' = drive revrevTerm' ["revrev", "append"] []  
+
+
+term1 = (Case (Apply (Fun "f") (Free "xs'")))
+    [("Nil", [], (Con "Con" [Free "x'", Con "Nil" []]))
+    ,("Cons", ["v'", "vs'"], (Con "Con" [Free "v'", (Apply (Fun "g") (Free "vs'"))]))]
+term1Lts = drive term1 ["f", "g"] []     
+term2 = Case ((Case (Apply (Fun "f") (Free "xs''")))
+            [("Nil", [], (Con "Con" [Free "x''", Con "Nil" []]))
+            ,("Cons", ["v'", "vs'"], (Con "Con" [Free "v'", (Apply (Fun "g") (Free "vs'"))]))])
+    [("Nil", [], (Con "Con" [Free "x'", Con "Nil" []]))
+    ,("Cons", ["v'", "vs'"], (Con "Con" [Free "v'", (Apply (Fun "g") (Free "vs'"))]))]
+term2Lts = drive term2 ["f", "g"] []

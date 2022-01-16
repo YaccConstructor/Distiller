@@ -75,10 +75,11 @@ embed funNamesAccum lts1 lts2 freeVars boundVars renaming | traceShow ("embed: t
     ++ show lts2 ++ ", dived = " ++ show (dived funNamesAccum lts1 lts2 freeVars boundVars renaming)
     ++ show (coupled funNamesAccum lts1 lts2 freeVars boundVars renaming)) False = undefined
 embed funNamesAccum lts1 lts2 freeVars boundVars renaming =
-  sort $ nub (dived funNamesAccum lts1 lts2 freeVars boundVars renaming ++ coupled funNamesAccum lts1 lts2 freeVars boundVars renaming)
+  sort $ nub (coupled funNamesAccum lts1 lts2 freeVars boundVars renaming ++ dived funNamesAccum lts1 lts2 freeVars boundVars renaming)
 
 dived ::  [(String, String)] -> LTS -> LTS -> [String] -> [String] -> [(String, String)] -> [(String, String)]
 dived _ t u _ _ _ | traceShow ("dived : t = " ++ show t ++ " and u = " ++ show u) False = undefined
+--dived funNamesAccum (LTS (LTSTransitions (Free x) _)) (LTS (LTSTransitions _ (_ : _))) _ _ _ = []
 dived funNamesAccum lts1
                     lts2@(LTS (LTSTransitions _ branches'@((Unfold' _, _) : _))) freeVars boundVars renaming =
     -- if some i has embedding, than dived is passed
@@ -112,15 +113,18 @@ dived _ _ _ _ _ _ = []
 
 -- if all i has embedding, than coupled is passed
 coupled :: [(String, String)] -> LTS -> LTS -> [String] -> [String] -> [(String, String)] -> [(String, String)]
-coupled _ t u _ _ _
-    | traceShow ("coupled : t = " ++ show t ++ " and u = " ++ show u) False = undefined
-coupled _ t@(LTS (LTSTransitions (Free x) _)) u@(LTS (LTSTransitions (Free x') _)) _ _ _
-    | traceShow ("coupled : t = " ++ show t ++ " and u = " ++ show u) False = undefined
+--coupled _ t u _ _ _
+  --  | traceShow ("coupled : t = " ++ show t ++ " and u = " ++ show u) False = undefined
+coupled _ t@(LTS (LTSTransitions (Free x) _)) u@(LTS (LTSTransitions (Free x') _)) _ _ renaming
+    | traceShow ("coupled : t = " ++ show t ++ " and u = " ++ show u ++ ", r = " ++ show renaming) False = undefined
 coupled funNamedAccum (LTS (LTSTransitions t@(Free x) _))
                       (LTS (LTSTransitions t'@(Free x') _)) freeVars boundVars renaming =
-                        if  (x,x') `elem` renaming
+                          if x `elem` map fst renaming
+                            then concat ([renaming | (x,x') `elem` renaming])
+                            else concat ([(x,x') : renaming])
+                        {-if  (x,x') `elem` renaming
                             then renaming
-                            else (x,x') : renaming
+                            else (x,x') : renaming--}
 -- unfold
 coupled funNamesAccum (LTS (LTSTransitions (Fun f) _))
                       (LTS (LTSTransitions (Fun g) _)) _ _ renaming | f /= g = []
@@ -140,7 +144,9 @@ coupled funNamesAccum (LTS (LTSTransitions _ bs@((Con' conName, Leaf) : branches
       if conName == conName' then let
         termPairs = zip (map snd branches) (map snd branches')
         in foldr (\(t, t') renaming' -> embed funNamesAccum t t' freeVars boundVars renaming') renaming termPairs
-        else []
+        {---embedResults =  map (\(t, t') -> embed funNamesAccum t t' freeVars boundVars renaming) termPairs
+        in if [] `elem` embedResults then [] else concat embedResults--}
+      else []
 -- Apply
 coupled funNamesAccum (LTS (LTSTransitions (Apply (Fun f) _) [(Apply0', _), (Apply1', u)]))
                         (LTS (LTSTransitions (Apply (Fun g) _) [(Apply0', _), (Apply1', u')])) _ _ _ | traceShow ("f = " ++ show f ++ ", g = " ++ show g) False = undefined
@@ -149,11 +155,7 @@ coupled funNamesAccum (LTS (LTSTransitions (Apply (Fun f) _) [(Apply0', _), (App
 coupled funNamesAccum  (LTS (LTSTransitions _ [(Apply0', t), (Apply1', u)]))
                            (LTS (LTSTransitions _ [(Apply0', t'), (Apply1', u')])) freeVars boundVars renaming = let
     a = coupled funNamesAccum t t' freeVars boundVars renaming
-    b = embed funNamesAccum u u' freeVars boundVars renaming in a ++ b
-coupled funNamesAccum  (LTS (LTSTransitions _ [(Apply0', t), (Apply1', u)]))
-                           (LTS (LTSTransitions _ [(Apply0', t'), (Apply1', u')])) freeVars boundVars renaming = let
-    a = coupled funNamesAccum t t' freeVars boundVars renaming
-    b = embed funNamesAccum u u' freeVars boundVars renaming in a ++ b
+    b = embed funNamesAccum u u' freeVars boundVars a in b
 -- let
 coupled funNamesAccum (LTS (LTSTransitions _ [(Let', t), (LetX' x, u)]))
                           (LTS (LTSTransitions _ [(Let', t'), (LetX' x', u')])) freeVars boundVars renaming = let
@@ -169,7 +171,7 @@ coupled funNamesAccum (LTS (LTSTransitions _ ((Case', t) : branches)))
     | matchCase branches branches' = let
         initializer = embed funNamesAccum t t' freeVars boundVars renaming
         branchess = zip branches branches' 
-        in if initializer == [] 
+        in if null initializer
             then []
             else foldr (\((CaseBranch' name xs, u), (CaseBranch' name' xs', u')) renaming' -> let
                     freeVars' = renameVars freeVars xs

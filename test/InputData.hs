@@ -55,7 +55,7 @@ revrevTerm' = Case (Apply
                                 (Apply
                                     (Fun "revrev")
                                     (Free "xs''"))
-                                (Con "Cons" [Free "x''", Free "x'"])))
+                                (Con "Con" [Free "x''", Con "Con" [Free "x'", Con "Nil" []]])))
                         (Con "Con" [Free "x''", Con "Nil" []]))
         [("Nil", [], (Con "Con" [Free "x'", Con "Nil" []]))
         ,("Con",["x","xs"], Con "Con" [Free "x", Apply (Apply (Fun "append") (Free "xs")) (Con "Con" [Free "x'", Con "Nil" []])])]

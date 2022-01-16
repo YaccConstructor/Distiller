@@ -71,14 +71,14 @@ isHomeomorphicEmbedding' :: LTS -> LTS -> [(String, String)]
 isHomeomorphicEmbedding' lts1 lts2 = coupled [] lts1 lts2 [] [] []
 
 embed ::  [(String, String)] -> LTS -> LTS -> [String] -> [String] -> [(String, String)] -> [(String, String)]
-{---embed funNamesAccum lts1 lts2 freeVars boundVars renaming | traceShow ("embed: t = " ++ show lts1 ++ " and u = "
+embed funNamesAccum lts1 lts2 freeVars boundVars renaming | traceShow ("embed: t = " ++ show lts1 ++ " and u = "
     ++ show lts2 ++ ", dived = " ++ show (dived funNamesAccum lts1 lts2 freeVars boundVars renaming)
-    ++ show (coupled funNamesAccum lts1 lts2 freeVars boundVars renaming)) False = undefined--}
+    ++ show (coupled funNamesAccum lts1 lts2 freeVars boundVars renaming)) False = undefined
 embed funNamesAccum lts1 lts2 freeVars boundVars renaming =
   sort $ nub (dived funNamesAccum lts1 lts2 freeVars boundVars renaming ++ coupled funNamesAccum lts1 lts2 freeVars boundVars renaming)
 
 dived ::  [(String, String)] -> LTS -> LTS -> [String] -> [String] -> [(String, String)] -> [(String, String)]
---dived _ t u _ _ _ | traceShow ("dived : t = " ++ show t ++ " and u = " ++ show u) False = undefined
+dived _ t u _ _ _ | traceShow ("dived : t = " ++ show t ++ " and u = " ++ show u) False = undefined
 dived funNamesAccum lts1
                     lts2@(LTS (LTSTransitions _ branches'@((Unfold' _, _) : _))) freeVars boundVars renaming =
     -- if some i has embedding, than dived is passed
@@ -106,15 +106,16 @@ dived funNamesAccum lts1
                     lts2@(LTS (LTSTransitions _ branches'@((Let', _) : _))) freeVars boundVars renaming =
     -- if some i has embedding, than dived is passed
     concatMap (\t -> embed funNamesAccum lts1 t freeVars boundVars renaming) (map snd branches')
+dived _ t u _ _ _ | traceShow ("in dived nothing matched : t = " ++ show t ++ " and u = " ++ show u) False = undefined
 dived _ _ _ _ _ _ = []
 
 
 -- if all i has embedding, than coupled is passed
 coupled :: [(String, String)] -> LTS -> LTS -> [String] -> [String] -> [(String, String)] -> [(String, String)]
-{---coupled _ t u _ _ _
+coupled _ t u _ _ _
     | traceShow ("coupled : t = " ++ show t ++ " and u = " ++ show u) False = undefined
 coupled _ t@(LTS (LTSTransitions (Free x) _)) u@(LTS (LTSTransitions (Free x') _)) _ _ _
-    | traceShow ("coupled : t = " ++ show t ++ " and u = " ++ show u) False = undefined-}
+    | traceShow ("coupled : t = " ++ show t ++ " and u = " ++ show u) False = undefined
 coupled funNamedAccum (LTS (LTSTransitions t@(Free x) _))
                       (LTS (LTSTransitions t'@(Free x') _)) freeVars boundVars renaming =
                         if  (x,x') `elem` renaming
@@ -167,11 +168,13 @@ coupled funNamesAccum (LTS (LTSTransitions _ ((Case', t) : branches)))
                           (LTS (LTSTransitions _ ((Case', t') : branches'))) freeVars boundVars renaming
     | matchCase branches branches' = let
         initializer = embed funNamesAccum t t' freeVars boundVars renaming
-        branchess = zip branches branches'
-        in foldr (\((CaseBranch' name xs, u), (CaseBranch' name' xs', u')) renaming' -> let
+        branchess = zip branches branches' 
+        in if initializer == [] 
+            then []
+            else foldr (\((CaseBranch' name xs, u), (CaseBranch' name' xs', u')) renaming' -> let
                     freeVars' = renameVars freeVars xs
                     xs'' = take (length xs) freeVars'
                     in (renaming' ++ embed funNamesAccum u u' freeVars' (xs'' ++ boundVars) renaming')) initializer branchess
---coupled _ t u _ _ _ | traceShow ("Nothing matched for t = " ++ show t ++ " and u = " ++ show u) False = undefined
+coupled _ t u _ _ _ | traceShow ("IN coupling nothing matched for t = " ++ show t ++ " and u = " ++ show u) False = undefined
 coupled _ _ _ _ _ _ = []
 

@@ -9,6 +9,7 @@ import Text.ParserCombinators.Parsec.Expr
 import qualified Text.ParserCombinators.Parsec.Token as T
 import Text.ParserCombinators.Parsec.Language
 import Data.List
+import Debug.Trace (traceShow)
 
 
 type TermInContext = (Term, Context)
@@ -63,7 +64,7 @@ free' (Case t bs) = free' t ++ concatMap (\(c,xs,t) -> free' t) bs
 free' (Let x t u) = free' t  ++ free' u
 
 -- place term in context
-
+--place t k | traceShow ("place : t = " ++ show t ++ ", k = " ++ show k) False = undefined
 place t EmptyCtx = t
 place t (ApplyCtx con u) = place (Apply t u) con
 place t (CaseCtx con bs) = place (Case t bs) con

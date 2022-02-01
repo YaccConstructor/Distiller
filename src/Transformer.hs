@@ -11,8 +11,10 @@ import Residualizer
 import TermType
 import Unfolder
 import HelperTypes
+import Debug.Trace (traceShow)
 
 transform :: Int -> TermInContext -> [LTS] -> [Generalization] -> [FunctionDefinition] -> LTS
+transform n t f p funsDefs | traceShow ("transform" ++ show n ++ show t ++ show f ++ show p ++ show funsDefs) False = undefined
 transform index (term@(Free x), context) funNamesAccum previousGensAccum funsDefs =
   transform' index (doLTS1Tr term (X' x) doLTS0Tr) context funNamesAccum previousGensAccum funsDefs
    
@@ -47,11 +49,14 @@ transform index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum f
           funNamesAccum of
           (_, t') : _ ->
             let generalizedLTS = generalize t t' previousGensAccum
-                residualizedLTS = residualize generalizedLTS
-             in transform index (residualizedLTS, EmptyCtx) funNamesAccum previousGensAccum []
+                residualizedLTS = residualize generalizedLTS funsDefs
+             in transform index (fst residualizedLTS, EmptyCtx) funNamesAccum previousGensAccum []
           [] ->
             let oldTerm = place f k
-                newTerm = transform index (unfold oldTerm funsDefs, EmptyCtx) (t : funNamesAccum) previousGensAccum funsDefs
+                residualized = residualize t funsDefs
+                --newTerm = if index == 0 
+                  --  then transform index (unfold oldTerm funsDefs, EmptyCtx) (t : funNamesAccum) previousGensAccum funsDefs
+                newTerm = transform index (unfold (fst residualized) funsDefs, EmptyCtx) (t : funNamesAccum) previousGensAccum (funsDefs ++ snd residualized)
              in doLTS1Tr oldTerm (Unfold' funName) newTerm
 transform index (Apply e0 e1, k) funNamesAccum previousGensAccum funsDefs =
   transform index (e0, ApplyCtx k e1) funNamesAccum previousGensAccum funsDefs
@@ -64,7 +69,7 @@ transform index (e@(Let x e0 e1), k) funNamesAccum previousGensAccum funsDefs =
 transform index (MultipleApply e0 funsDefs', context) funNamesAccum previousGensAccum funsDefs =
   let
    in transform index (e0, context) funNamesAccum previousGensAccum $ funsDefs ++ funsDefs'
-transform _ _ _ _ _ = error "Got error during execution transform."
+transform _ (e0, context) _ _ _ = error $ "Nothing matched for " ++ show e0 ++ show context ++ " during transform."
 
 transform' :: Int -> LTS -> Context -> [LTS] -> [Generalization] -> [FunctionDefinition] -> LTS
 transform' _ lts EmptyCtx _ _ _ = lts

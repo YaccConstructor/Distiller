@@ -42,7 +42,7 @@ distill index (term@(Lambda x e0), k@(ApplyCtx k' e1)) funNamesAccum previousGen
 distill index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum funsDefs =
    let t = transform index termInCtx [] previousGensAccum funsDefs
    in case filter (null . isRenaming t) funNamesAccum of
-        _ : _ -> error "erro2" -- doLTS1Tr f (Unfold' funName) doLTS0Tr
+        _ : _ -> doLTS1Tr f (Unfold' funName) doLTS0Tr
         [] -> case mapMaybe ( \t' -> case isHomeomorphicEmbedding t t' of
                             [] -> Nothing
                             renaming -> Just (renaming, t')) funNamesAccum of
@@ -53,8 +53,8 @@ distill index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum fun
           [] ->
             let oldTerm = place f k
                 residualized = residualize t funsDefs
-                --newTerm = distill index (unfold residualized funsDefs, EmptyCtx) (t : funNamesAccum) previousGensAccum []
-             in error $ "Error" ++ show residualized -- ++ show (unfold residualized funsDefs)--doLTS1Tr oldTerm (Unfold' funName) newTerm
+                newTerm = distill index (unfold (fst $ residualized) funsDefs, EmptyCtx) (t : funNamesAccum) previousGensAccum funsDefs
+             in doLTS1Tr oldTerm (Unfold' funName) newTerm
 distill index (Apply e0 e1, k) funNamesAccum previousGensAccum funsDefs =
   distill index (e0, ApplyCtx k e1) funNamesAccum previousGensAccum funsDefs
 distill index (Case e0 branches, k) funNamesAccum previousGensAccum funsDefs =

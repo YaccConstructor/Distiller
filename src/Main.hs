@@ -83,7 +83,7 @@ toplevel prog = do
                                                        toplevel prog
                                          Just (funsTerms, definitions) -> do
                                                        putStrLn "Implementation in progress"
-                                                       p $ distillProg (funsTerms, definitions)
+                                                       print $ distillProg (funsTerms, definitions)
                                                        toplevel prog
                        Quit -> return ()
                        Help -> do putStrLn helpMessage

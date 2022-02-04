@@ -94,8 +94,23 @@ substituteTermWithNewVars (MultipleApply e0 funsDefs) xs =
    in MultipleApply e0' funsDefs'
 substituteTermWithNewVars fun _ = fun
 
+
 substituteTermWithNewTerms :: Term -> [(String, Term)] -> Term
-substituteTermWithNewTerms term _ = term
+substituteTermWithNewTerms term xs | traceShow ("Substitute term with new terms " ++ show term ++ ";;;" ++ show xs) False = undefined
+substituteTermWithNewTerms term xs = foldl substituteTermWithNewTerm term xs
+
+substituteTermWithNewTerm :: Term -> (String, Term) -> Term
+substituteTermWithNewTerm (Free x) (x', term') | x == x' = term'
+                                               | otherwise = Free x
+substituteTermWithNewTerm (Lambda x term) pair = Lambda x $ substituteTermWithNewTerm term pair
+substituteTermWithNewTerm (Con con terms) pair = Con con $ map (\term -> substituteTermWithNewTerm term pair) terms
+substituteTermWithNewTerm (Apply term' term'') pair = Apply (substituteTermWithNewTerm term' pair) $ substituteTermWithNewTerm term'' pair
+substituteTermWithNewTerm (Case term branches) pair =
+  Case (substituteTermWithNewTerm term pair) (map (\(name, args, term') -> (name, args,substituteTermWithNewTerm term' pair)) branches)
+substituteTermWithNewTerm (Let x term term') pair = Let x (substituteTermWithNewTerm term pair) $ substituteTermWithNewTerm term' pair
+substituteTermWithNewTerm term _ = term
+
+
 
 -- is term t renaming of u
 termRenaming :: Term -> Term -> [[(String, Term)]]

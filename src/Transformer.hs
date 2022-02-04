@@ -11,7 +11,7 @@ import Residualizer
 import TermType
 import Unfolder
 import HelperTypes
-import Debug.Trace (traceShow)
+import Debug.Trace (traceShow, trace)
 
 transform :: Int -> TermInContext -> [LTS] -> [Generalization] -> [FunctionDefinition] -> LTS
 transform n t f p funsDefs | traceShow ("transform" ++ show n ++ show t ++ show f ++ show p ++ show funsDefs) False = undefined
@@ -29,17 +29,22 @@ transform index (term@(Con conName expressions), k@(CaseCtx k' branches)) funNam
       let oldTerm = place term k
           newTerm' = substituteTermWithNewTerms term' $ zip expressions' expressions
           newTerm = transform index (newTerm', k') funNamesAccum previousGensAccum funsDefs
-       in doLTS1Tr oldTerm (UnfoldCons' conName) newTerm
+       in doLTS1Tr oldTerm (UnfoldCons' conName) newTerm       
 transform index (term@(Lambda x expr), EmptyCtx) funNamesAccum previousGensAccum funsDefs =
   doLTS1Tr term (Lambda' x) $ transform index (expr, EmptyCtx) funNamesAccum previousGensAccum funsDefs
+transform index (term@(Lambda x e0), k@(ApplyCtx k' e1)) funNamesAccum previousGensAccum funsDefs | traceShow ("lambda: " ++ show ((substituteTermWithNewTerms e0 [(x, e1)], k'))) False = undefined
 transform index (term@(Lambda x e0), k@(ApplyCtx k' e1)) funNamesAccum previousGensAccum funsDefs =
   doLTS1Tr (place term k) UnfoldBeta' $ transform index (substituteTermWithNewTerms e0 [(x, e1)], k') funNamesAccum previousGensAccum funsDefs
+transform index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum funsDefs | traceShow ("index = " ++ show index ++ show (if index == 0
+                                                                                                then drive (place f k) [] funsDefs
+                                                                                                else transform (index - 1) termInCtx [] previousGensAccum funsDefs)) False = undefined
 transform index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum funsDefs =
    let t =
         if index == 0
           then drive (place f k) [] funsDefs
           else transform (index - 1) termInCtx [] previousGensAccum funsDefs
-   in case filter (null . isRenaming t) funNamesAccum of
+   in do {
+     case filter (null . isRenaming t) funNamesAccum of
         _ : _ -> doLTS1Tr f (Unfold' funName) doLTS0Tr
         [] -> case mapMaybe
           ( \t' -> case isHomeomorphicEmbedding t t' of
@@ -54,10 +59,12 @@ transform index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum f
           [] ->
             let oldTerm = place f k
                 residualized = residualize t funsDefs
-                --newTerm = if index == 0 
-                  --  then transform index (unfold oldTerm funsDefs, EmptyCtx) (t : funNamesAccum) previousGensAccum funsDefs
                 newTerm = transform index (unfold (fst residualized) funsDefs, EmptyCtx) (t : funNamesAccum) previousGensAccum (funsDefs ++ snd residualized)
-             in doLTS1Tr oldTerm (Unfold' funName) newTerm
+             in do {
+               trace ("Residualized!! " ++ show index ++ ";" ++ show t ++ ";;;" ++ show residualized ++ ";;;;" ++ show (unfold (fst residualized) funsDefs))
+               doLTS1Tr oldTerm (Unfold' funName) newTerm
+               }
+               }
 transform index (Apply e0 e1, k) funNamesAccum previousGensAccum funsDefs =
   transform index (e0, ApplyCtx k e1) funNamesAccum previousGensAccum funsDefs
 transform index (Case e0 branches, k) funNamesAccum previousGensAccum funsDefs =

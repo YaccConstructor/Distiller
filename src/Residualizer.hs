@@ -4,7 +4,7 @@ import TermType
 import LTSType
 import HelperTypes
 import Debug.Trace (traceShow)
-import Data.List (sort)
+import Data.List (sort, (\\))
   
 residualize :: LTS -> [FunctionDefinition] -> (Term, [FunctionDefinition])
 residualize lts funsDefs = let 
@@ -71,9 +71,7 @@ residualize' (LTS (LTSTransitions e [(Unfold' funName, t)])) eps =
                 xs = free t'
                 f = renameVar (map (fst . fst) eps) "f"
                 result = residualize' t $ ((f, xs), e) : eps
-            in if checkDefinitionHasLambdas t' xs
-                 then (fst result, snd result ++ eps)
-                 else (foldl (flip Lambda) (fst result) xs, snd result ++ eps)--}
+            in (foldl (flip Lambda) (fst result) $ checkDefinitionHasLambdas t' xs, snd result ++ eps)
 residualize' (LTS (LTSTransitions _ [(UnfoldBeta', t)])) eps = residualize' t eps
 residualize' (LTS (LTSTransitions _ [(UnfoldCons' _, t)])) eps = residualize' t eps   
 residualize' lts eps = error $ "LTS " ++ show lts ++ " with fun calls " ++ show eps ++ " not matched in residualization."      
@@ -81,10 +79,10 @@ residualize' lts eps = error $ "LTS " ++ show lts ++ " with fun calls " ++ show 
 
 -- to prevent residualizer from generating more and more lambdas during creating new function f
 -- checks that function definition already has set of lambdas in the top of expression (already residualized)
-checkDefinitionHasLambdas :: Term -> [String] -> Bool
+checkDefinitionHasLambdas :: Term -> [String] -> [String]
 checkDefinitionHasLambdas term xs = let 
-    lambdasInTerm = sort $ getLambdasInDefinition term []
-    in sort xs == lambdasInTerm
+    lambdasInTerm = getLambdasInDefinition term []
+    in xs \\ lambdasInTerm
 
 getLambdasInDefinition :: Term -> [String] -> [String]
 getLambdasInDefinition (Lambda x t@(Lambda x' term)) xs = getLambdasInDefinition t (x : xs)

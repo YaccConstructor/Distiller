@@ -4,13 +4,13 @@ import TermType
 import LTSType
 import HelperTypes
 import Debug.Trace (traceShow)
-import Data.List (sort, (\\))
+import Data.List (sort, (\\), nub)
   
 residualize :: LTS -> [FunctionDefinition] -> (Term, [FunctionDefinition])
 residualize lts funsDefs = let 
     funsDefs'' = map (\(funname, (args, term)) -> ((funname, args), term)) funsDefs
     (term', funsDefs') = residualize' lts funsDefs''
-    convertedFunsDefs = map (\((funname, args), term) -> (funname, (args, term))) funsDefs' 
+    convertedFunsDefs = nub $ map (\((funname, args), term) -> (funname, (args, term))) funsDefs'
     in (term', convertedFunsDefs)
     
 -- lts --> [((funname, vars),expr)] -> prog

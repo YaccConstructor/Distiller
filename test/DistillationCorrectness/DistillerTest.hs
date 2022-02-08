@@ -49,3 +49,10 @@ test_implies = let
     funDef = [("implies",(["x","y"],Case (Free "x") [("True",[],Free "y"),("False",[],Con "True" [])]))]
     result = Lambda "y" (Lambda "x" (Case (Free "x") [("True",[],Con "True" []),("False",[],Con "True" [])]))
     in return $ testGroup "Distiller" [testCase "Distiller: iff True x" $ distillProg (funTerm, funDef) @?= result]
+    
+test_append :: IO TestTree
+test_append = let 
+    funTerm = Apply (Apply (Fun "append") (Free "xs")) (Free "ys")
+    funDef = [("append",(["xs","ys"],Case (Free "xs") [("Nil",[],Free "ys"),("Cons",["x","xs"],Con "Cons" [Free "x",Apply (Apply (Fun "append") (Free "xs")) (Free "ys")])]))]
+    result = Case (Free "xs") [("Nil",[],Free "ys"),("Cons",["x","xs"],Con "Cons" [Free "x",Apply (Apply (Fun "f") (Free "xs")) (Free "ys")])]
+    in return $ testGroup "Distiller" [testCase "Distiller: append xs ys" $ distillProg (funTerm, funDef) @?= result]           

@@ -19,7 +19,7 @@ test_checkResidualizer_case = let
     expected = Case (Free "xs")
         [("Cons", ["x'", "xs'"], Free "xs'")
         ,("Nil", [], Con "Nil" [])]
-    in return $ testGroup "Residualizer" [testCase "case xs of Cons(x',xs') => xs'; Nil => Nil" $ residualize lts @?= expected]
+    in return $ testGroup "Residualizer" [testCase "case xs of Cons(x',xs') => xs'; Nil => Nil" $ fst (residualize lts []) @?= expected]
 
 test_checkResidualizer_let :: IO TestTree
 test_checkResidualizer_let = let
@@ -35,7 +35,7 @@ test_checkResidualizer_let = let
                                               ,(ConArg' "#2", doLTS1Tr (Free "x'") (X' "x'") doLTS0Tr)])
         ,(X' "x2", doLTSManyTr (Con "Nil" []) [(Con' "Nil", doLTS0Tr)])])
     expected = Let "x1" (Con "Cons" [Free "x'",Free "x'"]) (Let "x2" (Con "Nil" []) (Apply (Apply (Con "Nil" []) (Free "x1")) (Free "x2")))
-    in return $ testGroup "Residualizer" [testCase "let x1 = Cons(x',xs') in x2 = Nil in f x1 x2" $ residualize lts @?= expected]
+    in return $ testGroup "Residualizer" [testCase "let x1 = Cons(x',xs') in x2 = Nil in f x1 x2" $ fst (residualize lts []) @?= expected]
 
 test_checkResidualizer_fun_neil3 :: IO TestTree
 test_checkResidualizer_fun_neil3 = let
@@ -46,7 +46,7 @@ test_checkResidualizer_fun_neil3 = let
             ,("Cons",["x","xs"],Case (Apply (Fun "f") (Free "xs")) [("True",[],Apply (Fun "f") (Free "xs")),("False",[],Con "False" [])])
             ]))
         (Free "xs")
-    in return $ testGroup "Residualizer" [testCase "neil3 xs" $ residualize lts @?= expected]
+    in return $ testGroup "Residualizer" [testCase "neil3 xs" $ fst (residualize lts []) @?= expected]
 
 test_checkResidualizer_fun_qrev :: IO TestTree
 test_checkResidualizer_fun_qrev = let
@@ -54,7 +54,7 @@ test_checkResidualizer_fun_qrev = let
     expected =  Lambda "x'" (Lambda "x" (Lambda "xs" (Case (Free "xs")
         [("Nil",[],Con "Cons" [Free "x",Con "Nil" []])
         ,("Cons",["x","xs"],Apply (Apply (Fun "f") (Free "xs")) (Con "Cons" [Free "x'",Con "Cons" [Free "x",Con "Nil" []]]))])))
-    in return $ testGroup "Residualizer" [testCase "qrev xs" $ residualize lts @?= expected]
+    in return $ testGroup "Residualizer" [testCase "qrev xs" $ fst (residualize lts []) @?= expected]
 
 test_checkResidualizer_fun_qrev_with_accum :: IO TestTree
 test_checkResidualizer_fun_qrev_with_accum = let
@@ -81,4 +81,4 @@ test_checkResidualizer_fun_qrev_with_accum = let
                 [("Nil",[],Con "Nil" [])
                 ,("Cons",["x","xs"],Apply (Apply (Fun "f") (Free "xs")) (Con "Cons" [Free "x",Con "Nil" []]))]))) (Free "xs")) 
             (Con "Nil" []))
-    in return $ testGroup "Residualizer" [testCase "qrev xs" $ residualize lts' @?= expected]
+    in return $ testGroup "Residualizer" [testCase "qrev xs" $ fst (residualize lts' []) @?= expected]

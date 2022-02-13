@@ -33,9 +33,11 @@ renameVarInLtsRecursively substitutions lts
   = foldl renameVarInLts lts substitutions
 
 branchesSetsForConstructor :: [(Label, LTS)] -> [(Label, LTS)] -> Bool
+branchesSetsForConstructor [] [] = True
 branchesSetsForConstructor branches branches' = length branches == length branches' && all (\t -> tail (map fst t) == take (length t - 1) (map ConArg' createLabels)) [branches, branches']
 
 branchesSetForConstructor :: [(Label, LTS)] -> Bool
+branchesSetForConstructor [] = True
 branchesSetForConstructor branch = tail (map fst branch) == take (length branch - 1) (map ConArg' createLabels)
 
 

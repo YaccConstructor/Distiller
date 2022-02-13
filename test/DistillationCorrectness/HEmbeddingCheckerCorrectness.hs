@@ -19,7 +19,7 @@ test_checkRenaming_qrev = let
             ,(Apply1', doLTS1Tr (Free "xs") (X' "xs") doLTS0Tr)])
         ,(Apply1', doLTS1Tr (Free "ys") (X' "ys") doLTS0Tr)]
     lts2 = renameVarInLts lts1 ("xs", "xs1")
-    in return $ testGroup "HEChecker" [testCase "Renaming: qrev xs ys and qrev xs1 ys" $ isRenaming lts1 lts2 @?= [("xs", "xs1")]]
+    in return $ testGroup "HEChecker" [testCase "Renaming: qrev xs ys and qrev xs1 ys" $ isRenaming lts1 lts2 @?= [("#","#"),("x","x"),("x'","x'"),("xs","xs1"),("ys","ys")]]
 
 test_checkRenaming_lambda :: IO TestTree
 test_checkRenaming_lambda = let
@@ -35,7 +35,22 @@ test_checkRenaming_lambda = let
                             (Free "xs"))
                         (Con "Nil" []))) [] []
     lts2 = renameVarInLtsRecursively [("xs", "xs1"), ("ys", "ys1")] lts1
-    in return $ testGroup "HEChecker" [testCase "Renaming: lambda x ys xs x xs and lambda x ys1 xs1 x xs1" $ isRenaming lts1 lts2 @?= [("xs", "xs1"), ("ys", "ys1")]]
+    in return $ testGroup "HEChecker" [testCase "Renaming: lambda x ys xs x xs and lambda x ys1 xs1 x xs1" $ isRenaming lts1 lts2 @?= [("x","x"),("xs","xs1"),("ys","ys1")]]
+
+test_checkRenaming_reflexive_f :: IO TestTree
+test_checkRenaming_reflexive_f = let
+    lts1 = LTS (LTSTransitions (Apply (Fun "f") (Free "x"))
+        [(Apply0',LTS (LTSTransitions (Fun "f") [(Unfold' "f",LTS (LTSTransitions (Apply (Fun "f") (Free "x"))
+            [(Apply0',LTS (LTSTransitions (Fun "f") [(Unfold' "f",Leaf)])), (Apply1',LTS (LTSTransitions (Free "x") [(X' "x",Leaf)]))]))]))
+            ,(Apply1',LTS (LTSTransitions (Free "x") [(X' "x",Leaf)]))])
+    in return $ testGroup "HEChecker" [testCase "Renaming: reflexive f x and f x" $ isRenaming lts1 lts1 @?= [("#", "#"), ("x","x")]]
+
+test_checkRenaming_reflexive_f_with_unfoldBeta :: IO TestTree
+test_checkRenaming_reflexive_f_with_unfoldBeta = let
+    lts1 = LTS (LTSTransitions (Apply (Fun "f") (Free "x"))
+        [(Unfold' "f",LTS (LTSTransitions (Apply (Lambda "x" (Apply (Fun "f") (Free "x"))) (Free "x"))
+            [(UnfoldBeta',LTS (LTSTransitions (Apply (Fun "f") (Free "x")) [(Unfold' "f",Leaf)]))]))])
+    in return $ testGroup "HEChecker" [testCase "Renaming: reflexive f x and f x with unfold beta" $ isRenaming lts1 lts1 @?= [("#","#")]]
 
 test_checkEmbedding_qrev :: IO TestTree
 test_checkEmbedding_qrev = let

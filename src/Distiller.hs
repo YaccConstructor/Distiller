@@ -42,8 +42,8 @@ distill index (term@(Lambda x e0), k@(ApplyCtx k' e1)) funNamesAccum previousGen
 distill index termInCtx@(f@(Fun funName), k) _ _ funsDefs | traceShow ("index = " ++ show index ++ "funsDefs = " ++ show funsDefs) False = undefined
 distill index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum funsDefs =
    let t = transform index termInCtx [] previousGensAccum funsDefs
-   in case filter (null . isRenaming t) funNamesAccum of
-        _ : _ -> doLTS1Tr f (Unfold' funName) doLTS0Tr
+   in case filter (not . null . isRenaming t) funNamesAccum of
+        _ : _ -> doLTS1Tr (place f k) (Unfold' funName) doLTS0Tr
         [] -> case mapMaybe ( \t' -> case isHomeomorphicEmbedding t t' of
                             [] -> Nothing
                             renaming -> Just (renaming, t')) funNamesAccum of

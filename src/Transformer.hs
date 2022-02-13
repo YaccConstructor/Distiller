@@ -14,7 +14,7 @@ import HelperTypes
 import Debug.Trace (traceShow, trace)
 
 transform :: Int -> TermInContext -> [LTS] -> [Generalization] -> [FunctionDefinition] -> LTS
-transform n t f p funsDefs | traceShow ("transform" ++ show n ++ show t ++ show f ++ show p ++ show funsDefs) False = undefined
+--transform n t f p funsDefs | traceShow ("transform" ++ show n ++ show t ++ show f ++ show p ++ show funsDefs) False = undefined
 transform index (term@(Free x), context) funNamesAccum previousGensAccum funsDefs =
   transform' index (doLTS1Tr term (X' x) doLTS0Tr) context funNamesAccum previousGensAccum funsDefs
    
@@ -44,8 +44,11 @@ transform index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum f
           then drive (place f k) [] funsDefs
           else transform (index - 1) termInCtx [] previousGensAccum funsDefs
    in do {
-     case filter (null . isRenaming t) funNamesAccum of
-        _ : _ -> doLTS1Tr f (Unfold' funName) doLTS0Tr
+     case filter (not . null . isRenaming t) funNamesAccum of
+        _ : _ -> do {
+          traceShow ("renaming passed##")
+          doLTS1Tr (place f k) (Unfold' funName) doLTS0Tr
+          }
         [] -> case mapMaybe
           ( \t' -> case isHomeomorphicEmbedding t t' of
               [] -> Nothing
@@ -55,13 +58,18 @@ transform index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum f
           (_, t') : _ ->
             let generalizedLTS = generalize t t' previousGensAccum
                 residualizedLTS = residualize generalizedLTS funsDefs
-             in transform index (fst residualizedLTS, EmptyCtx) funNamesAccum previousGensAccum []
+             in do {
+               trace ("before gen t = " ++ show t ++ "; funNamesAccum = " ++ show funNamesAccum)
+               transform index (fst residualizedLTS, EmptyCtx) funNamesAccum previousGensAccum []
+               }
           [] ->
             let oldTerm = place f k
                 residualized = residualize t funsDefs
-                newTerm = transform index (unfold (fst residualized) funsDefs, EmptyCtx) (t : funNamesAccum) previousGensAccum (funsDefs ++ snd residualized)
+                newTerm = if (index == 0)
+                    then transform index (unfold oldTerm funsDefs, EmptyCtx) (t : funNamesAccum) previousGensAccum (funsDefs ++ snd residualized)
+                    else transform index (unfold (fst residualized) funsDefs, EmptyCtx) (t : funNamesAccum) previousGensAccum (funsDefs ++ snd residualized)
              in do {
-               trace ("Residualized!! " ++ show index ++ ";" ++ show t ++ ";;;" ++ show residualized ++ ";;;;" ++ show (unfold (fst residualized) funsDefs))
+               trace ("Residualized!! " ++ "t = " ++ show t ++ "; funNamesAccum = " ++ show funNamesAccum)
                doLTS1Tr oldTerm (Unfold' funName) newTerm
                }
                }
@@ -80,6 +88,7 @@ transform _ (e0, context) _ _ _ = error $ "Nothing matched for " ++ show e0 ++ s
 
 transform' :: Int -> LTS -> Context -> [LTS] -> [Generalization] -> [FunctionDefinition] -> LTS
 transform' _ lts EmptyCtx _ _ _ = lts
+transform' index t@(LTS lts) (ApplyCtx context expr) _ _ _ | traceShow ("in transform': lts = " ++ show lts ++ "; ctx = " ++ show context ++ "; expr = " ++ show expr) False = undefined
 transform' index t@(LTS lts) (ApplyCtx context expr) funNames previousGensAccum funsDefs =
   let term = getOldTerm lts
       newLts = updateLTS t Apply0' (transform index (expr, EmptyCtx) funNames previousGensAccum funsDefs) Apply1' (Apply term expr)

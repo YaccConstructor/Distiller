@@ -25,6 +25,7 @@ dependencies:
 - parsec
 - directory
 - process
+- containers
 
 library:
   source-dirs: src
@@ -53,3 +54,5 @@ tests:
     - tasty-discover
     - tasty
     - tasty-hunit
+    - tasty-hedgehog
+    - hedgehog

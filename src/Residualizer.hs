@@ -69,9 +69,13 @@ residualize' (LTS (LTSTransitions e [(Unfold' funName, t)])) eps funsDefs =
         LTS transitions -> case filter (\((_, _), fundef) -> not $ null $ termRenaming fundef $ getOldTerm transitions) funsDefs of
           ((funname, vars), fundef) : _ -> let
             residualized = residualize' t eps funsDefs
+            renamings = concat $ termRenaming fundef e
+            vars' = map (\var -> case lookup var renamings of
+                                    Nothing -> var
+                                    Just (Free var') -> var') vars
             in do {
           --  traceShow ("renaming passed!" ++ show t ++ ";;" ++ show e ++ ";" ++ show vars)
-            (foldl (flip Lambda) (fst residualized) (reverse vars), snd residualized ++ funsDefs)
+            (foldl (flip Lambda) (fst residualized) (reverse vars'), snd residualized ++ funsDefs)
             }
           _ -> let
                 t' = getOldTerm transitions

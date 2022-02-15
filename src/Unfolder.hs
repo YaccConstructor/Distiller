@@ -20,7 +20,7 @@ unfold' (Fun funname, context) funsDefs _ =
   case lookup funname funsDefs of
         Just (xs, e) -> do {
           trace ("funname:" ++ show funname ++ show (place e context) ++ ";" ++ show (place (foldl (flip Lambda) e xs) context))
-          place (foldl (flip Lambda) e xs) context
+          place (foldl (flip Lambda) e (reverse xs)) context
           } 
         Nothing -> error $ "Function definition for " ++ funname ++ " not found in " ++ show funsDefs ++ " during unfolding." 
 unfold' (Apply e0 e1, context) funsDefs letVarsAccum = unfold' (e0, ApplyCtx context e1) funsDefs letVarsAccum 

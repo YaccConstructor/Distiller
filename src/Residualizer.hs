@@ -15,7 +15,7 @@ residualize lts funsDefs = let
     
 -- lts --> [((funname, vars),expr)] -> prog
 residualize' :: LTS -> [((String, [String]), Term)] -> [((String, [String]), Term)] -> (Term, [((String, [String]), Term)])
---residualize' lts eps funsDefs | traceShow ("in residualizer " ++ show lts ++ ", eps = " ++ show eps) False = undefined
+--residualize' lts eps funsDefs | traceShow ("in residualizer " ++ show lts ++ ", eps = " ++ show eps ++ show funsDefs) False = undefined
 residualize' (LTS (LTSTransitions _ [(X' x, Leaf)])) eps funsDefs = (Free x, eps)
 residualize' (LTS (LTSTransitions _ bs@((Con' conName, Leaf) : branches))) eps funsDefs
     | branchesSetForConstructor bs = let
@@ -51,30 +51,21 @@ residualize' (LTS (LTSTransitions _ ((Let', t0) : branches))) eps funsDefs = let
     t_i' = residualize' t_i eps funsDefs
     in (Let x_i (fst t_i') (fst accum), snd accum ++ snd t_i')) initializer $ tail branches'
 --residualize' (LTS (LTSTransitions e [(Unfold' funName, t)])) eps funsDefs | traceShow ("e = " ++ show e ++ ";funname = " ++ show funName ++ "; t = " ++ show t) False = undefined
-residualize' (LTS (LTSTransitions e [(Unfold' funName, t)])) eps funsDefs =
-  case filter (\((_, _), fundef) -> not $ null $ termRenaming fundef e) eps of
-    ((funname, vars), fundef) : _ -> let
-        renamings = concat $ termRenaming fundef e
-        result = foldl Apply (Fun funname) $ map snd renamings
-        in do {
-        --  traceShow ("renaming passed!1" ++ show t ++ ";;" ++ show e ++ ";" ++ show vars)
-          (result, funsDefs)
-        }
-    _ -> case t of
-        Leaf ->  case lookup funName (map fst funsDefs) of
+residualize' (LTS (LTSTransitions e [(Unfold' funName, t)])) eps funsDefs = case t of
+        Leaf ->  case lookup funName (map fst (funsDefs ++ eps)) of
                     Nothing -> error ("Error occured during residualization: unfolding of function " ++ funName ++ " is Leaf, but function have not occured before.")
                     Just _ -> do {
-                      (Fun funName, funsDefs)
+                      (e, funsDefs)
                       }
-        LTS transitions -> case filter (\((_, _), fundef) -> not $ null $ termRenaming fundef $ getOldTerm transitions) funsDefs of
+        LTS transitions -> case filter (\((_, _), fundef) -> not $ null $ concat $ termRenaming fundef $ getOldTerm transitions) funsDefs of
           ((funname, vars), fundef) : _ -> let
             residualized = residualize' t eps funsDefs
-            renamings = concat $ termRenaming fundef e
+            renamings = concat $ termRenaming fundef $ getOldTerm transitions
             vars' = map (\var -> case lookup var renamings of
                                     Nothing -> var
                                     Just (Free var') -> var') vars
             in do {
-          --  traceShow ("renaming passed!" ++ show t ++ ";;" ++ show e ++ ";" ++ show vars)
+            traceShow ("renaming passed!" ++ show t ++ ";;" ++ show e ++ ";" ++ show vars)
             (foldl (flip Lambda) (fst residualized) (reverse vars'), snd residualized ++ funsDefs)
             }
           _ -> let
@@ -83,7 +74,7 @@ residualize' (LTS (LTSTransitions e [(Unfold' funName, t)])) eps funsDefs =
                 f = renameVar (map (fst . fst) eps) "f"
                 result = residualize' t (((f, xs), e) : eps) (((f, xs), e) : funsDefs)
             in do {
-           --   traceShow ("Renaming not passed " ++ show ((foldl (flip Lambda) (fst result) $ checkDefinitionHasLambdas t' xs, snd result ++ eps)))
+              traceShow ("Renaming not passed " ++ show ((foldl (flip Lambda) (fst result) $ checkDefinitionHasLambdas t' xs, snd result ++ eps)))
               (foldl (flip Lambda) (fst result) $ checkDefinitionHasLambdas t' xs, snd result ++ funsDefs)
             }
 residualize' (LTS (LTSTransitions _ [(UnfoldBeta', t)])) eps funsDefs = residualize' t eps funsDefs

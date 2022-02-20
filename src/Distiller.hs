@@ -15,7 +15,7 @@ import HelperTypes
 import Debug.Trace (traceShow)
 
 distillProg :: (Term, [FunctionDefinition]) -> Term
-distillProg (mainFunTerm, funDefinitions) = fst $ residualize (distill 2 (mainFunTerm, EmptyCtx) [] [] funDefinitions) funDefinitions
+distillProg (mainFunTerm, funDefinitions) = fst $ residualize (distill 1 (mainFunTerm, EmptyCtx) [] [] funDefinitions) funDefinitions
 
 distill :: Int -> TermInContext -> [LTS] -> [Generalization] -> [FunctionDefinition] -> LTS
 --distill i t funNamesAccum p funsDefs | traceShow ("distill " ++ show i ++ ";" ++ show t) False = undefined
@@ -76,12 +76,6 @@ distill' index t@(LTS lts) (ApplyCtx context expr) funNames previousGensAccum fu
   let term = getOldTerm lts
       newLts = updateLTS t Apply0' (distill index (expr, EmptyCtx) funNames previousGensAccum funsDefs) Apply1' (Apply term expr)
    in distill' index newLts context funNames previousGensAccum funsDefs
-distill' index t@(LTS lts) (CaseCtx context branches) funsNames previousGens funsDefs =
-  let root = Case (getOldTerm lts) branches
-      firstBranch = (Case', t)
-      otherBranches = map (\(branchName, args, resultTerm) ->
-        (CaseBranch' branchName args, distill index (place resultTerm context, EmptyCtx) funsNames previousGens funsDefs)) branches
-   in doLTSManyTr root $ firstBranch : otherBranches
 distill' index t@(LTS (LTSTransitions term@(Free x) [(X' x', _)])) (CaseCtx context branches) funsNames previousGens funsDefs =
   if x == x'
     then
@@ -90,14 +84,19 @@ distill' index t@(LTS (LTSTransitions term@(Free x) [(X' x', _)])) (CaseCtx cont
           otherBranches =
             map
               ( \(branchName, args, resultTerm) ->
-                  if length args > 1
-                    then error "Got one free variable, but pattern matching uses more."
-                    else
-                      let resultTerm' = substituteTermWithNewVars resultTerm [(head args, x')]
-                          distilledTerm = distill index (place resultTerm' context, EmptyCtx) funsNames previousGens funsDefs
-                       in (CaseBranch' branchName args, distilledTerm)
+                    let 
+                        args'= map (renameVar (free resultTerm)) args
+                        resultTerm' = substituteTermWithNewTerms resultTerm [(x', Con branchName $ map Free args')]
+                        distilledTerm = distill index (place resultTerm' context, EmptyCtx) funsNames previousGens funsDefs
+                    in (CaseBranch' branchName args, distilledTerm)
               )
               branches
        in doLTSManyTr root $ firstBranch : otherBranches
     else error "Error: got branch x -> (x,0), but label is not the same as x"
+distill' index t@(LTS lts) (CaseCtx context branches) funsNames previousGens funsDefs =
+  let root = Case (getOldTerm lts) branches
+      firstBranch = (Case', t)
+      otherBranches = map (\(branchName, args, resultTerm) ->
+        (CaseBranch' branchName args, distill index (place resultTerm context, EmptyCtx) funsNames previousGens funsDefs)) branches
+   in doLTSManyTr root $ firstBranch : otherBranches    
 distill' _ _ _ _ _ _ = error "Got error during execution distill'."

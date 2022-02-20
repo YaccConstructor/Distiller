@@ -60,7 +60,8 @@ transform index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum f
                 residualizedLTS = residualize generalizedLTS funsDefs
              in do {
                trace ("before gen t = " ++ show t ++ "; funNamesAccum = " ++ show funNamesAccum)
-               transform index (fst residualizedLTS, EmptyCtx) funNamesAccum previousGensAccum []
+               error "error"
+               --transform index (fst residualizedLTS, EmptyCtx) funNamesAccum previousGensAccum []
                }
           [] ->
             let oldTerm = place f k
@@ -93,12 +94,7 @@ transform' index t@(LTS lts) (ApplyCtx context expr) funNames previousGensAccum 
   let term = getOldTerm lts
       newLts = updateLTS t Apply0' (transform index (expr, EmptyCtx) funNames previousGensAccum funsDefs) Apply1' (Apply term expr)
    in transform' index newLts context funNames previousGensAccum funsDefs
-transform' index t@(LTS lts) (CaseCtx context branches) funsNames previousGens funsDefs =
-  let root = Case (getOldTerm lts) branches
-      firstBranch = (Case', t)
-      otherBranches = map (\(branchName, args, resultTerm) -> 
-        (CaseBranch' branchName args, transform index (resultTerm, context) funsNames previousGens funsDefs)) branches
-   in doLTSManyTr root $ firstBranch : otherBranches
+transform' index t@(LTS (LTSTransitions term@(Free x) [(X' x', _)])) (CaseCtx context branches) funsNames previousGens funsDefs | traceShow ("In transform, want to substitute branches in case") False = undefined
 transform' index t@(LTS (LTSTransitions term@(Free x) [(X' x', _)])) (CaseCtx context branches) funsNames previousGens funsDefs =
   if x == x'
     then
@@ -107,14 +103,19 @@ transform' index t@(LTS (LTSTransitions term@(Free x) [(X' x', _)])) (CaseCtx co
           otherBranches =
             map
               ( \(branchName, args, resultTerm) ->
-                  if length args > 1
-                    then error "Got one free variable, but pattern matching uses more."
-                    else
-                      let resultTerm' = substituteTermWithNewVars resultTerm [(head args, x')]
+                      let
+                          args'= map (renameVar (free resultTerm)) args
+                          resultTerm' = substituteTermWithNewTerms resultTerm [(x', Con branchName $ map Free args')]
                           transformedTerm = transform index (resultTerm', context) funsNames previousGens funsDefs
                        in (CaseBranch' branchName args, transformedTerm)
               )
               branches
        in doLTSManyTr root $ firstBranch : otherBranches
     else error "Error: got branch x -> (x,0), but label is not the same as x"
+transform' index t@(LTS lts) (CaseCtx context branches) funsNames previousGens funsDefs =
+  let root = Case (getOldTerm lts) branches
+      firstBranch = (Case', t)
+      otherBranches = map (\(branchName, args, resultTerm) ->
+        (CaseBranch' branchName args, transform index (resultTerm, context) funsNames previousGens funsDefs)) branches
+   in doLTSManyTr root $ firstBranch : otherBranches
 transform' _ _ _ _ _ _ = error "Got error during execution transform'."

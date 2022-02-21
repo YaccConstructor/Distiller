@@ -141,6 +141,19 @@ termRenaming' fs t u fv bv s | varApp fv t = let
                                             else [(x,u'):s]
 termRenaming' fs t u fv bv s = []
 
+
+doBetaReductions :: Term -> Term
+doBetaReductions term@(Apply e0@(Apply _ _) e1) | traceShow ("Doing beta reduction of term " ++ show term) False = undefined
+doBetaReductions term@(Apply e0 e1) | lambdasPresent e0 = doBetaReductions (Apply (doBetaReductions e0) e1)
+doBetaReductions term@(Apply (Lambda x e0) e1) | traceShow ("!Doing beta reduction of term " ++ show x ++ ";" ++ show term ++ ";" ++ show (substituteTermWithNewTerms e0 [(x, e1)])) False = undefined
+doBetaReductions (Apply (Lambda x e0) e1) = substituteTermWithNewTerms e0 [(x, e1)]
+doBetaReductions term = term
+
+lambdasPresent :: Term -> Bool
+lambdasPresent (Apply (Lambda _ _ ) _) = True
+lambdasPresent (Apply e0@(Apply _ _) _) = lambdasPresent e0
+lambdasPresent _ = False
+
 varApp xs (Free x) = x `elem` xs
 varApp xs (Apply t (Free x)) = varApp xs t
 varApp xs t = False

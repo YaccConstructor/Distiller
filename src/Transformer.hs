@@ -14,7 +14,7 @@ import HelperTypes
 import Debug.Trace (traceShow, trace)
 
 transform :: Int -> TermInContext -> [LTS] -> [Generalization] -> [FunctionDefinition] -> LTS
---transform n t f p funsDefs | traceShow ("transform" ++ show n ++ show t ++ show f ++ show p ++ show funsDefs) False = undefined
+transform n t f p funsDefs | traceShow ("transform" ++ show n ++ show t ++ show f ++ show p ++ show funsDefs) False = undefined
 transform index (term@(Free x), context) funNamesAccum previousGensAccum funsDefs =
   transform' index (doLTS1Tr term (X' x) doLTS0Tr) context funNamesAccum previousGensAccum funsDefs
    
@@ -74,8 +74,11 @@ transform index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum f
                doLTS1Tr oldTerm (Unfold' funName) newTerm
                }
                }
-transform index (Apply e0 e1, k) funNamesAccum previousGensAccum funsDefs =
-  transform index (e0, ApplyCtx k e1) funNamesAccum previousGensAccum funsDefs
+transform index (term@(Apply e0 e1), k) funNamesAccum previousGensAccum funsDefs =
+  let term' = doBetaReductions term in
+  if term' == term
+    then transform index (e0, ApplyCtx k e1) funNamesAccum previousGensAccum funsDefs
+    else transform index (term', k) funNamesAccum previousGensAccum funsDefs
 transform index (Case e0 branches, k) funNamesAccum previousGensAccum funsDefs =
   transform index (e0, CaseCtx k branches) funNamesAccum previousGensAccum funsDefs
 transform index (e@(Let x e0 e1), k) funNamesAccum previousGensAccum funsDefs =

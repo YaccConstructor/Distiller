@@ -15,7 +15,12 @@ import HelperTypes
 import Debug.Trace (traceShow)
 
 distillProg :: (Term, [FunctionDefinition]) -> Term
-distillProg (mainFunTerm, funDefinitions) = fst $ residualize (distill 0 (mainFunTerm, EmptyCtx) [] [] funDefinitions) funDefinitions
+distillProg (mainFunTerm, funDefinitions) = let
+    --prog = distill 2 (mainFunTerm, EmptyCtx) [] [] funDefinitions
+    in do {
+     -- traceShow ("prog = " ++ show prog)
+      fst $ residualize (distill 2 (mainFunTerm, EmptyCtx) [] [] funDefinitions) funDefinitions
+    }
 
 distill :: Int -> TermInContext -> [LTS] -> [Generalization] -> [FunctionDefinition] -> LTS
 distill i t funNamesAccum p funsDefs | traceShow ("distill " ++ show i ++ ";" ++ show t) False = undefined

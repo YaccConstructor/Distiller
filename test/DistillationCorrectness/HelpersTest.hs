@@ -33,10 +33,20 @@ test_checkTermsRenaming4 = let
     term2 = Apply (Fun "f'") (Con "Cons" [Free "x", Free "x'"])
     in return $ testGroup "Helpers" [testCase "Renaming: f Cons(x,x') and f' Cons(x,x')" $ concat (termRenaming term2 term1) @?= []]
 
+test_checkTermsRenaming5 :: IO TestTree
+test_checkTermsRenaming5 = let 
+    term = Apply (Apply (Fun "and") (Free "x")) (Con "False" [])
+    in return $ testGroup "Helpers" [testCase "Renaming: and x False ; and x False" $ concat (termRenaming term term) @?= [("x",Free "x")]]    
+
 test_doBetaReductions :: IO TestTree
 test_doBetaReductions = let
     term = Apply (Apply (Apply 
         (Lambda "x" (Lambda "y" (Lambda "z" (Case (Free "xs") 
             [("Nil",[], Con "Pair" [Free "x", Free "z"]), ("Cons", ["x","xs"], Free "y")])))) (Free "1")) (Free "2")) (Free "3")
+    {---term' = Apply (Apply (Apply 
+            (Lambda "x" (Lambda "y" (Lambda "z" (Case (Free "xs") 
+                [("Nil",[], Con "Pair" [Free "x", Free "z"]), ("Cons", ["x","xs"], Free "y")])))) (Free "1")) (Free "2")) (Free "z")--}            
     result = Case (Free "xs") [("Nil",[], Con "Pair" [Free "1", Free "3"]), ("Cons", ["x","xs"], Free "2")]
+    --result' = Case (Free "xs") [("Nil",[], Con "Pair" [Free "1", Free "3"]), ("Cons", ["x","xs"], Free "2")]
     in return $ testGroup "Helpers" [testCase "doBetaReductions" $ doBetaReductions term @?= result]
+       --                             ,testCase "doBetaReductions" $ doBetaReductions term' @?= result']

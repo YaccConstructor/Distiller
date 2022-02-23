@@ -65,10 +65,11 @@ transform index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum f
                }
           [] ->
             let oldTerm = place f k
-                residualized = residualize t funsDefs
                 newTerm = if (index == 0)
-                    then transform index (unfold oldTerm funsDefs, EmptyCtx) (t : funNamesAccum) previousGensAccum (funsDefs ++ snd residualized)
-                    else transform index (unfold (fst residualized) funsDefs, EmptyCtx) (t : funNamesAccum) previousGensAccum (funsDefs ++ snd residualized)
+                    then transform index (unfold oldTerm funsDefs, EmptyCtx) (t : funNamesAccum) previousGensAccum funsDefs
+                    else let
+                        residualized = residualize t funsDefs
+                        in transform index (unfold (fst residualized) funsDefs, EmptyCtx) (t : funNamesAccum) previousGensAccum (funsDefs ++ snd residualized)
              in do {
                trace ("Residualized!! " ++ "t = " ++ show t ++ "; funNamesAccum = " ++ show funNamesAccum)
                doLTS1Tr oldTerm (Unfold' funName) newTerm

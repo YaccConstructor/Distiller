@@ -12,14 +12,14 @@ import TermType
 import Transformer
 import Unfolder
 import HelperTypes
-import Debug.Trace (traceShow)
+import Debug.Trace (traceShow, trace)
 
 distillProg :: (Term, [FunctionDefinition]) -> Term
 distillProg (mainFunTerm, funDefinitions) = let
-    --prog = distill 2 (mainFunTerm, EmptyCtx) [] [] funDefinitions
+    --prog = distill 0 (mainFunTerm, EmptyCtx) [] [] funDefinitions
     in do {
-     -- traceShow ("prog = " ++ show prog)
-      fst $ residualize (distill 2 (mainFunTerm, EmptyCtx) [] [] funDefinitions) funDefinitions
+      --traceShow ("prog = " ++ show prog ++ "; residualized prog = ") ++ show (fst $ residualize (distill 0 (mainFunTerm, EmptyCtx) [] [] funDefinitions) funDefinitions))
+      fst $ residualize (distill 1 (mainFunTerm, EmptyCtx) [] [] funDefinitions) funDefinitions
     }
 
 distill :: Int -> TermInContext -> [LTS] -> [Generalization] -> [FunctionDefinition] -> LTS
@@ -44,7 +44,7 @@ distill index (term@(Lambda x expr), EmptyCtx) funNamesAccum previousGensAccum f
   doLTS1Tr term (Lambda' x) $ distill index (expr, EmptyCtx) funNamesAccum previousGensAccum funsDefs
 distill index (term@(Lambda x e0), k@(ApplyCtx k' e1)) funNamesAccum previousGensAccum funsDefs =
   doLTS1Tr (place term k) UnfoldBeta' $ distill index (substituteTermWithNewTerms e0 [(x, e1)], k') funNamesAccum previousGensAccum funsDefs
-distill index termInCtx@(f@(Fun funName), k) _ _ funsDefs | traceShow ("index = " ++ show index ++ "funsDefs = " ++ show funsDefs) False = undefined
+--distill index termInCtx@(f@(Fun funName), k) _ _ funsDefs | traceShow ("distill index = " ++ show index ++ "funsDefs = " ++ show funsDefs) False = undefined
 distill index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum funsDefs =
    let t = transform index termInCtx [] previousGensAccum funsDefs
    in case filter (not . null . isRenaming t) funNamesAccum of
@@ -59,8 +59,12 @@ distill index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum fun
           [] ->
             let oldTerm = place f k
                 residualized = residualize t funsDefs
-                newTerm = distill index (unfold (fst $ residualized) funsDefs, EmptyCtx) (t : funNamesAccum) previousGensAccum (funsDefs ++ snd residualized)
-             in doLTS1Tr oldTerm (Unfold' funName) newTerm
+                --newTerm = distill index (unfold (fst $ residualized) funsDefs, EmptyCtx) (t : funNamesAccum) previousGensAccum (funsDefs ++ snd residualized)
+             in do {
+                trace ("Residualized in distill: " ++ show index ++ "; t = " ++ show t ++ ";  residualized =" ++ show residualized ++ "; funNamesAccum = " ++ show funNamesAccum) -- ++ show newTerm)
+                error "error"
+                --doLTS1Tr oldTerm (Unfold' funName) newTerm
+                }
 distill index (term@(Apply e0 e1), k) funNamesAccum previousGensAccum funsDefs =
   let term' = doBetaReductions term in
   if term' == term
@@ -91,11 +95,9 @@ distill' index t@(LTS (LTSTransitions term@(Free x) [(X' x', _)])) (CaseCtx cont
           firstBranch = (Case', t)
           otherBranches =
             map
-              ( \(branchName, args, resultTerm) ->
-                    let 
-                        args'= map (renameVar (free resultTerm)) args
-                        resultTerm' = substituteTermWithNewTerms resultTerm [(x', Con branchName $ map Free args')]
-                        distilledTerm = distill index (place resultTerm' context, EmptyCtx) funsNames previousGens funsDefs
+              ( \(branchName, args, resultTerm) -> let 
+                        resultTerm'' = substituteTermWithNewTerms resultTerm [(x', Con branchName $ map Free args)]
+                        distilledTerm = distill index (place resultTerm'' context, EmptyCtx) funsNames previousGens funsDefs
                     in (CaseBranch' branchName args, distilledTerm)
               )
               branches

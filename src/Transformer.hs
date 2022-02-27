@@ -14,7 +14,7 @@ import HelperTypes
 import Debug.Trace (traceShow, trace)
 
 transform :: Int -> TermInContext -> [LTS] -> [Generalization] -> [FunctionDefinition] -> LTS
-transform n t f p funsDefs | traceShow ("transform" ++ show n ++ show t ++ show f ++ show p ++ show funsDefs) False = undefined
+--transform n t f p funsDefs | traceShow ("transform" ++ show n ++ show t ++ show f ++ show p ++ show funsDefs) False = undefined
 transform index (term@(Free x), context) funNamesAccum previousGensAccum funsDefs =
   transform' index (doLTS1Tr term (X' x) doLTS0Tr) context funNamesAccum previousGensAccum funsDefs
    
@@ -46,7 +46,7 @@ transform index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum f
    in do {
      case filter (not . null . isRenaming t) funNamesAccum of
         _ : _ -> do {
-          traceShow ("renaming passed##")
+          --traceShow ("renaming passed##")
           doLTS1Tr (place f k) (Unfold' funName) doLTS0Tr
           }
         [] -> case mapMaybe
@@ -59,7 +59,7 @@ transform index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum f
             let generalizedLTS = generalize t t' previousGensAccum
                 residualizedLTS = residualize generalizedLTS funsDefs
              in do {
-               trace ("before gen t = " ++ show t ++ "; funNamesAccum = " ++ show funNamesAccum)
+               --trace ("before gen t = " ++ show t ++ "; funNamesAccum = " ++ show funNamesAccum)
                error "error"
                --transform index (fst residualizedLTS, EmptyCtx) funNamesAccum previousGensAccum []
                }
@@ -69,9 +69,15 @@ transform index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum f
                     then transform index (unfold oldTerm funsDefs, EmptyCtx) (t : funNamesAccum) previousGensAccum funsDefs
                     else let
                         residualized = residualize t funsDefs
-                        in transform index (unfold (fst residualized) funsDefs, EmptyCtx) (t : funNamesAccum) previousGensAccum (funsDefs ++ snd residualized)
+                        result = transform index (unfold (fst residualized) funsDefs, EmptyCtx) (t : funNamesAccum) previousGensAccum (funsDefs ++ snd residualized)
+                        in do {
+                          trace ("Residualized!! n = " ++ show index ++ "t = " ++ show t 
+                            ++ "; residualized = " ++ show residualized 
+                            ++ "; unfold =" ++ show (unfold (fst residualized) funsDefs) 
+                            ++ "; result = " ++ show result)
+                          result
+                          }
              in do {
-               trace ("Residualized!! " ++ "t = " ++ show t ++ "; funNamesAccum = " ++ show funNamesAccum)
                doLTS1Tr oldTerm (Unfold' funName) newTerm
                }
                }
@@ -98,7 +104,8 @@ transform' index t@(LTS lts) (ApplyCtx context expr) funNames previousGensAccum 
   let term = getOldTerm lts
       newLts = updateLTS t Apply0' (transform index (expr, EmptyCtx) funNames previousGensAccum funsDefs) Apply1' (Apply term expr)
    in transform' index newLts context funNames previousGensAccum funsDefs
-transform' index t@(LTS (LTSTransitions term@(Free x) [(X' x', _)])) (CaseCtx context branches) funsNames previousGens funsDefs | traceShow ("In transform, want to substitute branches in case") False = undefined
+transform' index t@(LTS (LTSTransitions term@(Free x) [(X' x', _)])) (CaseCtx context branches) funsNames previousGens funsDefs 
+    | traceShow ("In transform, want to substitute branches in case " ++ show branches ++ "; with " ++ show x' ++ "") False = undefined
 transform' index t@(LTS (LTSTransitions term@(Free x) [(X' x', _)])) (CaseCtx context branches) funsNames previousGens funsDefs =
   if x == x'
     then
@@ -106,15 +113,15 @@ transform' index t@(LTS (LTSTransitions term@(Free x) [(X' x', _)])) (CaseCtx co
           firstBranch = (Case', t)
           otherBranches =
             map
-              ( \(branchName, args, resultTerm) ->
-                      let
-                          args'= map (renameVar (free resultTerm)) args
-                          resultTerm' = substituteTermWithNewTerms resultTerm [(x', Con branchName $ map Free args')]
-                          transformedTerm = transform index (resultTerm', context) funsNames previousGens funsDefs
+              ( \(branchName, args, resultTerm) -> let
+                          resultTerm'' = substituteTermWithNewTerms resultTerm [(x', Con branchName $ map Free args)]
+                          transformedTerm = transform index (resultTerm'', context) funsNames previousGens funsDefs
                        in (CaseBranch' branchName args, transformedTerm)
               )
               branches
-       in doLTSManyTr root $ firstBranch : otherBranches
+       in do { 
+       doLTSManyTr root $ firstBranch : otherBranches
+       }
     else error "Error: got branch x -> (x,0), but label is not the same as x"
 transform' index t@(LTS lts) (CaseCtx context branches) funsNames previousGens funsDefs =
   let root = Case (getOldTerm lts) branches

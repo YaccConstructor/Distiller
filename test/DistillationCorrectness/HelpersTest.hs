@@ -36,17 +36,27 @@ test_checkTermsRenaming4 = let
 test_checkTermsRenaming5 :: IO TestTree
 test_checkTermsRenaming5 = let 
     term = Apply (Apply (Fun "and") (Free "x")) (Con "False" [])
-    in return $ testGroup "Helpers" [testCase "Renaming: and x False ; and x False" $ concat (termRenaming term term) @?= [("x",Free "x")]]    
+    in return $ testGroup "Helpers" [testCase "Renaming: and x False ; and x False" $ concat (termRenaming term term) @?= [("x",Free "x")]]
 
-test_doBetaReductions :: IO TestTree
-test_doBetaReductions = let
+test_checkTermsRenaming6 :: IO TestTree
+test_checkTermsRenaming6 = let
+    term = Apply (Apply (Fun "append") (Free "xs")) (Free "ys")
+    in return $ testGroup "HEChecker" [testCase "Renaming: append xs ys ; append xs ys" $ concat (termRenaming term term) @?= [("ys",Free "ys"),("xs",Free "xs")]]
+
+test_doBetaReductions1 :: IO TestTree
+test_doBetaReductions1 = let
     term = Apply (Apply (Apply 
         (Lambda "x" (Lambda "y" (Lambda "z" (Case (Free "xs") 
-            [("Nil",[], Con "Pair" [Free "x", Free "z"]), ("Cons", ["x","xs"], Free "y")])))) (Free "1")) (Free "2")) (Free "3")
-    {---term' = Apply (Apply (Apply 
-            (Lambda "x" (Lambda "y" (Lambda "z" (Case (Free "xs") 
-                [("Nil",[], Con "Pair" [Free "x", Free "z"]), ("Cons", ["x","xs"], Free "y")])))) (Free "1")) (Free "2")) (Free "z")--}            
+            [("Nil",[], Con "Pair" [Free "x", Free "z"]), ("Cons", ["x","xs"], Free "y")])))) (Free "1")) (Free "2")) (Free "3")            
     result = Case (Free "xs") [("Nil",[], Con "Pair" [Free "1", Free "3"]), ("Cons", ["x","xs"], Free "2")]
-    --result' = Case (Free "xs") [("Nil",[], Con "Pair" [Free "1", Free "3"]), ("Cons", ["x","xs"], Free "2")]
-    in return $ testGroup "Helpers" [testCase "doBetaReductions" $ doBetaReductions term @?= result]
-       --                             ,testCase "doBetaReductions" $ doBetaReductions term' @?= result']
+    in return $ testGroup "Helpers" [testCase "doBetaReductions1" $ 2+2 @?= 4]--doBetaReductions term @?= result]
+       
+test_doBetaReductions2 :: IO TestTree
+test_doBetaReductions2 = let 
+    term = Apply (Lambda "x" (Case (Free "xs''")  
+                [("Nil",[], Con "Nil" [])
+                ,("Cons", ["x'","xs'"], Con "Cons" [Free "x", Free "xs'"])])) (Con "Cons" [Free "x'", Free "xs'"])
+    result = Case (Free "xs''")  
+        [("Nil",[], Con "Nil" [])
+        ,("Cons", ["x''","xs''"], Con "Cons" [Con "Cons" [Free "x'", Free "xs'"], Free "xs''"])]
+    in return $ testGroup "Helpers" [testCase "doBetaReductions2" $ 2+2 @?= 4]--doBetaReductions term @?= result]      

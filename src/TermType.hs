@@ -1,5 +1,5 @@
 module TermType (createTermInContext, getTerm, getContext,
-                Context (..), Term (..), TermInContext (..), place, free) where
+                Context (..), Term (..), TermInContext (..), place, free, bound) where
 
 --import ProgPrinter
 import Prelude hiding ((<>))
@@ -60,8 +60,13 @@ free' (Lambda x t) = free' t
 free' (Con c ts) = concatMap free' ts
 free' (Apply t u)  = free' t ++ free' u
 free' (Fun f) = []
-free' (Case t bs) = free' t ++ concatMap (\(c,xs,t) -> free' t) bs
+free' (Case t bs) = free' t ++ concatMap (\(c,xs,t) -> free' t \\ xs) bs
 free' (Let x t u) = free' t  ++ free' u
+
+bound t = nub (bound' t)
+bound' (Case t bs) = concatMap (\(c, xs, t) -> xs) bs
+bound' (Let x t u) = [x]
+bound' _ = []
 
 -- place term in context
 --place t k | traceShow ("place : t = " ++ show t ++ ", k = " ++ show k) False = undefined

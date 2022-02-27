@@ -4,7 +4,7 @@ import TermType
 import LTSType
 import Data.Maybe (fromMaybe)
 import Debug.Trace (traceShow)
-import Data.List (delete)
+import Data.List (delete, (\\), intersect)
 
 type FunctionDefinition = (String, ([String], Term))
 type Generalization = (Term, LTS)
@@ -107,8 +107,13 @@ substituteTermWithNewTerm (Free x) (x', term') | x == x' = term'
 substituteTermWithNewTerm (Lambda x term) pair = Lambda x $ substituteTermWithNewTerm term pair
 substituteTermWithNewTerm (Con con terms) pair = Con con $ map (\term -> substituteTermWithNewTerm term pair) terms
 substituteTermWithNewTerm (Apply term' term'') pair = Apply (substituteTermWithNewTerm term' pair) $ substituteTermWithNewTerm term'' pair
-substituteTermWithNewTerm (Case term branches) pair =
-  Case (substituteTermWithNewTerm term pair) (map (\(name, args, term') -> (name, args,substituteTermWithNewTerm term' pair)) branches)
+substituteTermWithNewTerm (Case term branches) pair@(x, Free x') =
+  Case (substituteTermWithNewTerm term pair) (map (\(name, args, term') -> let
+    args' = map (\arg -> if x == arg then x' else arg) args
+    in (name, args',substituteTermWithNewTerm term' pair)) branches)
+substituteTermWithNewTerm (Case term branches) pair@(x, x') =
+  Case (substituteTermWithNewTerm term pair) (map (\(name, args, term') 
+    -> (name, args,substituteTermWithNewTerm term' pair)) branches)    
 substituteTermWithNewTerm (Let x term term') pair = Let x (substituteTermWithNewTerm term pair) $ substituteTermWithNewTerm term' pair
 substituteTermWithNewTerm term _ = term
 
@@ -146,7 +151,11 @@ doBetaReductions :: Term -> Term
 doBetaReductions term@(Apply e0@(Apply _ _) e1) | traceShow ("Doing beta reduction of term " ++ show term) False = undefined
 doBetaReductions term@(Apply e0 e1) | lambdasPresent e0 = doBetaReductions (Apply (doBetaReductions e0) e1)
 doBetaReductions term@(Apply (Lambda x e0) e1) | traceShow ("!Doing beta reduction of term " ++ show x ++ ";" ++ show term ++ ";" ++ show (substituteTermWithNewTerms e0 [(x, e1)])) False = undefined
-doBetaReductions (Apply (Lambda x e0) e1) = substituteTermWithNewTerms e0 [(x, e1)]
+doBetaReductions (Apply (Lambda x e0) e1) = let
+    collisions = free e1 `intersect` bound e0
+    substitutes = map (\x -> (x, renameVar (free e1 ++ bound e0) x)) collisions
+    e0' = foldl (\e (x, x') -> substituteTermWithNewTerms e [(x, Free x')]) e0 substitutes 
+    in substituteTermWithNewTerms e0' [(x, e1)]
 doBetaReductions term = term
 
 lambdasPresent :: Term -> Bool

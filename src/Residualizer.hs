@@ -50,8 +50,8 @@ residualize' (LTS (LTSTransitions _ ((Let', t0) : branches))) eps = let
   in foldl (\accum (X' x_i, t_i) -> let
     t_i' = residualize' t_i eps
     in (Let x_i (fst t_i') (fst accum), snd accum ++ snd t_i')) initializer $ tail branches'
-residualize' (LTS (LTSTransitions e [(Unfold' funName, t)])) eps | traceShow ("e = " ++ show e ++ ";funname = "
-    ++ show funName ++ "; t = " ++ show t ++ ";" ++ show eps ++ "; renaming = " ++ show (filter (\((_, _), fundef) -> not $ null $ concat $ termRenaming fundef e) eps)) False = undefined
+--residualize' (LTS (LTSTransitions e [(Unfold' funName, t)])) eps | traceShow ("e = " ++ show e ++ ";funname = "
+  --  ++ show funName ++ "; t = " ++ show t ++ ";" ++ show eps ++ "; renaming = " ++ show (filter (\((_, _), fundef) -> not $ null $ concat $ termRenaming fundef e) eps)) False = undefined
 residualize' (LTS (LTSTransitions e [(Unfold' funName, t)])) eps =
         case filter (\((_, _), fundef) -> not $ null $ concat $ termRenaming fundef e) eps of
           ((funname, vars), fundef) : _ -> let

@@ -121,7 +121,7 @@ substituteTermWithNewTerm term _ = term
 
 -- is term t renaming of u
 termRenaming :: Term -> Term -> [[(String, Term)]]
-termRenaming t u | traceShow ("renaming: t = " ++ show t ++ ", u = " ++ show u) False = undefined
+--termRenaming t u | traceShow ("renaming: t = " ++ show t ++ ", u = " ++ show u) False = undefined
 termRenaming t u = termRenaming' [] t u (free t ++ free u) [] []
 
 termRenaming' :: t -> Term -> Term -> [String] -> [String] -> [(String, Term)] -> [[(String, Term)]]

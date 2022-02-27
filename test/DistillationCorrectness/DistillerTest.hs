@@ -56,20 +56,23 @@ test_f = let
     funTerm = (Apply (Fun "f") (Free "x"))
     funDef = [("f",(["x"],Apply (Fun "f") (Free "x")))]
     result = Apply (Fun "f") (Free "x")
-    in return $ testGroup "Distiller" [testCase "Distiller: f x = f x" $ 2+2 @?=4]--distillProg (funTerm, funDef) @?= result]
+    in return $ testGroup "Distiller" [testCase "Distiller: f x = f x" $ distillProg (funTerm, funDef) @?= result]
 
 test_f_g :: IO TestTree
 test_f_g = let
     funTerm = (Apply (Fun "f") (Free   "x"))
     funDef = [("f",(["x"],Apply (Fun "g") (Free "x"))), ("g",(["x"],Apply (Fun "f") (Free "x")))]
     result = Apply (Fun "g") (Free "x")
-    in return $ testGroup "Distiller" [testCase "Distiller: f x = g x, g x = f x" $ 2+2 @?=4]--distillProg (funTerm, funDef) @?= result]
+    in return $ testGroup "Distiller" [testCase "Distiller: f x = g x, g x = f x" $ distillProg (funTerm, funDef) @?= result]
 
 test_append :: IO TestTree
 test_append = let
     funTerm = Apply (Apply (Fun "append") (Free "xs")) (Free "ys")
     funDef = [("append",(["xs","ys"],Case (Free "xs") [("Nil",[],Free "ys"),("Cons",["x","xs'"],Apply (Apply (Fun "append") (Free "xs'")) (Free "ys"))]))]
-    result = Lambda "xs'" (Lambda "ys" (Lambda "xs" ((Case (Free "xs") [("Nil",[],Free "ys"),("Cons",["x","xs'"],Apply (Apply (Fun "append") (Free "xs'")) (Free "ys"))]))))
+    result = Apply (Apply (Lambda "ys" (Lambda "xs" (Case (Free "xs") 
+        [("Nil",[],Free "ys")
+        ,("Cons",["x","xs'"],Apply (Apply (Lambda "ys" (Lambda "xs'" 
+            (Apply (Apply (Fun "f'") (Free "xs'")) (Free "ys")))) (Free "ys")) (Free "xs'"))]))) (Free "ys")) (Free "xs")
     in return $ testGroup "Distiller" [testCase "Distiller: append xs ys" $ distillProg (funTerm, funDef) @?= result]
 
 test_plus :: IO TestTree
@@ -77,7 +80,7 @@ test_plus = let
     funTerm = Apply (Apply (Fun "plus") (Free "x")) (Free "y")
     funDef = [("plus",(["x","y"],Case (Free "x") [("Zero",[],Free "y"),("Succ",["x'"],Con "Succ" [Apply (Apply (Fun "plus") (Free "x'")) (Free "y")])]))]
     result = Lambda "x'" (Lambda "y" (Case (Free "x") [("Zero",[],Free "y"),("Succ",["x'"],Con "Succ" [Apply (Apply (Fun "plus") (Free "x'")) (Free "y")])]))
-    in return $ testGroup "Distiller" [testCase "Distiller: plus x y" $ 2+2 @?=4]--distillProg (funTerm, funDef) @?= result]
+    in return $ testGroup "Distiller" [testCase "Distiller: plus x y" $ distillProg (funTerm, funDef) @?= result]
 
 test_append_gen :: IO TestTree
 test_append_gen = let

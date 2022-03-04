@@ -1,0 +1,10 @@
+import Nat
+
+main = g1 m1 m2
+;
+
+h1 m1 d_m1 = mul (plus m1 d_m1) (Succ(Succ(Zero)))
+;
+
+g1 m1 d_m1 = 
+  Pair ((h1 m1 d_m1), (g1 (plus m1 d_m1)))

@@ -1,7 +1,7 @@
 import LinearAlgebra
 import Bool
 
-main = mAdd op_add (mAdd op_add  (mAdd op_add m3 m4) m2) m1 
+main = genMtxSingle
 ;
 
 op_add x y = case x of OptNone -> (case y of OptNone -> OptNone | OptSome(b) -> (OptSome(b))) 

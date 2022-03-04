@@ -1,0 +1,20 @@
+import LinearAlgebra
+import Bool
+
+main = (g1 m1 m2)
+;
+
+h1 m1 m2 = mask m1 m2
+;
+
+r m1 m2 d_m1 = g1 (mAdd is_z_bool op_add m1 d_m1) m2
+;
+
+g1 m1 m2 = 
+  Pair ((h1 m1 m2), (r m1 m2))
+;
+
+isZ x = eqBool x False
+;
+
+op_add x y = or x y

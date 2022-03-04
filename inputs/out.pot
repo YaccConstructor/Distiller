@@ -1,0 +1,8 @@
+main = f m1 s isZ f1 f2;
+f m1 s isZ f1 f2 = case m1 of
+                      Error -> s
+                    | None -> s
+                    | Val(v) -> (case (isZ (f1 v)) of
+                                    True -> s
+                                  | False -> (f2 s (f1 v)))
+                    | Node(q1,q2,q3,q4) -> (f q4 (f q3 (f q2 (f q1 s isZ f1 f2) isZ f1 f2) isZ f1 f2) isZ f1 f2)

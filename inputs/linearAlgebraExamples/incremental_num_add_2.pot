@@ -1,0 +1,13 @@
+import Nat
+
+main = case (g1 m1 m2) of Pair(x,y) -> y m3 m4
+;
+
+h1 m1 m2 = mul m1 m2
+;
+
+r m1 m2 d_m1 d_m2 = g1 (plus m1 d_m1) (plus m2 d_m2)
+;
+
+g1 m1 m2 = 
+  Pair ((h1 m1 m2), (r m1 m2))

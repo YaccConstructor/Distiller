@@ -1,26 +1,30 @@
 import Bool
+import Nat
 
-mkNode isZ x = case (isZ x) of True -> None | False -> Val(x)
+mkNode x = case x of OptNone -> None | OptSome(x) -> (Val(x))
 ; 
 
-mAdd isZ g m1 m2 = 
+flip g x y = g y x
+;
+
+mAdd g m1 m2 = 
     case m1 of
          Error -> Error
-         | None -> (m2)
+         | None -> (map (g OptNone) m2)
          | Val (v1) -> (case m2 of 
                         Error -> Error 
-                        | None -> m1 
-                        | Val (v) -> (mkNode isZ (g v1 v))
+                        | None -> (map (flip g OptNone) m1) 
+                        | Val (v) -> (mkNode (g (OptSome (v1)) (OptSome (v))))
                         | Node (t1, t2, t3, t4) -> Error)
          | Node (q1, q2, q3, q4) -> (case m2 of 
                                     Error -> Error
-                                    | None -> m1 
+                                    | None -> (map (flip g OptNone) m1) 
                                     | Val (v) -> Error 
                                     | Node (t1, t2, t3, t4) -> (Node( 
-                                                                     (mAdd isZ g q1 t1) 
-                                                                    ,(mAdd isZ g q2 t2) 
-                                                                    ,(mAdd isZ g q3 t3) 
-                                                                    ,(mAdd isZ g q4 t4))))
+                                                                     (mAdd g q1 t1) 
+                                                                    ,(mAdd g q2 t2) 
+                                                                    ,(mAdd g q3 t3) 
+                                                                    ,(mAdd g q4 t4))))
 ;
 
 mask m msk =
@@ -59,16 +63,16 @@ mMult isZ g h m1 m2 =
               )
 ;
 
-map isZ g m = 
+map g m = 
     case m of
          Error -> Error
          | None -> None
-         | Val (v) -> (mkNode isZ (g v))
+         | Val (v) -> (mkNode (g (OptSome (v))))
          | Node (q1, q2, q3, q4) -> (Node( 
-                                     (map isZ g q1) 
-                                     ,(map isZ g q2) 
-                                     ,(map isZ g q3) 
-                                     ,(map isZ g q4)))
+                                      (map g q1) 
+                                     ,(map g q2) 
+                                     ,(map g q3) 
+                                     ,(map g q4)))
 ;
                       
 kron isZ g m1 m2 =
@@ -166,3 +170,24 @@ mEq m1 m2 opEq =
                               | None -> False
                               | Val (v2) -> False
                             ) 
+;
+
+two = Succ(Succ(Zero))
+;
+
+genMtxSingle sz i j v =
+   case (minus sz (Succ(Zero))) of
+   Zero -> Val(v)
+   | Succ(y) -> (
+     case (lt (div sz two) i) of
+     True -> (
+       case (lt (div sz two) j) of
+       True -> Node (None,None,None,(genMtxSingle (div sz two) (minus i (div sz two)) (minus j (div sz two)) v))
+       | False -> Node (None,(genMtxSingle (div sz two) (minus i (div sz two)) j v),None,None)
+     )
+     | False -> (
+       case (lt (div sz two) j) of
+       True -> Node (None,None,(genMtxSingle (div sz two) i (minus j (div sz two)) v),None)
+       | False -> Node ((genMtxSingle (div sz two) i j v),None,None,None)
+     )
+   ) 

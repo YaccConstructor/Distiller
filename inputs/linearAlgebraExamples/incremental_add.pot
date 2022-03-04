@@ -1,0 +1,22 @@
+import LinearAlgebra
+import Bool
+
+main = 
+    case (g1 m1 m2) of 
+    Pair (r,x) -> x n1 n2
+;
+
+h1 m1 m2 = mAdd is_z_bool op_add m1 m2
+;
+
+r m1 m2 d_m1 d_m2 = g1 (mAdd is_z_bool op_add m1 d_m1) (mAdd is_z_bool op_add m2 d_m2)
+;
+
+g1 m1 m2 = 
+  Pair ((h1 m1 m2), (r m1 m2))
+;
+
+isZ x = eqBool x False
+;
+
+op_add x y = or x y

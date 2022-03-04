@@ -1,4 +1,4 @@
 import NatList
 
-main = map f l
+main = map g l
 

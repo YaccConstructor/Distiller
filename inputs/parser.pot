@@ -1,0 +1,83 @@
+main = parse_test8 eof input
+;
+
+parse_a next input = 
+   case input of
+         Cons(hd,tl) -> (case hd of A -> (next tl) | B -> None)
+       | Nil -> None
+;
+
+parse_b next input = 
+   case input of
+         Cons(hd,tl) -> (case hd of B -> next tl | A -> None)
+       | Nil -> None
+;
+
+parse_seq p1 p2 next input = p1 (p2 next) input
+;
+
+parse_alt p1 p2 next input = 
+    case (p1 next input) of
+          Some(w1) -> (Some(w1))
+        | None -> p2 next input 
+;
+
+parse_eps next input = 
+    case input of
+          Nil -> Some (Nil)
+        | Cons(hd,tl) -> next input
+;
+
+parse_cls p next input =
+    case (next input) of
+          Some(w1) -> Some(w1)
+        | None -> (case (p next input) of
+                        Some (w2) -> Some(w2)
+                      | None -> (case (p return input) of
+                                      Some (w3) -> (parse_cls p next w3)
+                                    | None -> None))
+;
+
+return input = Some(input)     
+;
+
+eof input = 
+     case input of 
+          Cons(hd,tl) -> None
+        | Nil -> Some(Nil)
+;
+
+parse_s next input = parse_alt parse_eps (parse_seq parse_a (parse_seq parse_s parse_b)) next input 
+;
+
+parse_test8 next input = parse_seq parse_s parse_a next input
+;
+
+parse_test next input = parse_alt (parse_seq (parse_seq parse_a parse_b) parse_a) (parse_seq (parse_seq parse_a parse_a) parse_a) next input 
+;
+
+parse_test2 next input = parse_seq (parse_alt (parse_seq parse_a parse_b) (parse_seq parse_a parse_a)) parse_a next input 
+;
+
+parse_test4 next input = parse_alt (parse_alt (parse_seq parse_a parse_b) (parse_seq parse_a parse_a)) (parse_seq (parse_seq parse_a parse_b) parse_a) next input 
+;
+
+parse_test5 next input = parse_seq (parse_cls parse_a) parse_b next input
+;
+
+parse_test6 next input = parse_seq (parse_cls parse_a) (parse_seq parse_a parse_b) next input
+;
+
+parse_test7 next input = parse_seq (parse_cls (parse_alt parse_a parse_b)) (parse_seq parse_a parse_b) next input
+;
+
+parse_test3_1 next input = parse_alt parse_eps (parse_seq parse_a parse_test3_1) next input
+;
+
+parse_test3 next input = parse_seq parse_test3_1 parse_b next input
+;
+
+find parse input = 
+    case input of
+         Cons(hd, tl) -> Cons((parse return input),find tl)
+        | Nil -> Nil

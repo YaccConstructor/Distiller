@@ -64,9 +64,13 @@ free' (Case t bs) = free' t ++ concatMap (\(c,xs,t) -> free' t \\ xs) bs
 free' (Let x t u) = free' t  ++ free' u
 
 bound t = nub (bound' t)
-bound' (Case t bs) = concatMap (\(c, xs, t) -> xs) bs
-bound' (Let x t u) = [x]
-bound' _ = []
+bound' (Free x) = []
+bound' (Lambda x t) = bound' t
+bound' (Con c ts) = concatMap bound' ts
+bound' (Apply t u) = bound' t ++ bound' u
+bound' (Fun f) = [] 
+bound' (Case t bs) = concatMap (\(c, xs, t') -> xs ++ bound' t') bs
+bound' (Let x t u) = x : (bound' t ++ bound' u)
 
 -- place term in context
 --place t k | traceShow ("place : t = " ++ show t ++ ", k = " ++ show k) False = undefined

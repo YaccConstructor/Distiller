@@ -20,7 +20,7 @@ distillProg (mainFunTerm, funDefinitions) = let
 
     in do {
       traceShow ("prog = " ++ show (funsDefs', prog) ++ "; residualized prog = " ++ show (residualize prog funsDefs'))
-      fst $ residualize prog funsDefs'
+      getFirst $ residualize prog funsDefs'
       --(Fun "f") -- ++ show (fst result) ++ show (snd result))
     }
 
@@ -74,8 +74,10 @@ distill index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum fun
              in error "error1" --distill (index + 1) (unfold residualizedLTS funsDefs, EmptyCtx) [generalizedLTS] previousGensAccum []
           [] ->
             let oldTerm = place f k
-                (residualized, funsDefs'') = residualize t funsDefs'
-                (funsDefs''', newTerm) = distill index (unfold (residualized) funsDefs', EmptyCtx) (t : funNamesAccum) previousGensAccum (nub $ funsDefs' ++ funsDefs'' ++ funsDefs)
+                (residualized, funsDefs'', funNamesAccumTerms) = residualize t funsDefs'
+                newFunsToAccum = map (\funDef@(f, (xs, e)) -> doLTS1Tr (foldl Apply (Fun f) $ map Free xs) (Unfold' f) $ drive e [] funNamesAccumTerms) funNamesAccumTerms
+                funsDefs'''' = nub $ funsDefs' ++ funsDefs'' ++ funsDefs
+                (funsDefs''', newTerm) = distill index (unfold (residualized) funsDefs', EmptyCtx) (nub $ t : funNamesAccum ++ newFunsToAccum) previousGensAccum funsDefs''''
              in do {
                 --traceShow ("Residualized in distill: " ++ show index ++ "; t = " ++ show t)-- ++ ";  residualized =" ++ show residualized ++ "; funNamesAccum = " ++ show funNamesAccum) -- ++ show newTerm)
                 case filter (\(_, (_, fundef)) -> not $ null $ concat $ termRenaming fundef oldTerm) funsDefs' of

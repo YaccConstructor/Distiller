@@ -17,7 +17,7 @@ drive term@(Fun funName) funsNames funsDefs =
       let term' = find (\(funName', _) -> funName == funName') funsDefs
        in case term' of
             Just (_, (_, term'')) -> doLTS1Tr term (Unfold' funName) $ drive term'' (funName : funsNames) funsDefs
-            Nothing -> error "This function does not have definition."
+            Nothing -> error $ "Function " ++ show funName ++ " does not have definition."
 drive term@(Apply e0 e1) funsNames funsDefs = doLTSManyTr term [(Apply0', drive e0 funsNames funsDefs), (Apply1', drive e1 funsNames funsDefs)]
 drive term@(Case e0 branches) funsNames funsDefs =
   doLTSManyTr term $

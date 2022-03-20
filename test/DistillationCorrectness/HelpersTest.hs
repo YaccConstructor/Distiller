@@ -49,7 +49,7 @@ test_doBetaReductions1 = let
         (Lambda "x" (Lambda "y" (Lambda "z" (Case (Free "xs") 
             [("Nil",[], Con "Pair" [Free "x", Free "z"]), ("Cons", ["x","xs"], Free "y")])))) (Free "1")) (Free "2")) (Free "3")            
     result = Case (Free "xs") [("Nil",[], Con "Pair" [Free "1", Free "3"]), ("Cons", ["x","xs"], Free "2")]
-    in return $ testGroup "Helpers" [testCase "doBetaReductions1" $ 2+2 @?= 4]--doBetaReductions term @?= result]
+    in return $ testGroup "Helpers" [testCase "doBetaReductions1" $ doBetaReductions term @?= result]
        
 test_doBetaReductions2 :: IO TestTree
 test_doBetaReductions2 = let 
@@ -59,4 +59,12 @@ test_doBetaReductions2 = let
     result = Case (Free "xs''")  
         [("Nil",[], Con "Nil" [])
         ,("Cons", ["x''","xs''"], Con "Cons" [Con "Cons" [Free "x'", Free "xs'"], Free "xs''"])]
-    in return $ testGroup "Helpers" [testCase "doBetaReductions2" $ 2+2 @?= 4]--doBetaReductions term @?= result]      
+    in return $ testGroup "Helpers" [testCase "doBetaReductions2" $ doBetaReductions term @?= result]
+
+test_doBetaReductions3 :: IO TestTree
+test_doBetaReductions3 = let
+    term = Apply (Apply (Lambda "xs" (Lambda "ys" (Case (Free "xs")
+            [("Nil",[], Free "xs")
+            ,("Cons", ["x","xs#"], Free "xs#")]))) (Free "xs#")) (Free "ys")
+    result = Case (Free "xs#") [("Nil",[],Free "xs#"),("Cons",["x","xs#'"],Free "xs#'")]
+    in return $ testGroup "Helpers" [testCase "doBetaReductions3" $ doBetaReductions term @?= result]

@@ -15,26 +15,26 @@ residualize' :: LTS -> [FunctionDefinition] -> (Term, [FunctionDefinition])
 residualize' (LTS (LTSTransitions _ [(X' x, Leaf)])) eps = (Free x, eps)
 residualize' (LTS (LTSTransitions _ bs@((Con' conName, Leaf) : branches))) eps
     | branchesSetForConstructor bs = let
-        result = map ((\branch -> residualize' branch eps) . snd) branches
+        result = map ((`residualize'` eps) . snd) branches
         terms = map fst result
-        eps' = eps ++ concatMap snd result
+        eps' = nub $ eps ++ concatMap snd result
         in (Con conName terms, eps')
     | otherwise = error $ "Trying to residualize: " ++ conName ++ " constructor case, but branches have incorrect form."
 residualize' (LTS (LTSTransitions _ [(Lambda' x, t)])) eps = let
     result = residualize' t eps
     term = fst result
     eps' = snd result
-    in (Lambda x term, eps ++ eps')
+    in (Lambda x term, nub $ eps ++ eps')
 residualize' (LTS (LTSTransitions _ [(Apply0', t0), (Apply1', t1)])) eps = let
     result1 = residualize' t0 eps
     result2 = residualize' t1 eps
-    in (Apply (fst result1) (fst result2), snd result1 ++ snd result2 ++ eps)
+    in (Apply (fst result1) (fst result2), nub $ snd result1 ++ snd result2 ++ eps)
 residualize' (LTS (LTSTransitions _ ((Case', t0) : branches))) eps = let
     caseResult = residualize' t0 eps
     branchesResult = map (\(CaseBranch' p1 args, branch) -> (CaseBranch' p1 args, residualize' branch (eps ++ snd caseResult))) branches
     branchesTerms = map (\(CaseBranch' p1 args, residualized) -> (p1, args, fst residualized)) branchesResult
     branchesEps = concatMap (\(CaseBranch' p1 args, residualized) -> snd residualized) branchesResult
-    in (Case (fst caseResult) branchesTerms, eps ++ (snd caseResult) ++ branchesEps)
+    in (Case (fst caseResult) branchesTerms, nub $ eps ++ snd caseResult ++ branchesEps)
 residualize' (LTS (LTSTransitions _ ((Let', t0) : branches))) eps = let
   t0' = residualize' t0 eps
   
@@ -57,7 +57,7 @@ residualize' (LTS (LTSTransitions e [(Unfold' funName, t)])) eps =
                                     Just var' -> var') vars
             in do {
             traceShow ("renaming passed!" ++ show t ++ ";;" ++ show e ++ ";" ++ show vars ++ "; result = " ++ show (foldl (Apply) (Fun funname) (vars')))
-            (foldl (Apply) (Fun funname) (vars'), eps)
+            (foldl Apply (Fun funname) (vars'), eps)
             }
           _ -> let
                 t' = case t of
@@ -70,7 +70,7 @@ residualize' (LTS (LTSTransitions e [(Unfold' funName, t)])) eps =
                 resultWithLambdasAndApplies = foldl (Apply) (resultWithLambdas) $ reverse $ map Free $ checkDefinitionHasLambdas t' xs
             in do {
               traceShow ("Renaming not passed " ++ show e ++ "; t = " ++ show t ++ "; eps = " ++ show eps ++ show ((f, xs), e) ++ show (((f, xs), fst result)))
-              (resultWithLambdasAndApplies, ((f, (xs, fst result)) : (f, (xs, e)) : snd result ++ eps))
+              (resultWithLambdasAndApplies, nub $ (f, (xs, fst result)) : (f, (xs, e)) : snd result ++ eps)
             }
 residualize' (LTS (LTSTransitions _ [(UnfoldBeta', t)])) eps = residualize' t eps
 residualize' (LTS (LTSTransitions _ [(UnfoldCons' _, t)])) eps = residualize' t eps

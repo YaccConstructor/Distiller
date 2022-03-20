@@ -33,6 +33,7 @@ isRenaming' funNamesAccum (LTS (LTSTransitions t@(Free x) _))
 isRenaming' funNamesAccum (LTS (LTSTransitions _ [(Unfold' funName, t)])) (LTS (LTSTransitions _ [(Unfold' funName', t')])) freeVars boundVars renaming
   | t == Leaf && t' == Leaf && funName == funName' = ("#", "#") : renaming
   | (funName, funName') `elem` funNamesAccum = renaming
+  | funName /= funName' = []
   | otherwise = renaming ++ isRenaming' ((funName, funName') : funNamesAccum) t t' freeVars boundVars renaming
 -- lambda
 isRenaming' funNamesAccum (LTS (LTSTransitions _ [(Lambda' x, t)]))

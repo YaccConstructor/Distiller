@@ -2,7 +2,7 @@ module Transformer (transform) where
 
 import Data.Maybe (fromMaybe, mapMaybe)
 import Driver
-import GHC.OldList (find)
+import GHC.OldList (find, nub)
 import Generalizer
 import HelperTypes
 import HomeomorphicEmbeddingChecker
@@ -38,20 +38,49 @@ transform index (term@(Lambda x e0), k@(ApplyCtx k' e1)) funNamesAccum previousG
 transform index (term@(Lambda x e0), k@(ApplyCtx k' e1)) funNamesAccum previousGensAccum funsDefs = let
   result = transform index (substituteTermWithNewTerms e0 [(x, e1)], k') funNamesAccum previousGensAccum funsDefs
   in (fst result ++ funsDefs, doLTS1Tr (place term k) UnfoldBeta' $ snd result)
-{--transform index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum funsDefs | traceShow ("index = " ++ show index ++ show (if index == 0
-                                                                                                then drive (place f k) [] funsDefs
-                                                                                                else transform (index - 1) termInCtx [] previousGensAccum funsDefs)) False = undefined-}
+transform index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum funsDefs | traceShow ("index = "
+    ++ show index ++ "; t = " ++ show (if index == 0
+        then drive (place f k) [] funsDefs
+        else snd $ transform (index - 1) termInCtx [] previousGensAccum funsDefs)
+    ++ "funNamesAccum = " ++ show funNamesAccum
+    ++ "; funsDefs = " ++ show (nub funsDefs) ++ "termInCtx = " ++ show termInCtx
+    ++ "isRenaming t  t''" ++ show (isRenaming (if index == 0
+                                                        then drive (place f k) [] funsDefs
+                                                        else snd $ transform (index - 1) termInCtx [] previousGensAccum funsDefs) (LTS (LTSTransitions (Apply (Apply (Fun "f") (Free "xs")) (Free "ys")) [(Unfold' "f",LTS (LTSTransitions
+                                                                                                                                            (Case (Free "xs") [("Nil",[],Free "ys"),("Cons",["x","xs#"],Apply (Apply (Fun "f") (Free "xs#")) (Free "ys"))]) [(Case',LTS (LTSTransitions (Free "xs")
+                                                                                                                                            [(X' "xs",Leaf)])),(CaseBranch' "Nil" [],LTS (LTSTransitions (Free "ys") [(X' "ys",Leaf)])),(CaseBranch' "Cons" ["x","xs#"],LTS (LTSTransitions (Apply (Apply (Fun "f")
+                                                                                                                                            (Free "xs#")) (Free "ys")) [(Unfold' "f",Leaf)]))]))])))) False = undefined
 transform index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum funsDefs =
    let (funsDefs', t) =
         if index == 0
           then (funsDefs, drive (place f k) [] funsDefs)
           else transform (index - 1) termInCtx [] previousGensAccum funsDefs
    in do {
-     case filter (not . null . isRenaming t) funNamesAccum of
-        _ : _ -> do {
-          --traceShow ("renaming passed##")
-          (funsDefs', doLTS1Tr (place f k) (Unfold' funName) doLTS0Tr)
-          }
+     case filter (not . null . isRenaming t) (funNamesAccum) of
+        _ : _ -> let
+          oldTerm = place f k 
+          in do {
+          --traceShow ("renaming passed##, index = " ++ show index ++ show (doLTS1Tr (place f k) (Unfold' funName) doLTS0Tr) ++ "; funNamesAccum" ++  show (funNamesAccum') ++ "; t" ++ show (t))
+         --(funsDefs', doLTS1Tr (place f k) (Unfold' funName) doLTS0Tr)
+            case filter (\(_, (_, fundef)) -> not $ null $ concat $ termRenaming fundef oldTerm) funsDefs' of
+                                                  (funname, (vars, fundef)) : _ -> let
+                                                    renamings = concat $ termRenaming fundef oldTerm
+                                                    vars' = map (\var -> case lookup var renamings of
+                                                                            Nothing -> Free var
+                                                                            Just var' -> var') vars
+                                                    oldTerm' = foldl (Apply) (Fun funname) vars'
+                                                    in do {
+                                                    {---trace ("renaming passed in transformer!"
+                                                         ++ show t
+                                                         ++ ";"
+                                                         ++ show vars
+                                                         ++ "; result = "
+                                                         ++ show (foldl (Apply) (Fun funname) (vars'))
+                                                         ++ "; funsDefs = " ++ show (nub $ funsDefs'))--}
+                                                       (funsDefs', doLTS1Tr oldTerm' (Unfold' funname) doLTS0Tr)
+                                                    }
+                                                  _ -> (funsDefs', doLTS1Tr oldTerm (Unfold' funName) doLTS0Tr)
+                         }
         [] -> case mapMaybe
           ( \t' -> case isHomeomorphicEmbedding t t' of
               [] -> Nothing
@@ -69,19 +98,45 @@ transform index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum f
           [] ->
             let oldTerm = place f k
                 (funsDefs'', newTerm) = if (index == 0)
-                    then transform index (unfold oldTerm funsDefs', EmptyCtx) (t : funNamesAccum) previousGensAccum funsDefs'
+                    then let 
+                        in do {
+                          trace ("Residualized!! n = " ++ show index ++ "residualized = " ++ show (unfold oldTerm funsDefs'))
+                          transform index (unfold oldTerm funsDefs', EmptyCtx) (t : funNamesAccum) previousGensAccum funsDefs'
+                          }
                     else let
                         residualized = residualize t funsDefs'
                         result = transform index (unfold (fst residualized) funsDefs', EmptyCtx) (t : funNamesAccum) previousGensAccum (funsDefs' ++ snd residualized)
                         in do {
-                          trace ("Residualized!! n = " ++ show index ++ "t = " ++ show t)
-                            -- ++ "; residualized = " ++ show residualized
-                            -- ++ "; unfold =" ++ show (unfold (fst residualized) funsDefs')
-                            -- ++ "; result = " ++ show result)
+                          trace ("Residualized!! n = " ++ show index ++ "residualized = " ++ show (fst residualized)
+                            ++ "; drived = " ++ show t
+                            ++ "; unfold! =" ++ show (unfold (fst residualized) funsDefs')
+                            ++ "; funNamesAccum = " ++ show (funNamesAccum))
                           result
                           }
              in do {
-               (funsDefs'', doLTS1Tr oldTerm (Unfold' funName) newTerm)
+               --trace ("index = " ++ show index ++ "result = " ++ show (doLTS1Tr oldTerm (Unfold' funName) newTerm) ++ "; funsDefs'' = " ++ show (nub $ funsDefs''))
+               case filter (\(_, (_, fundef)) -> not $ null $ concat $ termRenaming fundef oldTerm) funsDefs'' of
+                                        (funname, (vars, fundef)) : _ -> let
+                                          renamings = concat $ termRenaming fundef oldTerm
+                                          vars' = map (\var -> case lookup var renamings of
+                                                                  Nothing -> Free var
+                                                                  Just var' -> var') vars
+                                          oldTerm' = foldl (Apply) (Fun funname) vars'
+                                          in do {
+                                          {---traceShow ("renaming passed in transformer!"
+                                               ++ show t
+                                               ++ ";"
+                                               ++ show vars
+                                               ++ "; result = "
+                                               ++ show (foldl (Apply) (Fun funname) (vars'))
+                                               ++ "; funsDefs = " ++ show (nub $ funsDefs''))--}
+                                             trace ("tr index = " ++ show index ++ "result = " ++ show (doLTS1Tr oldTerm' (Unfold' funname) newTerm) ++ "; funsDefs'' = " ++ show (nub $ funsDefs''))
+                                             (funsDefs'', doLTS1Tr oldTerm' (Unfold' funname) newTerm)
+                                          }
+                                        _ -> do {
+                                          trace ("tr index = " ++ show index ++ "result = " ++ show (doLTS1Tr oldTerm (Unfold' funName) newTerm) ++ "; funsDefs'' = " ++ show (nub $ funsDefs''))
+                                          (funsDefs'', doLTS1Tr oldTerm (Unfold' funName) newTerm)
+                                          }
                }
                }
 transform index (term@(Apply e0 e1), k) funNamesAccum previousGensAccum funsDefs =

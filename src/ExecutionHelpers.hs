@@ -1,4 +1,4 @@
-module Helpers where
+module ExecutionHelpers where
 
 import TermType
 import ProgParser

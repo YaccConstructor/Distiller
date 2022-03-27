@@ -1,4 +1,4 @@
-module HelperTypes where
+module DistillationHelpers where
 
 import TermType
 import LTSType
@@ -6,15 +6,10 @@ import Data.Maybe (fromMaybe)
 import Debug.Trace (traceShow)
 import Data.List (delete, (\\), intersect)
 
-type FunctionDefinition = (String, ([String], Term))
-type Generalization = (Term, LTS)
-
-type Prog = (Term,[FunctionDefinition])
+-- | Helper functions for working with labels in lts 
 
 createLabels :: [String]
 createLabels = map ((++) "#" . show) [1 ..]
-
--- | Simple functions used for checking in guards that branches of lts have correct form 
 
 branchesSetsForConstructor :: [(Label, LTS)] -> [(Label, LTS)] -> Bool
 branchesSetsForConstructor [] [] = True

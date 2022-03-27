@@ -4,28 +4,22 @@ import Data.Maybe (fromMaybe, mapMaybe)
 import Driver
 import GHC.OldList (find, nub)
 import Generalizer
-import HelperTypes
+import DistillationHelpers
 import HomeomorphicEmbeddingChecker
 import LTSType
 import Residualizer
 import TermType
 import Transformer
 import Unfolder
-import HelperTypes
 import Debug.Trace (traceShow, trace)
 
 distillProg :: (Term, [FunctionDefinition]) -> (Term, [FunctionDefinition])
 distillProg (mainFunTerm, funDefinitions) = let
     (funsDefs', prog) = distill 2 (mainFunTerm, EmptyCtx) [] [] funDefinitions
     residualized = residualize prog funsDefs'
-    in do {
-      --traceShow ("prog = " ++ show (funsDefs', prog) ++ "; residualized prog = " ++ show (residualize prog funsDefs'))
-      (getFirst residualized, getSecond residualized)
-      --(Fun "f") -- ++ show (fst result) ++ show (snd result))
-    }
+    in (getFirst residualized, getSecond residualized)
 
 distill :: Int -> TermInContext -> [LTS] -> [Generalization] -> [FunctionDefinition] -> ([FunctionDefinition], LTS)
---distill i t funNamesAccum p funsDefs | traceShow ("distill " ++ show i ++ ";" ++ show t) False = undefined
 distill index (term@(Free x), context) funNamesAccum previousGensAccum funsDefs =
   distill' index (doLTS1Tr term (X' x) doLTS0Tr) context funNamesAccum previousGensAccum funsDefs
 
@@ -50,12 +44,6 @@ distill index (term@(Lambda x expr), EmptyCtx) funNamesAccum previousGensAccum f
 distill index (term@(Lambda x e0), k@(ApplyCtx k' e1)) funNamesAccum previousGensAccum funsDefs = let
     (funsDefs', term') = distill index (substituteTermWithNewTerms e0 [(x, e1)], k') funNamesAccum previousGensAccum funsDefs
   in (nub $ funsDefs' ++ funsDefs, doLTS1Tr (place term k) UnfoldBeta' term')
-distill index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum funsDefs | traceShow ("distill index = " ++ show index
-    ++ "funsDefs = " ++ show (nub funsDefs)
-    ++ "; Fun = " ++ show (place f k)
-    ++ "; t = " ++ show (transform index termInCtx [] previousGensAccum funsDefs)
-    ++ "funNamesAccum = " ++ show funNamesAccum
-    {-- ++ "residualized = " ++ show (residualize (snd $ transform index termInCtx [] previousGensAccum funsDefs) funsDefs)--} ) False = undefined
 distill index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum funsDefs =
    let (funsDefs', t) = transform index termInCtx [] previousGensAccum funsDefs
    in case filter (not . null . isRenaming t) (funNamesAccum) of
@@ -66,28 +54,19 @@ distill index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum fun
           (_, t') : _ ->
             let generalizedLTS = generalize t t' previousGensAccum
                 residualizedLTS = residualize generalizedLTS
-             in error "error1" --distill (index + 1) (unfold residualizedLTS funsDefs, EmptyCtx) [generalizedLTS] previousGensAccum []
+                --distill (index + 1) (unfold residualizedLTS funsDefs, EmptyCtx) [generalizedLTS] previousGensAccum []
+             in error "Generalization process have not tested yet. If this error occurred, something went wrong during test execution."
           [] ->
             let oldTerm = place f k
                 (residualized, funsDefs'', funNamesAccumTerms) = residualize t (nub $ funsDefs ++ funsDefs')
                 newFunsToAccum = map (\funDef@(ff, (xs, e)) -> doLTS1Tr (foldl Apply (Fun ff) $ map Free xs) (Unfold' ff) $ drive e [ff] funNamesAccumTerms) funNamesAccumTerms
                 funsDefs'''' = nub $ funsDefs' ++ funsDefs'' ++ funsDefs
                 (funsDefs''', newTerm) = distill index (unfold (residualized) funsDefs', EmptyCtx) (nub $ t : funNamesAccum ++ newFunsToAccum) previousGensAccum funsDefs''''
-             in {---error ("haha " ++ show residualized ++ "; newTerm = " ++ show newTerm)--}do {
-                --traceShow ("Residualized in distill: " ++ show index ++ "; t = " ++ show t)-- ++ ";  residualized =" ++ show residualized ++ "; funNamesAccum = " ++ show funNamesAccum) -- ++ show newTerm)
-                case filter (\(_, (_, fundef)) -> not $ null $ concat $ termRenaming fundef oldTerm) funsDefs' of
-                                                         (funname, (vars, fundef)) : _ -> let
-                                                           renamings = concat $ termRenaming fundef oldTerm
-                                                           vars' = map (\var -> case lookup var renamings of
-                                                                                   Nothing -> Free var
-                                                                                   Just var' -> var') vars
-                                                           oldTerm' = foldl (Apply) (Fun funname) vars'
-                                                           in do {
-                                                           --traceShow ("renaming passed!" ++ show t ++ ";;" ++ show e ++ ";" ++ show vars ++ "; result = " ++ show (foldl (Apply) (Fun funname) (vars')))
-                                                              (funsDefs''', doLTS1Tr oldTerm' (Unfold' funname) newTerm)
-                                                           }
-                                                         _ -> (funsDefs''', doLTS1Tr oldTerm (Unfold' funName) newTerm)
-                }--}
+             in case termRenamingExists oldTerm funsDefs''' of
+                    matched@(funname, (vars, fundef)) : _ -> let
+                        oldTerm' = mapTermToRenaming oldTerm matched
+                        in (funsDefs''', doLTS1Tr oldTerm' (Unfold' funname) newTerm)
+                    _ -> (funsDefs''', doLTS1Tr oldTerm (Unfold' funName) newTerm)
 distill index (term@(Apply e0 e1), k) funNamesAccum previousGensAccum funsDefs =
   let term' = doBetaReductions term in
   if term' == term

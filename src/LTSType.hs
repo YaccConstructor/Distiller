@@ -1,10 +1,14 @@
 module LTSType (
-    LTS (..), LTSTransitions (..), LTSTransitions (..), Label (..),
+    LTS (..), LTSTransitions (..), FunctionDefinition, Generalization, Prog, Label (..),
     doLTS0Tr, doLTS1Tr, doLTSManyTr,
     getLabels, getOldTerm, updateLTS) where
   
 import TermType
 import Debug.Trace (traceShow)
+
+type Prog = (Term, [FunctionDefinition])
+type FunctionDefinition = (String, ([String], Term))
+type Generalization = (Term, LTS)
 
 data LTS = Leaf  | LTS LTSTransitions deriving Show
 
@@ -67,13 +71,6 @@ updateLTS lts1 label1 lts2 label2 term = doLTSManyTr term [(label1, lts1), (labe
 
 getLabels :: LTSTransitions -> [Label]
 getLabels (LTSTransitions _ pairs) = map fst pairs
-
-{--getNewTerms :: LTSTransitions -> [Term]
-getNewTerms (LTSTransitions _ pairs) = map (\(_, y) -> 
-    case y of
-        (Leaf term) -> term
-        (LTS (LTSTransitions tr _)) -> tr
-        ) pairs --}
 
 getOldTerm :: LTSTransitions -> Term
 getOldTerm (LTSTransitions oldTerm _) = oldTerm

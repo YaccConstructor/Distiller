@@ -14,6 +14,25 @@ type Prog = (Term,[FunctionDefinition])
 createLabels :: [String]
 createLabels = map ((++) "#" . show) [1 ..]
 
+-- | Simple functions used for checking in guards that branches of lts have correct form 
+
+branchesSetsForConstructor :: [(Label, LTS)] -> [(Label, LTS)] -> Bool
+branchesSetsForConstructor [] [] = True
+branchesSetsForConstructor branches branches' = length branches == length branches' && all (\t -> tail (map fst t) == take (length t - 1) (map ConArg' createLabels)) [branches, branches']
+
+branchesSetForConstructor :: [(Label, LTS)] -> Bool
+branchesSetForConstructor [] = True
+branchesSetForConstructor branch = tail (map fst branch) == take (length branch - 1) (map ConArg' createLabels)
+
+matchCase :: [(Label, LTS)] -> [(Label, LTS)] -> Bool
+matchCase bs bs' = length bs == length bs' && all (\(CaseBranch' c xs,CaseBranch' c' xs') 
+    -> c == c' && length xs == length xs') (zip (map fst bs) (map fst bs'))
+    
+matchCase' :: (Eq a1, Foldable t1, Foldable t2) => [(a1, t1 a2, c1)] -> [(a1, t2 a3, c2)] -> Bool
+matchCase' bs bs' = length bs == length bs' && all (\((c,xs,t),(c',xs',t')) -> c == c' && length xs == length xs') (zip bs bs')
+
+
+-- | Functions for renaming variables in lts 
 renameVar :: Foldable t => t [Char] -> [Char] -> [Char]
 renameVar fv x = if   x `elem` fv
                  then renameVar fv (x++"'")
@@ -28,24 +47,8 @@ renameVarInLts (LTS (LTSTransitions e branches)) var = let
     in LTS (LTSTransitions e' branches')
 
 renameVarInLtsRecursively :: [(String, String)] -> LTS -> LTS
-renameVarInLtsRecursively xs lts | traceShow ("in renameVarLtsRec, xs = " ++ show xs ++ ", lts = " ++ show lts) False = undefined
 renameVarInLtsRecursively substitutions lts
   = foldl renameVarInLts lts substitutions
-
-branchesSetsForConstructor :: [(Label, LTS)] -> [(Label, LTS)] -> Bool
-branchesSetsForConstructor [] [] = True
-branchesSetsForConstructor branches branches' = length branches == length branches' && all (\t -> tail (map fst t) == take (length t - 1) (map ConArg' createLabels)) [branches, branches']
-
-branchesSetForConstructor :: [(Label, LTS)] -> Bool
-branchesSetForConstructor [] = True
-branchesSetForConstructor branch = tail (map fst branch) == take (length branch - 1) (map ConArg' createLabels)
-
-
-matchCase :: [(Label, LTS)] -> [(Label, LTS)] -> Bool
-matchCase bs bs' = length bs == length bs' && all (\((CaseBranch' c xs),(CaseBranch' c' xs')) 
-    -> c == c' && length xs == length xs') (zip (map fst bs) (map fst bs'))
-
-matchCase' bs bs' = length bs == length bs' && all (\((c,xs,t),(c',xs',t')) -> c == c' && length xs == length xs') (zip bs bs')
 
 renameLabel :: Label -> (String, String) -> Label
 renameLabel (X' x) (x', x'') = if x == x' then X' x'' else X' x
@@ -60,7 +63,8 @@ renameLabel (CaseBranch' x args) (x', x'') = let
     in CaseBranch' resultX resultArgs  
 renameLabel u _ = u         
     
--- concrete function alternative
+    
+-- | Functions for doing various updates with given term
 substituteTermWithNewVars :: Term -> [(String, String)] -> Term
 substituteTermWithNewVars (Free x) pairs | traceShow ("in subs, x = " ++ x ++ ", pairs = " ++ show pairs) False = undefined
 substituteTermWithNewVars (Free x) pairs = case lookup x pairs of
@@ -98,7 +102,6 @@ substituteTermWithNewVars fun _ = fun
 
 
 substituteTermWithNewTerms :: Term -> [(String, Term)] -> Term
-substituteTermWithNewTerms term xs | traceShow ("Substitute term with new terms " ++ show term ++ ";;;" ++ show xs) False = undefined
 substituteTermWithNewTerms term xs = foldl substituteTermWithNewTerm term xs
 
 substituteTermWithNewTerm :: Term -> (String, Term) -> Term
@@ -118,10 +121,12 @@ substituteTermWithNewTerm (Let x term term') pair = Let x (substituteTermWithNew
 substituteTermWithNewTerm term _ = term
 
 
+-- | Functions for checking if term t is a renaming of term u
+termRenamingExists :: Term -> [FunctionDefinition] -> [FunctionDefinition]
+termRenamingExists term funsDefs = filter (\(_, (_, fundef)) -> not $ null $ concat $ termRenaming fundef term) funsDefs
 
--- is term t renaming of u
+
 termRenaming :: Term -> Term -> [[(String, Term)]]
---termRenaming t u | traceShow ("renaming: t = " ++ show t ++ ", u = " ++ show u) False = undefined
 termRenaming t u = termRenaming' [] t u (free t ++ free u) [] []
 
 termRenaming' :: t -> Term -> Term -> [String] -> [String] -> [(String, Term)] -> [[(String, Term)]]
@@ -146,15 +151,32 @@ termRenaming' fs t u fv bv s | varApp fv t = let
                                             else [(x,u'):s]
 termRenaming' fs t u fv bv s = []
 
+varApp :: Foldable t => t String -> Term -> Bool
+varApp xs (Free x) = x `elem` xs
+varApp xs (Apply t (Free x)) = varApp xs t
+varApp xs t = False
 
+redex :: Term -> Term
+redex (Case t bs) = redex t
+redex (Apply t u) = redex t
+redex t = t
+
+mapTermToRenaming :: Term -> FunctionDefinition -> Term
+mapTermToRenaming term (funname, (vars, fundef)) = let
+    renamings = concat $ termRenaming fundef term
+    vars' = map (\var -> case lookup var renamings of
+                        Nothing -> Free var
+                        Just var' -> var') vars
+    in foldl Apply (Fun funname) vars'  
+                              
+
+-- | Functions for implementing performing beta reduction
 doBetaReductions :: Term -> Term
-doBetaReductions term@(Apply e0@(Apply _ _) e1) | traceShow ("Doing beta reduction of term " ++ show term) False = undefined
 doBetaReductions term@(Apply e0 e1) | lambdasPresent e0 = doBetaReductions (Apply (doBetaReductions e0) e1)
-doBetaReductions term@(Apply (Lambda x e0) e1) | traceShow ("!Doing beta reduction of term " ++ show x ++ ";" ++ show term ++ ";" ++ show (substituteTermWithNewTerms e0 [(x, e1)])) False = undefined
 doBetaReductions (Apply (Lambda x e0) e1) = let
     collisions = free e1 `intersect` bound e0
     substitutes = map (\x -> (x, renameVar (free e1 ++ bound e0) x)) collisions
-    e0' = foldl (\e (x, x') -> substituteTermWithNewTerms e [(x, Free x')]) e0 substitutes 
+    e0' = foldl (\e (x, x') -> substituteTermWithNewTerms e [(x, Free x')]) e0 substitutes
     in substituteTermWithNewTerms e0' [(x, e1)]
 doBetaReductions term = term
 
@@ -162,11 +184,3 @@ lambdasPresent :: Term -> Bool
 lambdasPresent (Apply (Lambda _ _ ) _) = True
 lambdasPresent (Apply e0@(Apply _ _) _) = lambdasPresent e0
 lambdasPresent _ = False
-
-varApp xs (Free x) = x `elem` xs
-varApp xs (Apply t (Free x)) = varApp xs t
-varApp xs t = False
-
-redex (Case t bs) = redex t 
-redex (Apply t u) = redex t
-redex t = t

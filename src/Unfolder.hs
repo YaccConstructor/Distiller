@@ -1,6 +1,6 @@
 module Unfolder (unfold) where
 
-import HelperTypes  
+import LTSType
 import TermType
 import Debug.Trace (traceShow, trace)
 

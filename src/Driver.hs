@@ -1,7 +1,7 @@
 module Driver where
 
 import Data.Foldable (find)
-import HelperTypes
+import DistillationHelpers
 import LTSType
 import TermType
 import Debug.Trace (trace)

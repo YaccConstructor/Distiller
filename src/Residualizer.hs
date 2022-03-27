@@ -2,7 +2,7 @@ module Residualizer (residualize, getFirst, getSecond, getThird) where
   
 import TermType
 import LTSType
-import HelperTypes
+import DistillationHelpers
 import Debug.Trace (traceShow)
 import Data.List (sort, (\\), nub)
   

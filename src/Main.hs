@@ -5,8 +5,8 @@ module Main (
 import Exception
 import TermType
 import Transformer
-import Helpers
-import HelperTypes
+import ExecutionHelpers
+import LTSType
 import Distiller
 
 import Text.ParserCombinators.Parsec

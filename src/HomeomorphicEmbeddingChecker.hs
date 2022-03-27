@@ -2,7 +2,7 @@ module HomeomorphicEmbeddingChecker (isRenaming, isHomeomorphicEmbedding) where
 
 import TermType
 import LTSType
-import HelperTypes
+import DistillationHelpers
 import Debug.Trace (traceShow)
 import Data.List
 

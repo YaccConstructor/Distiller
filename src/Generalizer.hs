@@ -1,6 +1,6 @@
 module Generalizer where
 
-import HelperTypes
+import DistillationHelpers
 import LTSType
 import TermType
 import Data.List

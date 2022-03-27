@@ -57,7 +57,8 @@ transform index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum f
         _ : _ -> let
           oldTerm = place f k 
           in do {
-          --traceShow ("renaming passed##, index = " ++ show index ++ show (doLTS1Tr (place f k) (Unfold' funName) doLTS0Tr) ++ "; funNamesAccum" ++  show (funNamesAccum') ++ "; t" ++ show (t))
+            trace ("renaming passed##, index = " ++ show index ++ show (doLTS1Tr (place f k) (Unfold' funName) doLTS0Tr) 
+                ++ "; funNamesAccum" ++  show (funNamesAccum) ++ "; t" ++ show (t)) (funsDefs, doLTS0Tr);
          --(funsDefs', doLTS1Tr (place f k) (Unfold' funName) doLTS0Tr)
             case filter (\(_, (_, fundef)) -> not $ null $ concat $ termRenaming fundef oldTerm) funsDefs' of
                                                   (funname, (vars, fundef)) : _ -> let
@@ -98,14 +99,15 @@ transform index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum f
                           }
                     else let
                         (term, funsDefs''',funNamesAccumTerms) = residualize t funsDefs'
-                        newFunsToAccum = map (\funDef@(f, (xs, e)) -> doLTS1Tr (foldl Apply (Fun f) $ map Free xs) (Unfold' f) $ drive e [] funNamesAccumTerms) funNamesAccumTerms
+                        newFunsToAccum = map (\funDef@(ff, (xs, e)) -> doLTS1Tr (foldl Apply (Fun ff) $ map Free xs) (Unfold' ff) $ drive e [ff] funNamesAccumTerms) funNamesAccumTerms
                         result = transform index (unfold term funsDefs', EmptyCtx) (nub $ t : funNamesAccum ++ newFunsToAccum) previousGensAccum (funsDefs' ++ funsDefs''')
                         in do {
                           trace ("Residualized!! n = " ++ show index ++ "residualized = " ++ show term
                             ++ "; drived = " ++ show t
                             ++ "; unfold! =" ++ show (unfold term funsDefs')
                             ++ "; funNamesAccum = " ++ show (funNamesAccum)
-                            ++ "; newFunsAccum = " ++ show (t : newFunsToAccum))
+                            ++ "; newFunsAccum = " ++ show (t : newFunsToAccum)
+                            ++ "; funNamesAccumTerms = " ++ show funNamesAccumTerms)
                           result
                           }
              in do {

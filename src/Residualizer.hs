@@ -69,18 +69,18 @@ residualize' (LTS (LTSTransitions e [(Unfold' funName, t)])) funsDefs =
             (foldl Apply (Fun funname) (vars'), funsDefs, [])
             }
           _ -> let
-                t' = case t of
-                  Leaf -> e
-                  LTS transitions -> getOldTerm transitions
-                xs = free t'
-                f = renameVar (map fst funsDefs) "f"
-                result = residualize' t ((f, (xs, e)) : funsDefs)
-                resultWithLambdas = foldl (flip Lambda) (getFirst result) $ checkDefinitionHasLambdas t' xs
-                resultWithLambdasAndApplies = foldl (Apply) (resultWithLambdas) $ reverse $ map Free $ checkDefinitionHasLambdas t' xs
-            in do {
-              traceShow ("Renaming not passed " ++ show e ++ "; t = " ++ show t ++ "; funsDefs = " ++ show funsDefs ++ show ((f, xs), e) ++ show (((f, xs), getFirst result)))
-              (resultWithLambdasAndApplies, nub $ (f, (xs, getFirst result)) : (f, (xs, e)) : getSecond result ++ funsDefs, nub $ (f, (xs, getFirst result)) : getThird result)
-            }
+                        t' = case t of
+                                                Leaf -> e
+                                                LTS transitions -> getOldTerm transitions
+                        xs = free t'
+                        f = renameVar (map fst funsDefs) "f"
+                        residualized = residualize' t ((f, (xs, e)) : funsDefs)
+                        resultWithLambdas = foldl (flip Lambda) (getFirst residualized) $ checkDefinitionHasLambdas t' xs
+                        resultWithLambdasAndApplies = foldl (Apply) (resultWithLambdas) $ reverse $ map Free $ checkDefinitionHasLambdas t' xs
+                    in do {
+                        traceShow ("Renaming not passed " ++ show e ++ "; t = " ++ show t ++ "; funsDefs = " ++ show funsDefs ++ show ((f, xs), e) ++ show (((f, xs), getFirst residualized)))
+                        (resultWithLambdasAndApplies, nub $ (f, (xs, getFirst residualized)) : (f, (xs, e)) : getSecond residualized ++ funsDefs, nub $ (f, (xs, getFirst residualized)) : getThird residualized)
+                    }
 residualize' (LTS (LTSTransitions _ [(UnfoldBeta', t)])) funsDefs = residualize' t funsDefs
 residualize' (LTS (LTSTransitions _ [(UnfoldCons' _, t)])) funsDefs = residualize' t funsDefs
 residualize' lts funsDefs = error $ "LTS " ++ show lts ++ " with fun calls " ++ show funsDefs ++ " not matched in residualization."

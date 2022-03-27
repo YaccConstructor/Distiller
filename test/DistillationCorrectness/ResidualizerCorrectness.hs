@@ -20,7 +20,7 @@ test_checkResidualizer_case = let
     expected = Case (Free "xs")
         [("Cons", ["x'", "xs'"], Free "xs'")
         ,("Nil", [], Con "Nil" [])]
-    in return $ testGroup "Residualizer" [testCase "case xs of Cons(x',xs') => xs'; Nil => Nil" $ fst (residualize lts []) @?= expected]
+    in return $ testGroup "Residualizer" [testCase "case xs of Cons(x',xs') => xs'; Nil => Nil" $ getFirst (residualize lts []) @?= expected]
 
 test_checkResidualizer_let :: IO TestTree
 test_checkResidualizer_let = let

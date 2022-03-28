@@ -21,22 +21,12 @@ drive term@(Fun funName) funsNames funsDefs =
             Just (_, (_, term'')) -> do doLTS1Tr term (Unfold' funName) $ drive term'' (funName : funsNames) funsDefs
             Nothing -> error $ "Function " ++ show funName ++ " does not have definition."
 drive term@(Apply e0 e1) funsNames funsDefs =
-    case doFun term funsNames of
-        Just f ->  doLTS1Tr term (Unfold' f) doLTS0Tr  
-        Nothing -> doLTSManyTr term [(Apply0', drive e0 funsNames funsDefs), (Apply1', drive e1 funsNames funsDefs)]
+    doLTSManyTr term [(Apply0', drive e0 funsNames funsDefs), (Apply1', drive e1 funsNames funsDefs)]
 drive term@(Case e0 branches) funsNames funsDefs =
   doLTSManyTr term $
     (:) (Case', drive e0 funsNames funsDefs) $
       map (\(branchName, args, branchResultTerm) -> (CaseBranch' branchName args, drive branchResultTerm funsNames funsDefs)) branches
 drive term@(Let x e0 e1) funsNames funsDefs = 
   doLTSManyTr term [(Let', drive e1 funsNames funsDefs), (LetX' x, drive e0 funsNames funsDefs)]
-drive (MultipleApply e0 eiDefinitions) funsNames funsDefs = drive e0 funsNames (funsDefs ++ eiDefinitions)  
-  
-doFun :: Term -> [String] -> Maybe String
-doFun (Apply e0 e1) funNamesAccum = doFun e0 funNamesAccum
-doFun (Fun f) funNamesAccum = 
-  if f `elem` funNamesAccum
-    then Just f
-    else Nothing
-doFun term _ = Nothing 
+drive (MultipleApply e0 eiDefinitions) funsNames funsDefs = drive e0 funsNames (funsDefs ++ eiDefinitions)   
 

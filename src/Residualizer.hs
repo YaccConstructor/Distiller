@@ -11,7 +11,7 @@ residualize = residualize'
     
 -- lts --> [((funname, vars),expr)] -> prog
 residualize' :: LTS -> [FunctionDefinition] -> (Term, [FunctionDefinition], [FunctionDefinition])
---residualize' lts funsDefs | traceShow ("in residualizer " ++ show lts ++ ", funsDefs = " ++ show funsDefs) False = undefined
+residualize' lts funsDefs | traceShow ("in residualizer " ++ show lts ++ ", funsDefs = " ++ show funsDefs) False = undefined
 residualize' (LTS (LTSTransitions _ [(X' x, Leaf)])) funsDefs = (Free x, funsDefs, [])
 residualize' (LTS (LTSTransitions _ bs@((Con' conName, Leaf) : branches))) funsDefs
     | branchesSetForConstructor bs = let
@@ -68,16 +68,16 @@ residualize' (LTS (LTSTransitions e [(Unfold' funName, t)])) funsDefs =
             traceShow ("renaming passed!" ++ show t ++ ";;" ++ show e ++ ";" ++ show vars ++ "; result = " ++ show (foldl (Apply) (Fun funname) (vars')))
             (foldl Apply (Fun funname) (vars'), funsDefs, [])
             }
-          _ -> let
-                        t' = case t of
-                                                Leaf -> e
-                                                LTS transitions -> getOldTerm transitions
-                        xs = free t'
-                        f = renameVar (map fst funsDefs) "f"
-                        residualized = residualize' t ((f, (xs, e)) : funsDefs)
-                        resultWithLambdas = foldl (flip Lambda) (getFirst residualized) $ checkDefinitionHasLambdas t' xs
-                        resultWithLambdasAndApplies = foldl (Apply) (resultWithLambdas) $ reverse $ map Free $ checkDefinitionHasLambdas t' xs
-                    in do {
+          _ -> case t of
+                    Leaf -> (e, funsDefs, [])
+                    LTS transitions -> let
+                              t' = getOldTerm transitions
+                              xs = free t'
+                              f = renameVar (map fst funsDefs) "f"
+                              residualized = residualize' t ((f, (xs, e)) : funsDefs)
+                              resultWithLambdas = foldl (flip Lambda) (getFirst residualized) $ checkDefinitionHasLambdas t' xs
+                              resultWithLambdasAndApplies = foldl (Apply) (resultWithLambdas) $ reverse $ map Free $ checkDefinitionHasLambdas t' xs
+                        in do {
                         traceShow ("Renaming not passed " ++ show e ++ "; t = " ++ show t ++ "; funsDefs = " ++ show funsDefs ++ show ((f, xs), e) ++ show (((f, xs), getFirst residualized)))
                         (resultWithLambdasAndApplies, nub $ (f, (xs, getFirst residualized)) : (f, (xs, e)) : getSecond residualized ++ funsDefs, nub $ (f, (xs, getFirst residualized)) : getThird residualized)
                     }

@@ -68,7 +68,8 @@ transform index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum f
                     then transform index (unfold oldTerm funsDefs', EmptyCtx) (t : funNamesAccum) previousGensAccum funsDefs'
                     else let
                         (term, funsDefs''',funNamesAccumTerms) = residualize t funsDefs'
-                        newFunsToAccum = map (\(ff, (xs, e)) -> doLTS1Tr (foldl Apply (Fun ff) $ map Free xs) (Unfold' ff) $ drive e [ff] funNamesAccumTerms) funNamesAccumTerms
+                        newFunsToAccum = map (\(ff, (xs, e)) -> 
+                            doLTS1Tr (foldl Apply (Fun ff) $ map Free xs) (Unfold' ff) $ drive e [ff] (funNamesAccumTerms ++ funsDefs'')) funNamesAccumTerms
                         result = transform index (unfold term funsDefs', EmptyCtx) (nub $ t : funNamesAccum ++ newFunsToAccum) previousGensAccum (funsDefs' ++ funsDefs''')
                         in result
              in case termRenamingExists oldTerm funsDefs'' of

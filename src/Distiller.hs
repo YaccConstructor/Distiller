@@ -59,7 +59,8 @@ distill index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum fun
           [] ->
             let oldTerm = place f k
                 (residualized, funsDefs'', funNamesAccumTerms) = residualize t (nub $ funsDefs ++ funsDefs')
-                newFunsToAccum = map (\funDef@(ff, (xs, e)) -> doLTS1Tr (foldl Apply (Fun ff) $ map Free xs) (Unfold' ff) $ drive e [ff] funNamesAccumTerms) funNamesAccumTerms
+                newFunsToAccum = map (\funDef@(ff, (xs, e)) -> 
+                    doLTS1Tr (foldl Apply (Fun ff) $ map Free xs) (Unfold' ff) $ drive e [ff] (funNamesAccumTerms ++ funsDefs ++ funsDefs')) funNamesAccumTerms
                 funsDefs'''' = nub $ funsDefs' ++ funsDefs'' ++ funsDefs
                 (funsDefs''', newTerm) = distill index (unfold (residualized) funsDefs', EmptyCtx) (nub $ t : funNamesAccum ++ newFunsToAccum) previousGensAccum funsDefs''''
              in case termRenamingExists oldTerm funsDefs''' of

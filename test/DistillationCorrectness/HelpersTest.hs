@@ -4,7 +4,7 @@ import Test.Tasty.Providers (TestTree)
 import Test.Tasty (testGroup)
 import Test.Tasty.HUnit (testCase, (@?=))
 import TermType
-import HelperTypes 
+import DistillationHelpers
 
   
 test_checkTermsRenaming1 :: IO TestTree

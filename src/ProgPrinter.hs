@@ -1,11 +1,18 @@
 module ProgPrinter where
 
 import TermType
+import Text.PrettyPrint.HughesPJ as P
+import Prelude hiding ((<>))
+import DistillationHelpers (renameVar, renameVars)
+import LTSType (FunctionDefinition)
 
 -- pretty printing
 
-{-stripLambda (Lambda x t) = let x' = renameVar (free t) x
-                               (xs,u) = stripLambda $ concrete x' t
+showProg :: (Term, [FunctionDefinition]) -> String
+showProg p = renderStyle (Style { lineLength = 100, ribbonsPerLine = 1.1, mode = PageMode }) $ prettyProg p
+
+stripLambda (Lambda x t) = let x' = renameVar (free t) x
+                               (xs,u) = stripLambda t
                            in  (x':xs,u)
 stripLambda t = ([],t)
 
@@ -18,7 +25,6 @@ prettyCon t@(Con c ts)
    | otherwise = text c <> parens (hcat $ punctuate comma $ map prettyTerm ts)
 
 prettyTerm (Free x) = text x
-prettyTerm (Bound i) = text "#" <> int i
 prettyTerm t@(Lambda _ _) = let (xs,t') = stripLambda t
                             in  text "\\" <> hsep (map text xs) <> text "." <> prettyTerm t'
 prettyTerm t@(Con c ts) = prettyCon t
@@ -27,14 +33,9 @@ prettyTerm (Fun f) = text f
 prettyTerm (Case t (b:bs)) = 
    hang (text "case" <+> prettyAtom t <+> text "of") 1 (blank <+> prettyBranch b $$ vcat (map ((text "|" <+>).prettyBranch) bs)) where
    prettyBranch (c,[],t) = text c <+> text "->" <+> prettyAtom t
-   prettyBranch (c,xs,t) = let fv = renameVars (free t) xs
-                               xs' = take (length xs) fv
-                               t' = foldr concrete t xs'
-                           in  text c <> parens(hcat $ punctuate comma $ map text xs') <+> text "->" <+> prettyAtom t' $$ empty
+   prettyBranch (c,xs,t) = text c <> parens(hcat $ punctuate comma $ map text xs) <+> text "->" <+> prettyAtom t $$ empty
 prettyTerm (Let x t u) = let x' = renameVar (free u) x
-                         in  (text "let" <+> text x' <+> text "=" <+> prettyTerm t) $$ (text "in" <+> prettyTerm (concrete x' u))
-prettyTerm (Unfold l t u) = text "Unfold" <+> text l <+> prettyAtom t <+> text "=" <+> prettyTerm u
-prettyTerm (Fold l t) = text "Fold" <+> text l <+> prettyAtom t 
+                         in  (text "let" <+> text x' <+> text "=" <+> prettyTerm t) $$ (text "in" <+> prettyTerm u)
 
 prettyAtom (Free x) = text x
 prettyAtom t@(Con c ts) = prettyCon t
@@ -45,7 +46,21 @@ prettyProg (t,d) = let d' = [f | f <- d, fst f `elem` funs (t,d)]
                    in  prettyEnv (("main",([],t)):d')
 
 
-prettyEnv xs = vcat (punctuate semi $ map (\(f,(xs,t)) -> text f <+> hsep (map text xs) <+> equals <+> prettyTerm (foldr concrete t xs)) xs)-}
+prettyEnv xs = vcat (punctuate semi $ map (\(f,(xs,t)) -> text f <+> hsep (map text xs) <+> equals <+> prettyTerm t) xs)
+
+funs (t,d) = funs' d t []
+
+funs' d (Free x) fs = fs
+funs' d (Lambda x t) fs = funs' d t fs
+funs' d (Con c ts) fs = foldr (funs' d) fs ts
+funs' d (Apply t u) fs = funs' d t (funs' d u fs)
+funs' d (Fun f) fs = if   f `elem` fs
+                     then fs
+                     else case lookup f d of
+                             Nothing -> f:fs
+                             Just (xs,t)  -> funs' d t (f:fs)
+funs' d (Case t bs) fs = foldr (\(_,_,t) fs -> funs' d t fs) (funs' d t fs) bs
+funs' d (Let x t u) fs = funs' d t (funs' d u fs)
 
 isList (Con "Nil" []) = True
 isList (Con "Cons" [h,t]) = isList t

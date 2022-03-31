@@ -8,6 +8,7 @@ import Transformer
 import ExecutionHelpers
 import LTSType
 import Distiller
+import ProgPrinter
 
 import Text.ParserCombinators.Parsec
 import Debug.Trace
@@ -82,8 +83,11 @@ toplevel prog = do
                                          Nothing -> do putStrLn "No program loaded"
                                                        toplevel prog
                                          Just (funsTerms, definitions) -> do
-                                                       putStrLn "Implementation in progress"
-                                                       print $ distillProg (funsTerms, definitions)
+                                                       let p = distillProg (funsTerms, definitions)
+                                                       print p
+                                                       case f of
+                                                          Nothing -> return()
+                                                          Just f -> writeFile f (showProg p)
                                                        toplevel prog
                        Quit -> return ()
                        Help -> do putStrLn helpMessage

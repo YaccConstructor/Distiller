@@ -9,6 +9,9 @@ import ExecutionHelpers
 import LTSType
 import Distiller
 import ProgPrinter
+import Evaluator
+import DistillationHelpers
+import ProgParser
 
 import Text.ParserCombinators.Parsec
 import Debug.Trace
@@ -76,9 +79,20 @@ toplevel prog = do
                        Eval -> case prog of
                                   Nothing -> do putStrLn "No program loaded"
                                                 toplevel prog
-                                  Just (t,d) -> do
-                                                putStrLn "Implementation needs revision"
-                                                toplevel prog
+                                  Just (t,d) -> f (free t) t
+                                                                             where
+                                                                             f [] t = do let (v,r,a) = eval t EmptyCtx d 0 0
+                                                                                         print v
+                                                                                         putStrLn ("Reductions: " ++ show r)
+                                                                                         putStrLn ("Allocations: " ++ show a)
+                                                                                         toplevel prog
+                                                                             f (x:xs) t = do putStr (x++" = ")
+                                                                                             hFlush stdout
+                                                                                             l <-  getLine
+                                                                                             case parseTerm l of
+                                                                                                Left s -> do putStrLn ("Could not parse term: "++ show s)
+                                                                                                             f (x:xs) t
+                                                                                                Right u -> f xs (substituteTermWithNewTerm u (x, t)) 
                        Distill f -> case prog of
                                          Nothing -> do putStrLn "No program loaded"
                                                        toplevel prog

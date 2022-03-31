@@ -1,12 +1,12 @@
 module Test.TestHelpers where
 
-import Helpers
+import TermType
 import Test.Tasty
 import Test.Tasty.HUnit
 import Data.Maybe (fromJust, isJust)
-import TermType
 import Transformer
 import ProgParser
+import ExecutionHelpers
 
 defaultTimeout :: Integer
 defaultTimeout = 2 * 1000000 --timeout in nanoseconds: 1 sec = 10^6 ns 

@@ -1,6 +1,6 @@
 module Test.DistillTest where
 
-import Helpers
+import ExecutionHelpers
 import Test.Tasty
 import Test.Tasty.HUnit
 import TermType

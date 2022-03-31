@@ -16,7 +16,6 @@ import Test.Generators
 import Test.TestHelpers
 import TermType
 import Transformer
-import Helpers
 
 import Control.Exception
 import Text.Printf (printf)

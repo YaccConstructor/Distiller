@@ -100,8 +100,10 @@ toplevel prog = do
                                                        let p = distillProg (funsTerms, definitions)
                                                        print p
                                                        case f of
-                                                          Nothing -> return()
-                                                          Just f -> writeFile f (showProg p)
+                                                          Nothing -> putStrLn (showProg p)
+                                                          Just f -> do
+                                                             putStrLn (showProg p)
+                                                             writeFile f (showProg p)
                                                        toplevel prog
                        Quit -> return ()
                        Help -> do putStrLn helpMessage

@@ -55,8 +55,8 @@ transform index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum f
             let generalizedLTS = generalize t t' previousGensAccum
                 residualizedLTS = residualize generalizedLTS funsDefs
              in do {
-               --transform index (fst residualizedLTS, EmptyCtx) funNamesAccum previousGensAccum []
-               error "Generalization process have not tested yet. If this error occurred, something went wrong during test execution."
+               transform index (getFirst residualizedLTS, EmptyCtx) funNamesAccum previousGensAccum (funsDefs' ++ funsDefs)
+               --error "Generalization process have not tested yet. If this error occurred, something went wrong during test execution."
                }
           [] -> let
                 oldTerm = place f k

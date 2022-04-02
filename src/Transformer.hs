@@ -1,6 +1,6 @@
 module Transformer (transform) where
 
-import Data.Maybe (fromMaybe, mapMaybe)
+import Data.Maybe (mapMaybe)
 import Driver
 import GHC.OldList (find, nub)
 import Generalizer
@@ -10,11 +10,8 @@ import LTSType
 import Residualizer
 import TermType
 import Unfolder
-import DistillationHelpers
-import Debug.Trace (traceShow, trace)
 
 transform :: Int -> TermInContext -> [LTS] -> [Generalization] -> [FunctionDefinition] -> ([FunctionDefinition], LTS)
---transform n t f p funsDefs | traceShow ("transform" ++ show n ++ show t ++ show f ++ show p ++ show funsDefs) False = undefined
 transform index (term@(Free x), context) funNamesAccum previousGensAccum funsDefs =
   transform' index (doLTS1Tr term (X' x) doLTS0Tr) context funNamesAccum previousGensAccum funsDefs
    
@@ -58,7 +55,6 @@ transform index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum f
             let generalizedLTS = generalize t t' previousGensAccum
                 residualizedLTS = residualize generalizedLTS funsDefs
              in do {
-               --trace ("before gen t = " ++ show t ++ "; funNamesAccum = " ++ show funNamesAccum)
                --transform index (fst residualizedLTS, EmptyCtx) funNamesAccum previousGensAccum []
                error "Generalization process have not tested yet. If this error occurred, something went wrong during test execution."
                }
@@ -96,14 +92,11 @@ transform _ (e0, context) _ _ _ = error $ "Nothing matched for " ++ show e0 ++ s
 
 transform' :: Int -> LTS -> Context -> [LTS] -> [Generalization] -> [FunctionDefinition] -> ([FunctionDefinition], LTS)
 transform' _ lts EmptyCtx _ _ funsDefs = (funsDefs, lts)
-transform' index t@(LTS lts) (ApplyCtx context expr) _ _ _ | traceShow ("in transform': lts = " ++ show lts ++ "; ctx = " ++ show context ++ "; expr = " ++ show expr) False = undefined
 transform' index t@(LTS lts) (ApplyCtx context expr) funNames previousGensAccum funsDefs =
   let term = getOldTerm lts
       (funsDefs', transformed) = transform index (expr, EmptyCtx) funNames previousGensAccum funsDefs
       newLts = updateLTS t Apply0' (transformed) Apply1' (Apply term expr)
    in transform' index newLts context funNames previousGensAccum (funsDefs ++ funsDefs')
-transform' index t@(LTS (LTSTransitions term@(Free x) [(X' x', _)])) (CaseCtx context branches) funsNames previousGens funsDefs 
-    | traceShow ("In transform, want to substitute branches in case " ++ show branches ++ "; with " ++ show x' ++ "") False = undefined
 transform' index t@(LTS (LTSTransitions term@(Free x) [(X' x', _)])) (CaseCtx context branches) funsNames previousGens funsDefs =
   if x == x'
     then

@@ -3,7 +3,7 @@ module ProgPrinter where
 import TermType
 import Text.PrettyPrint.HughesPJ as P
 import Prelude hiding ((<>))
-import DistillationHelpers (renameVar, renameVars)
+import DistillationHelpers (renameVar)
 import LTSType (FunctionDefinition)
 
 -- pretty printing

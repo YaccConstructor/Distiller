@@ -3,7 +3,6 @@ module DistillationHelpers where
 import TermType
 import LTSType
 import Data.Maybe (fromMaybe)
-import Debug.Trace (traceShow)
 import Data.List (delete, (\\), intersect)
 
 -- | Helper functions for working with labels in lts 
@@ -61,7 +60,6 @@ renameLabel u _ = u
     
 -- | Functions for doing various updates with given term
 substituteTermWithNewVars :: Term -> [(String, String)] -> Term
-substituteTermWithNewVars (Free x) pairs | traceShow ("in subs, x = " ++ x ++ ", pairs = " ++ show pairs) False = undefined
 substituteTermWithNewVars (Free x) pairs = case lookup x pairs of
   Nothing -> Free x
   Just x' -> Free x'

@@ -1,7 +1,6 @@
 module Exception where
 
 import Control.Monad (ap,liftM)
-import Debug.Trace
 
 data Exception a b = Exn a | NoExn b deriving Show
 

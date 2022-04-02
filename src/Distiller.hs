@@ -11,7 +11,6 @@ import Residualizer
 import TermType
 import Transformer
 import Unfolder
-import Debug.Trace (traceShow, trace)
 
 distillProg :: (Term, [FunctionDefinition]) -> (Term, [FunctionDefinition])
 distillProg (mainFunTerm, funDefinitions) = let
@@ -84,7 +83,6 @@ distill index (e@(Let x e0 e1), k) funNamesAccum previousGensAccum funsDefs =
 distill index (MultipleApply e0 funsDefs', context) funNamesAccum previousGensAccum funsDefs =
   let
    in distill index (e0, context) funNamesAccum previousGensAccum $ funsDefs ++ funsDefs'
-distill index e _ _ _ | traceShow ("Nothing matched " ++ show e) False = undefined
 distill index e _ _ _ = error $ "Nothing matched with " ++ show e ++ show " distillation."
 
 distill' :: Int -> LTS -> Context -> [LTS] -> [Generalization] -> [FunctionDefinition] -> ([FunctionDefinition], LTS)

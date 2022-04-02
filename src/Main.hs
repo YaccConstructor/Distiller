@@ -2,9 +2,7 @@ module Main (
     main
 ) where
 
-import Exception
 import TermType
-import Transformer
 import ExecutionHelpers
 import LTSType
 import Distiller
@@ -13,14 +11,7 @@ import Evaluator
 import DistillationHelpers
 import ProgParser
 
-import Text.ParserCombinators.Parsec
-import Debug.Trace
-import System.Directory
 import System.IO
-import Control.Monad
-import Data.List
-import System.Exit
-import System.Process
 
 data Command = Load String (Maybe String)
              | Prog

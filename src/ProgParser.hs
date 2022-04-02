@@ -1,13 +1,11 @@
 module ProgParser where
 
 import TermType
-import Generalizer
 import ProgPrinter
 
 import Data.List
 
 import Text.ParserCombinators.Parsec hiding (labels)
-import Text.ParserCombinators.Parsec.Expr
 import qualified Text.ParserCombinators.Parsec.Token as T
 import Text.ParserCombinators.Parsec.Language
 

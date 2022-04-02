@@ -2,24 +2,20 @@ module Unfolder (unfold) where
 
 import LTSType
 import TermType
-import Debug.Trace (traceShow, trace)
 
 unfold :: Term -> [FunctionDefinition] -> Term  
 unfold term funsDefs = unfold' (term, EmptyCtx) funsDefs [] 
 
 unfold' :: TermInContext -> [FunctionDefinition] -> [(String, Term)] -> Term
---unfold' x funDefs letVarsAccum | traceShow (show x ++ ";" ++ show funDefs ++ ";" ++ show letVarsAccum) False = undefined
 unfold' (term@(Free x), context) funsDefs letVarsAccum = 
    case lookup x letVarsAccum of
        Just e -> unfold' (e, context) funsDefs letVarsAccum 
        Nothing -> place term context
 unfold' (con@(Con _ _), context) _ _ = place con context
 unfold' (lambda@(Lambda _ _ ), context) _ _ = place lambda context
---unfold' (Fun funname, context) funsDefs _ | traceShow ("funname:" ++ show funname ++ show (place e context)) False = undefined
 unfold' (Fun funname, context) funsDefs _ = 
   case lookup funname funsDefs of
         Just (xs, e) -> do {
-         -- trace ("funname:" ++ show funname ++ show (place e context) ++ ";" ++ show (place (foldl (flip Lambda) e xs) context))
           place (foldl (flip Lambda) e (reverse xs)) context
           } 
         Nothing -> error $ "Function definition for " ++ funname ++ " not found in " ++ " during unfolding."

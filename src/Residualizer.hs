@@ -3,15 +3,13 @@ module Residualizer (residualize, getFirst, getSecond, getThird) where
 import TermType
 import LTSType
 import DistillationHelpers
-import Debug.Trace (traceShow)
-import Data.List (sort, (\\), nub)
+import Data.List ((\\), nub)
   
 residualize :: LTS -> [FunctionDefinition] -> (Term, [FunctionDefinition], [FunctionDefinition])
 residualize = residualize'
     
 -- lts --> [((funname, vars),expr)] -> prog
 residualize' :: LTS -> [FunctionDefinition] -> (Term, [FunctionDefinition], [FunctionDefinition])
-residualize' lts funsDefs | traceShow ("in residualizer " ++ show lts ++ ", funsDefs = " ++ show funsDefs) False = undefined
 residualize' (LTS (LTSTransitions _ [(X' x, Leaf)])) funsDefs = (Free x, funsDefs, [])
 residualize' (LTS (LTSTransitions _ bs@((Con' conName, Leaf) : branches))) funsDefs
     | branchesSetForConstructor bs = let
@@ -55,8 +53,6 @@ residualize' (LTS (LTSTransitions _ ((Let', t0) : branches))) funsDefs = let
   in foldl (\accum (X' x_i, t_i) -> let
     t_i' = residualize' t_i funsDefs
     in (Let x_i (getFirst t_i') (getFirst accum), getSecond accum ++ getSecond t_i', nub $ getThird accum ++ getThird t_i')) initializer $ tail branches'
-residualize' (LTS (LTSTransitions e [(Unfold' funName, t)])) funsDefs | traceShow ("e = " ++ show e ++ ";funname = "
-   ++ show funName ++ "; t = " ++ show t ++ ";" ++ show (nub funsDefs) ++ "; renaming = " ++ show (filter (\(_, (_, fundef)) -> not $ null $ concat $ termRenaming fundef e) funsDefs)) False = undefined
 residualize' (LTS (LTSTransitions e [(Unfold' funName, t)])) funsDefs =
         case filter (\(_, (_, fundef)) -> not $ null $ concat $ termRenaming fundef e) funsDefs of
           (funname, (vars, fundef)) : _ -> let
@@ -65,7 +61,6 @@ residualize' (LTS (LTSTransitions e [(Unfold' funName, t)])) funsDefs =
                                     Nothing -> Free var
                                     Just var' -> var') vars
             in do {
-            traceShow ("renaming passed!" ++ show t ++ ";;" ++ show e ++ ";" ++ show vars ++ "; result = " ++ show (foldl (Apply) (Fun funname) (vars')))
             (foldl Apply (Fun funname) (vars'), funsDefs, [])
             }
           _ -> case t of
@@ -77,10 +72,8 @@ residualize' (LTS (LTSTransitions e [(Unfold' funName, t)])) funsDefs =
                               residualized = residualize' t ((f, (xs, e)) : funsDefs)
                               resultWithLambdas = foldl (flip Lambda) (getFirst residualized) $ checkDefinitionHasLambdas t' xs
                               resultWithLambdasAndApplies = foldl (Apply) (resultWithLambdas) $ reverse $ map Free $ checkDefinitionHasLambdas t' xs
-                        in do {
-                        traceShow ("Renaming not passed " ++ show e ++ "; t = " ++ show t ++ "; funsDefs = " ++ show funsDefs ++ show ((f, xs), e) ++ show (((f, xs), getFirst residualized)))
-                        (resultWithLambdasAndApplies, nub $ (f, (xs, getFirst residualized)) : (f, (xs, e)) : getSecond residualized ++ funsDefs, nub $ (f, (xs, getFirst residualized)) : getThird residualized)
-                    }
+                        in do (resultWithLambdasAndApplies, nub $ (f, (xs, getFirst residualized)) : (f, (xs, e)) : getSecond residualized ++ funsDefs
+                                , nub $ (f, (xs, getFirst residualized)) : getThird residualized)
 residualize' (LTS (LTSTransitions _ [(UnfoldBeta', t)])) funsDefs = residualize' t funsDefs
 residualize' (LTS (LTSTransitions _ [(UnfoldCons' _, t)])) funsDefs = residualize' t funsDefs
 residualize' lts funsDefs = error $ "LTS " ++ show lts ++ " with fun calls " ++ show funsDefs ++ " not matched in residualization."

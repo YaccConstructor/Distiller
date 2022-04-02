@@ -4,14 +4,12 @@ import Data.Foldable (find)
 import DistillationHelpers
 import LTSType
 import TermType
-import Debug.Trace (trace)
 
 -- term -- functions names accumulator -- functions definitions = [(funName, ([args], term))]
 drive :: Term -> [String] -> [(String, ([String], Term))] -> LTS
 drive term@(Free x) _ _ = doLTS1Tr term (X' x) doLTS0Tr
 drive term@(Con conName expressions) funsNames funsDefs = doLTSManyTr term $ (:) (Con' conName, doLTS0Tr) $ zip (map ConArg' createLabels) $ map (\e -> drive e funsNames funsDefs) expressions
 drive term@(Lambda x expression) funsNames funsDefs = doLTS1Tr term (Lambda' x) $ drive expression funsNames funsDefs
-drive term@(Fun funName) funsNames funsDefs | trace ("in driving " ++ funName ++ ";" ++ show funsNames) False = undefined
 drive term@(Fun funName) funsNames funsDefs =
   if funName `elem` funsNames
     then doLTS1Tr term (Unfold' funName) doLTS0Tr

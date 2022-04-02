@@ -3,13 +3,7 @@ module TermType (createTermInContext, getTerm, getContext,
 
 --import ProgPrinter
 import Prelude hiding ((<>))
-import Text.PrettyPrint.HughesPJ as P
-import Text.ParserCombinators.Parsec hiding (labels)
-import Text.ParserCombinators.Parsec.Expr
-import qualified Text.ParserCombinators.Parsec.Token as T
-import Text.ParserCombinators.Parsec.Language
 import Data.List
-import Debug.Trace (traceShow)
 
 
 type TermInContext = (Term, Context)
@@ -39,7 +33,6 @@ instance Eq Term where
    (==) t t' = eqTerm (t,t')
 
 eqTerm (Free x,Free x') = x==x'
---eqTerm (Bound i,Bound i') = i==i'
 eqTerm (Lambda x t,Lambda x' t') = eqTerm (t,t')
 eqTerm (Con c ts,Con c' ts') | c==c' = all eqTerm (zip ts ts')
 eqTerm (Apply t u,Apply t' u') = eqTerm (t,t') && eqTerm (u,u')
@@ -73,7 +66,6 @@ bound' (Case t bs) = concatMap (\(c, xs, t') -> xs ++ bound' t') bs
 bound' (Let x t u) = x : (bound' t ++ bound' u)
 
 -- place term in context
---place t k | traceShow ("place : t = " ++ show t ++ ", k = " ++ show k) False = undefined
 place t EmptyCtx = t
 place t (ApplyCtx con u) = place (Apply t u) con
 place t (CaseCtx con bs) = place (Case t bs) con

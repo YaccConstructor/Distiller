@@ -4,7 +4,6 @@ module LTSType (
     getLabels, getOldTerm, updateLTS) where
   
 import TermType
-import Debug.Trace (traceShow)
 
 type Prog = (Term, [FunctionDefinition])
 type FunctionDefinition = (String, ([String], Term))
@@ -50,7 +49,6 @@ instance Ord LTS where
   (>) (LTS (LTSTransitions _ _)) Leaf = True
   (>) Leaf (LTS (LTSTransitions _ _)) = False
   (>) (LTS (LTSTransitions term branches)) (LTS (LTSTransitions term' branches'))
-    | traceShow ("in ord1") False = undefined
     | length branches > length branches' = True
     | length branches < length branches' = False
     | term < term' = False

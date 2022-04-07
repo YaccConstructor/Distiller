@@ -11,7 +11,7 @@ import Test.Tasty.Hedgehog (testProperty)
 
 import TermType
 
-{---genBool :: Gen Bool
+genBool :: Gen Bool
 genBool = Gen.bool
 
 genListBool :: Gen [Bool]
@@ -62,4 +62,4 @@ genListNat = Gen.list (Range.linear 0 100) genNat
 
 natToTerm :: MyNat -> Term
 natToTerm Zero = Con "Zero" []
-natToTerm (Succ x) = Con "Succ" [natToTerm x]--}
+natToTerm (Succ x) = Con "Succ" [natToTerm x]

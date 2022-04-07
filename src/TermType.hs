@@ -4,6 +4,7 @@ module TermType (createTermInContext, getTerm, getContext,
 --import ProgPrinter
 import Prelude hiding ((<>))
 import Data.List
+import Debug.Trace (traceShow)
 
 
 type TermInContext = (Term, Context)
@@ -53,7 +54,11 @@ free' (Lambda x t) = free' t
 free' (Con c ts) = concatMap free' ts
 free' (Apply t u)  = free' t ++ free' u
 free' (Fun f) = []
-free' (Case t bs) = free' t ++ concatMap (\(c,xs,t) -> free' t \\ xs) bs
+free' (Case t bs) | traceShow ("xs = " ++ show (concatMap (\(c,xs,t) -> free' t \\ xs) bs) ++ "; bs = " ++ (show bs)) False = undefined
+free' (Case t bs) = let
+    xss = concatMap (\(c,xs,t) -> xs) bs
+    xss' = concatMap (\(c,xs,t) -> nub $ free' t \\ xs) bs
+    in free' t ++ (nub xss' \\ xss)
 free' (Let x t u) = free' t  ++ free' u
 
 bound t = nub (bound' t)

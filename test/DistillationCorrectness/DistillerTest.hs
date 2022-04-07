@@ -87,16 +87,12 @@ test_append_without_cons = let
     funTerm = Apply (Apply (Fun "append") (Free "xs")) (Free "ys")
     funDef = [("append",(["xs","ys"],Case (Free "xs") 
         [("Nil",[],Free "ys")
-        ,("Cons",["x","xs#"],Con "Cons" [Free "x", Apply (Apply (Fun "append") (Free "xs#")) (Free "ys")])]))]
-    {--result = (Apply (Apply (Lambda "ys" (Lambda "xs" (Case (Free "xs")
-        [("Nil",[],Free "ys")
-        ,("Cons",["x","xs'"],Apply (Apply (Lambda "ys" (Lambda "xs'"
-            (Apply (Apply (Fun "f'") (Free "xs'")) (Free "ys")))) (Free "ys")) (Free "xs'"))]))) (Free "ys")) (Free "xs"), funDef)--}
+        ,("Cons",["x","xs"],Con "Cons" [Free "x", Apply (Apply (Fun "append") (Free "xs")) (Free "ys")])]))]
     result = distillProg (funTerm, funDef)            
     expectedTerm = Apply (Apply (Fun "f'") (Free "xs")) (Free "ys") 
     expectedFunDef = ("f'",(["xs","ys"], Case (Free "xs") 
         [("Nil",[],Free "ys")
-        ,("Cons",["x","xs#"],Con "Cons" [Free "x",Apply (Apply (Fun "f'") (Free "xs#")) (Free "ys")])]))           
+        ,("Cons",["x","xs"],Con "Cons" [Free "x",Apply (Apply (Fun "f'") (Free "xs")) (Free "ys")])]))           
     in return $ testGroup "Distiller" [testCase "Distiller: append xs ys, term " $ fst result @?= expectedTerm
                                       ,testCase "Distiller: append xs ys, funDef " $ expectedFunDef `elem` snd result @?= True]
 
@@ -104,10 +100,6 @@ test_append :: IO TestTree
 test_append = let
     funTerm = Apply (Apply (Fun "append") (Free "xs")) (Free "ys")
     funDef = [("append",(["xs","ys"],Case (Free "xs") [("Nil",[],Free "ys"),("Cons",["x","xs#"],Apply (Apply (Fun "append") (Free "xs#")) (Free "ys"))]))]
-    {---result = (Apply (Apply (Lambda "ys" (Lambda "xs" (Case (Free "xs") 
-        [("Nil",[],Free "ys")
-        ,("Cons",["x","xs'"],Apply (Apply (Lambda "ys" (Lambda "xs'" 
-            (Apply (Apply (Fun "f'") (Free "xs'")) (Free "ys")))) (Free "ys")) (Free "xs'"))]))) (Free "ys")) (Free "xs"), funDef)--}
     result = distillProg (funTerm, funDef)            
     expectedTerm = Apply (Apply (Fun "f'") (Free "xs")) (Free "ys")
     expectedFunDef = ("f'",(["xs","ys"],Case (Free "xs") [("Nil",[],Free "ys"),("Cons",["x","xs#"],Apply (Apply (Fun "f'") (Free "xs#")) (Free "ys"))]))            
@@ -118,7 +110,6 @@ test_plus :: IO TestTree
 test_plus = let
     funTerm = Apply (Apply (Fun "plus") (Free "x")) (Free "y")
     funDef = [("plus",(["x","y"],Case (Free "x") [("Zero",[],Free "y"),("Succ",["x'"],Con "Succ" [Apply (Apply (Fun "plus") (Free "x'")) (Free "y")])]))]
-    --result = Lambda "x'" (Lambda "y" (Case (Free "x") [("Zero",[],Free "y"),("Succ",["x'"],Con "Succ" [Apply (Apply (Fun "plus") (Free "x'")) (Free "y")])]))
     result = distillProg (funTerm, funDef)
     expectedTerm = Apply (Apply (Fun "f'") (Free "x")) (Free "y")
     expectedFunDef = ("f'",(["x","y"],Case (Free "x") [("Zero",[],Free "y"),("Succ",["x'"],Con "Succ" [Apply (Apply (Fun "f'") (Free "x'")) (Free "y")])]))

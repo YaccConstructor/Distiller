@@ -4,6 +4,7 @@ import TermType
 import LTSType
 import Data.Maybe (fromMaybe)
 import Data.List (delete, (\\), intersect)
+import Debug.Trace (traceShow)
 
 -- | Helper functions for working with labels in lts 
 
@@ -165,12 +166,13 @@ mapTermToRenaming term (funname, (vars, fundef)) = let
 
 -- | Functions for implementing performing beta reduction
 doBetaReductions :: Term -> Term
+doBetaReductions term | traceShow ("") False = undefined
 doBetaReductions term@(Apply e0 e1) | lambdasPresent e0 = doBetaReductions (Apply (doBetaReductions e0) e1)
 doBetaReductions (Apply (Lambda x e0) e1) = let
     collisions = free e1 `intersect` bound e0
-    substitutes = map (\x -> (x, renameVar (free e1 ++ bound e0) x)) collisions
-    e0' = foldl (\e (x, x') -> substituteTermWithNewTerms e [(x, Free x')]) e0 substitutes
-    in substituteTermWithNewTerms e0' [(x, e1)]
+    in if x `elem` collisions 
+        then e0
+        else substituteTermWithNewTerms e0 [(x, e1)]
 doBetaReductions term = term
 
 lambdasPresent :: Term -> Bool

@@ -53,8 +53,8 @@ distill index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum fun
           (_, t') : _ ->
             let generalizedLTS = generalize t t' previousGensAccum
                 residualized@(residualizedLTS, _, funsDefs'') = residualize generalizedLTS (nub $ funsDefs' ++ funsDefs)
-             in distill (index + 1) (unfold (getFirst residualized) (nub $ funsDefs ++ funsDefs' ++ funsDefs''), EmptyCtx) [generalizedLTS] previousGensAccum (nub $ funsDefs ++ funsDefs' ++ funsDefs'')
-             --in error "Generalization process have not tested yet. If this error occurred, something went wrong during test execution."
+             --in distill (index + 1) (unfold (getFirst residualized) (nub $ funsDefs ++ funsDefs' ++ funsDefs''), EmptyCtx) [generalizedLTS] previousGensAccum (nub $ funsDefs ++ funsDefs' ++ funsDefs'')
+             in error "Generalization process have not tested yet. If this error occurred, something went wrong during test execution."
           [] ->
             let oldTerm = place f k
                 (residualized, funsDefs'', funNamesAccumTerms) = residualize t (nub $ funsDefs ++ funsDefs')

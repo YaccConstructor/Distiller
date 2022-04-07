@@ -10,6 +10,7 @@ import LTSType
 import Residualizer
 import TermType
 import Unfolder
+import Debug.Trace (traceShow)
 
 transform :: Int -> TermInContext -> [LTS] -> [Generalization] -> [FunctionDefinition] -> ([FunctionDefinition], LTS)
 transform index (term@(Free x), context) funNamesAccum previousGensAccum funsDefs =
@@ -55,8 +56,8 @@ transform index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum f
             let generalizedLTS = generalize t t' previousGensAccum
                 residualizedLTS = residualize generalizedLTS funsDefs
              in do {
-               transform index (getFirst residualizedLTS, EmptyCtx) funNamesAccum previousGensAccum (funsDefs' ++ funsDefs)
-               --error "Generalization process have not tested yet. If this error occurred, something went wrong during test execution."
+               --transform index (getFirst residualizedLTS, EmptyCtx) funNamesAccum previousGensAccum (funsDefs' ++ funsDefs)
+               error "Generalization process have not tested yet. If this error occurred, something went wrong during test execution."
                }
           [] -> let
                 oldTerm = place f k
@@ -74,6 +75,8 @@ transform index termInCtx@(f@(Fun funName), k) funNamesAccum previousGensAccum f
                         in (funsDefs'', doLTS1Tr oldTerm' (Unfold' funname) newTerm)
                     _ -> (funsDefs'', doLTS1Tr oldTerm (Unfold' funName) newTerm)
                }
+transform index (term@(Apply e0 e1), k) funNamesAccum previousGensAccum funsDefs
+    | traceShow ("term = " ++ show term ++ "term' = " ++ show (doBetaReductions term)) False = undefined
 transform index (term@(Apply e0 e1), k) funNamesAccum previousGensAccum funsDefs = let
     term' = doBetaReductions term in if term' == term
     then transform index (e0, ApplyCtx k e1) funNamesAccum previousGensAccum funsDefs

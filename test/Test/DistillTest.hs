@@ -10,16 +10,17 @@ import Data.Maybe (fromJust, isJust)
 import Text.Printf ( printf )
 import Control.Exception
 import Test.TestHelpers
+import Distiller (distillProg)
 
 
 createDistillationTest :: String -> String -> String -> String -> Integer -> IO TestTree
-createDistillationTest fileToDistill importsForDistill fileWithGold importsForGold timeoutForDistillation = return $ testGroup "Tests" [testCase "2+2=4" $ 2+2 @?= 4] {- do
+createDistillationTest fileToDistill importsForDistill fileWithGold importsForGold timeoutForDistillation = do
   progToDistill <- load fileToDistill importsForDistill
   (mainOfExpectedProg, y) <- fromJust <$> load fileWithGold importsForGold -- parsing golden file should always succeed
   let testCaseName = printf "Distillation of %s" fileToDistill
   if isJust progToDistill
   then do
-    distillationResult <- try (evaluate $ dist (fromJust progToDistill)) :: IO (Either SomeException (Term, [(String, ([String], Term))]))
+    distillationResult <- try (evaluate $ distillProg (fromJust progToDistill)) :: IO (Either SomeException (Term, [(String, ([String], Term))]))
     case distillationResult of
       Left ex -> do 
         let assertion = assertFailure $ printf "program: %s; imports: %s; exception: %s" fileToDistill importsForDistill (show ex)
@@ -32,7 +33,7 @@ createDistillationTest fileToDistill importsForDistill fileWithGold importsForGo
   else do
     let testCaseName = printf "Parsing: %s" fileToDistill
     let assertion = assertFailure $ printf "program: %s; imports: %s." fileToDistill importsForDistill
-    return $ testCase testCaseName assertion-}
+    return $ testCase testCaseName assertion
 
 -- Basic tests
 

@@ -19,6 +19,7 @@ import ExecutionHelpers
 import Control.Exception
 import Text.Printf (printf)
 import Data.Maybe (fromJust, isJust)
+import Distiller (distillProg)
 
 createTest :: (Ord b, Ord c, Eq a, Show a) =>
                 String
@@ -28,11 +29,11 @@ createTest :: (Ord b, Ord c, Eq a, Show a) =>
                     -> PropertyT IO ((a, b, c), (a, b, c)))
                 -> p
                 -> IO TestTree
-createTest fileToDistill importsForDistill getEvaluationResults timeoutForDistillation = return $ testGroup "Tests" [testCase "2+2=4" $ 2+2 @?= 4]{-do
+createTest fileToDistill importsForDistill getEvaluationResults timeoutForDistillation = do
   progToDistill <- load fileToDistill importsForDistill  
   if isJust progToDistill
   then do
-    distillationResult <- try (evaluate $ dist (fromJust progToDistill)) :: IO (Either SomeException (Term, [(String, ([String], Term))]))
+    distillationResult <- try (evaluate $ distillProg (fromJust progToDistill)) :: IO (Either SomeException (Term, [(String, ([String], Term))]))
     case distillationResult of
       Left ex -> do 
         let testCaseName = printf "Distillation of %s" fileToDistill
@@ -58,22 +59,22 @@ createTest fileToDistill importsForDistill getEvaluationResults timeoutForDistil
   else do
     let testCaseName = printf "Parsing: %s" fileToDistill
     let assertion = assertFailure $ printf "program: %s; imports: %s." fileToDistill importsForDistill
-    return $ testCase testCaseName assertion-}
+    return $ testCase testCaseName assertion
 
 
---test_plusMinus_2_property :: IO TestTree
---test_plusMinus_2_property = do createTest "plusMinus_2" "inputs/" getEvaluationResults defaultTimeout 
---    where 
---    getEvaluationResults origProg distilledProg = do  
---        n <- forAll genNat
---        m <- forAll genNat            
---        return $ getEvalResults [("n", natToTerm n), ("m", natToTerm m)] origProg distilledProg
---            
---
---test_plusMinus_1_property :: IO TestTree
---test_plusMinus_1_property = do createTest "plusMinus_1" "inputs/" getEvaluationResults defaultTimeout 
---    where
---    getEvaluationResults origProg distilledProg = do  
---        n <- forAll genNat
---        m <- forAll genNat            
---        return $ getEvalResults [("n", natToTerm n), ("m", natToTerm m)] origProg distilledProg--}
+test_plusMinus_2_property :: IO TestTree
+test_plusMinus_2_property = do createTest "plusMinus_2" "inputs/" getEvaluationResults defaultTimeout 
+   where 
+    getEvaluationResults origProg distilledProg = do  
+        n <- forAll genNat
+        m <- forAll genNat            
+        return $ getEvalResults [("n", natToTerm n), ("m", natToTerm m)] origProg distilledProg
+            
+
+test_plusMinus_1_property :: IO TestTree
+test_plusMinus_1_property = do createTest "plusMinus_1" "inputs/" getEvaluationResults defaultTimeout 
+    where
+    getEvaluationResults origProg distilledProg = do  
+        n <- forAll genNat
+        m <- forAll genNat            
+        return $ getEvalResults [("n", natToTerm n), ("m", natToTerm m)] origProg distilledProg

@@ -3,8 +3,8 @@ module Residualizer (residualize, getFirst, getSecond, getThird) where
 import TermType
 import LTSType
 import DistillationHelpers
-import Data.List ((\\), nub)
-  
+import Data.List ((\\), nub, sort)
+
 residualize :: LTS -> [FunctionDefinition] -> (Term, [FunctionDefinition], [FunctionDefinition])
 residualize = residualize'
     
@@ -70,8 +70,8 @@ residualize' (LTS (LTSTransitions e [(Unfold' funName, t)])) funsDefs =
                               xs = free t'
                               f = renameVar (map fst funsDefs) "f"
                               residualized = residualize' t ((f, (xs, e)) : funsDefs)
-                              resultWithLambdas = foldl (flip Lambda) (getFirst residualized) $ checkDefinitionHasLambdas t' xs
-                              resultWithLambdasAndApplies = foldl (Apply) (resultWithLambdas) $ reverse $ map Free $ checkDefinitionHasLambdas t' xs
+                              resultWithLambdas = foldl (flip Lambda) (getFirst residualized) $ (reverse $ checkDefinitionHasLambdas t' xs)
+                              resultWithLambdasAndApplies = foldl (Apply) (resultWithLambdas) $ map Free $ checkDefinitionHasLambdas t' xs
                         in do (resultWithLambdasAndApplies, nub $ (f, (xs, getFirst residualized)) : (f, (xs, e)) : getSecond residualized ++ funsDefs
                                 , nub $ (f, (xs, getFirst residualized)) : getThird residualized)
 residualize' (LTS (LTSTransitions _ [(UnfoldBeta', t)])) funsDefs = residualize' t funsDefs

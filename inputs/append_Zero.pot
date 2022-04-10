@@ -1,0 +1,5 @@
+main = append xs Nil;
+
+append xs ys = case xs of
+                  Nil -> ys
+                | Cons(x,xs') -> append xs' ys

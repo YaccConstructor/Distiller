@@ -1,0 +1,169 @@
+import Bool
+
+mkNode isZ x = case (isZ x) of True -> None | False -> Val(x); 
+
+reduceTree n1 n2 n3 n4 = Node (n1, n2, n3, n4);
+
+mAdd isZ g m1 m2 = 
+    case m1 of
+         Error -> Error
+         | None -> (m2)
+         | Val (v1) -> (case m2 of 
+                        Error -> Error 
+                        | None -> m1 
+                        | Val (v) -> (mkNode isZ (g v1 v))
+                        | Node (t1, t2, t3, t4) -> Error)
+         | Node (q1, q2, q3, q4) -> (case m2 of 
+                                    Error -> Error
+                                    | None -> m1 
+                                    | Val (v) -> Error 
+                                    | Node (t1, t2, t3, t4) -> (Node( 
+                                                                     (mAdd isZ g q1 t1) 
+                                                                    ,(mAdd isZ g q2 t2) 
+                                                                    ,(mAdd isZ g q3 t3) 
+                                                                    ,(mAdd isZ g q4 t4))))
+;
+
+mask m msk =
+    case msk of 
+         MNone -> None 
+         | MVal -> m
+         | MNode (q1, q2, q3, q4) -> 
+               (case m of
+                    Error -> Error
+                    | None -> None
+                    | Val (v) -> Error
+                    | Node (t1, t2, t3, t4) -> (Node ((mask t1 q1), (mask t2 q2), (mask t3 q3), (mask t4 q4))))
+;
+
+mMult isZ g h m1 m2 = 
+    case m1 of 
+         Error -> Error
+         | None -> None
+         | Val (v1) -> 
+             (case m2 of
+                  Error -> Error 
+                  | None -> None
+                  | Val (v) -> (mkNode isZ (h v1 v))
+                  | Node (t1, t2, t3, t4) -> Error)
+         | Node (q1, q2, q3, q4) -> 
+              (case m2 of 
+                   Error -> Error
+                   | None -> None 
+                   | Val (v) -> Error
+                   | Node (t1, t2, t3, t4) -> 
+                          (Node(
+                                 (mAdd isZ g (mMult isZ g h q1 t1)(mMult isZ g h q2 t3)) 
+                                ,(mAdd isZ g (mMult isZ g h q1 t2)(mMult isZ g h q2 t4)) 
+                                ,(mAdd isZ g (mMult isZ g h q3 t1)(mMult isZ g h q4 t3)) 
+                                ,(mAdd isZ g (mMult isZ g h q3 t2)(mMult isZ g h q4 t4))))
+              )
+;
+
+map isZ g m = 
+    case m of
+         Error -> Error
+         | None -> None
+         | Val (v) -> (mkNode isZ (g v))
+         | Node (q1, q2, q3, q4) -> (Node( 
+                                     (map isZ g q1) 
+                                     ,(map isZ g q2) 
+                                     ,(map isZ g q3) 
+                                     ,(map isZ g q4)))
+;
+                      
+kron isZ g m1 m2 =
+    case m1 of 
+         Error -> Error
+         | None -> None
+         | Val (v) -> (map isZ (g v) m2)
+         | Node (q1, q2, q3, q4) -> (Node( 
+                                       (kron isZ g q1 m2) 
+                                      ,(kron isZ g q2 m2) 
+                                      ,(kron isZ g q3 m2) 
+                                      ,(kron isZ g q4 m2)))
+;
+
+fold g s m =
+     case m of
+       None -> s
+     | Error -> s
+     | Val(v) -> (g s v)
+     | Node (n1, n2, n3, n4) -> (fold g (fold g (fold g (fold g s n1) n2) n3) n4)
+;
+
+transpose m =
+    case m of
+      None -> m
+    | Error -> m
+    | Val (v) -> m
+    | Node (q1, q2, q3, q4) -> Node ((transpose q1), (transpose q3), (transpose q2), (transpose q4))
+;
+
+complimentary m =
+    let res = 
+        case m of 
+          MNode (m1, m2, m3, m4) -> MNode (complimentary m1, complimentary m2, complimentary m3, complimentary m4)
+        | MNone -> MVal
+        | MVal -> MNone
+    in reduceMask res
+;
+
+reduceMask m =
+    case m of
+       MVal -> MVal
+     | MNone -> MNone
+     | MNode (m1, m2, m3, m4) ->
+       (
+            let n1 = reduceMask m1 in
+            let n2 = reduceMask m2 in
+            let n3 = reduceMask m3 in
+            let n4 = reduceMask m4 in
+            let res = MNode (n1, n2, n3, n4) in
+            (case n1 of 
+               MVal -> (case n2 of
+                          MVal -> (case n3 of
+                                     MVal -> (case n4 of
+                                                MVal -> MVal
+                                              | MNone -> res
+                                              | MNode (l1,l2,l3,l4) -> res )
+                                     | MNone -> res
+                                     | MNode (l1,l2,l3,l4) -> res )
+                         | MNone -> res
+                         | MNode (l1,l2,l3,l4) -> res)
+               | MNone -> res
+               | MNode (l1,l2,l3,l4) -> res)
+       )
+;
+
+maskFromMatrix m =
+    let res = 
+        case m of
+          Error -> MNone
+        | Val (v) -> MVal
+        | None -> MNone
+        | Node (m1,m2,m3,m4) -> MNode (maskFromMatrix m1, maskFromMatrix m2, maskFromMatrix m3, maskFromMatrix m4)
+    in res
+;
+
+mEq m1 m2 opEq =
+    case m1 of
+      Error -> False
+    | None -> ( case m2 of 
+                  None -> True
+                | Error -> False
+                | Val (v) -> False
+                | Node (n1,n2,n3,n4) -> False
+              )
+    | Val (v1) -> ( case m2 of 
+                      Val (v2) -> opEq v1 v2
+                    | Error -> False
+                    | None -> False
+                    | Node (n1,n2,n3,n4) -> False
+                  ) 
+    | Node (n1,n2,n3,n4) -> ( case m2 of 
+                                Node (l1,l2,l3,l4) -> and (mEq n1 l1 opEq) (and (mEq n2 l2 opEq) (and (mEq n3 l3 opEq) (mEq n4 l4 opEq)))
+                              | Error -> False
+                              | None -> False
+                              | Val (v2) -> False
+                            ) 

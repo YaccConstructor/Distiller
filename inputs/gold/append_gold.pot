@@ -1,0 +1,4 @@
+main = f' xs ys;
+f' xs ys = case xs of
+              Nil -> ys
+            | Cons(x,xs') -> Cons(x,f' xs' ys)

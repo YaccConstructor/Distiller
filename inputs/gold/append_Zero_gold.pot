@@ -1,0 +1,4 @@
+main = f' xs;
+f' xs = case xs of
+           Nil -> []
+         | Cons(x,xs') -> (f' xs')

@@ -3,7 +3,7 @@ import Nat
 
 append xs ys = case xs of
                   Nil -> ys
-                | Cons(x,xs) -> Cons(x,append xs ys);
+                | Cons(x,xs') -> Cons(x,append xs' ys);
 
 nrev xs = case xs of
              Nil        -> Nil
@@ -11,7 +11,7 @@ nrev xs = case xs of
 
 qrev xs ys = case xs of
                 Nil        -> ys
-              | Cons(x,xs) -> qrev xs Cons(x,ys);
+              | Cons(x,xs') -> qrev xs' Cons(x,ys);
 
 length xs = case xs of
                Nil        -> Zero
@@ -19,7 +19,7 @@ length xs = case xs of
 
 map f xs = case xs of
               Nil        -> Nil
-		    | Cons(x,xs) -> Cons(f x,map f xs);
+		    | Cons(x,xs') -> Cons(f x,map f xs');
 			
 eqNatList xs ys = case xs of
                      Nil -> (case ys of

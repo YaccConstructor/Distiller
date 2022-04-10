@@ -1,0 +1,7 @@
+main = minus x y;
+
+minus x y = case y of
+               Zero -> x
+             | Succ(y') -> case x of
+                             Zero -> Zero
+                           | Succ(x') -> minus x' y'

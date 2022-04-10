@@ -1,0 +1,5 @@
+main = and x False;
+
+and x y = case x of 
+             True -> y     
+           | False -> False

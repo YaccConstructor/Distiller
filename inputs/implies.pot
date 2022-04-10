@@ -1,0 +1,5 @@
+main = implies x True;
+
+implies x y = case x of              
+                 True -> y           
+               | False -> True

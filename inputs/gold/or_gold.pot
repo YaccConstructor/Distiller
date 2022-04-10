@@ -1,0 +1,4 @@
+main = f' x y;
+f' x y = case x of
+            True -> True
+          | False -> y

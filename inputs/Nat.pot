@@ -2,13 +2,13 @@ import Bool
 
 plus x y = case x of
               Zero    -> y
-            | Succ(x) -> Succ(plus x y);
+            | Succ(x') -> Succ(plus x' y);
 
 minus x y = case y of
                Zero -> x
-             | Succ(y) -> case x of
+             | Succ(y') -> case x of
                              Zero -> Zero
-                           | Succ(x) -> minus x y;
+                           | Succ(x') -> minus x' y';
 mul x y = case x of
              Zero    -> Zero
            | Succ(x) -> plus y (mul x y);
@@ -19,7 +19,7 @@ div x y = case (gt y x) of
 
 pow x y = case y of
              Zero -> Succ(Zero)
-		   | Succ(y) -> mul x (pow x y);
+           | Succ(y) -> mul x (pow x y);
 
 gt x y = case x of
             Zero -> False

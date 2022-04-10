@@ -1,0 +1,5 @@
+main = or x y;
+
+or x y = case x of                  
+            True -> True    
+          | False -> y

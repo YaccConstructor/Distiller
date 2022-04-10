@@ -1,0 +1,9 @@
+main = eqBool x False;
+
+eqBool x y = case x of                   
+                True -> y            
+              | False -> not y;
+              
+not x = case x of                     
+           True -> False               
+         | False -> True              

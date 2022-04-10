@@ -1,0 +1,5 @@
+main = plus x y;
+
+plus x y = case x of
+              Zero    -> y
+            | Succ(x') -> Succ(plus x' y)

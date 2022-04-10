@@ -1,0 +1,7 @@
+main = f' x y;
+
+f' x y = case y of
+            Zero -> x
+          | Succ(y') -> (case x of
+                            Zero -> 0
+                          | Succ(x') -> (f' x' y'))

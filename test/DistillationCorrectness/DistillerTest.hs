@@ -87,12 +87,12 @@ test_append_without_cons = let
     funTerm = Apply (Apply (Fun "append") (Free "xs")) (Free "ys")
     funDef = [("append",(["xs","ys"],Case (Free "xs") 
         [("Nil",[],Free "ys")
-        ,("Cons",["x","xs"],Con "Cons" [Free "x", Apply (Apply (Fun "append") (Free "xs")) (Free "ys")])]))]
+        ,("Cons",["x","xs#"],Con "Cons" [Free "x", Apply (Apply (Fun "append") (Free "xs#")) (Free "ys")])]))]
     result = distillProg (funTerm, funDef)            
     expectedTerm = Apply (Apply (Fun "f'") (Free "xs")) (Free "ys") 
     expectedFunDef = ("f'",(["xs","ys"], Case (Free "xs") 
         [("Nil",[],Free "ys")
-        ,("Cons",["x","xs"],Con "Cons" [Free "x",Apply (Apply (Fun "f'") (Free "xs")) (Free "ys")])]))           
+        ,("Cons",["x","xs#"],Con "Cons" [Free "x",Apply (Apply (Fun "f'") (Free "xs#")) (Free "ys")])]))           
     in return $ testGroup "Distiller" [testCase "Distiller: append xs ys, term " $ fst result @?= expectedTerm
                                       ,testCase "Distiller: append xs ys, funDef " $ expectedFunDef `elem` snd result @?= True]
 

@@ -136,6 +136,14 @@ test_distillerBasicTest24 =
 test_distillerBasicTest25 :: IO TestTree
 test_distillerBasicTest25 =
     createDistillationTest "not" "inputs/" "gold/not_gold" "inputs/" defaultTimeout
+
+test_distillerBasicTest26 :: IO TestTree
+test_distillerBasicTest26 =
+    createDistillationTest "and" "inputs/" "gold/and_gold" "inputs/" defaultTimeout
+
+test_distillerBasicTest27 :: IO TestTree
+test_distillerBasicTest27 =
+    createDistillationTest "qrev" "inputs/" "gold/qrev_gold" "inputs/" defaultTimeout
 -- Linear algebra tests
 
 test_distillerLinearAlgebraTest1 :: IO TestTree

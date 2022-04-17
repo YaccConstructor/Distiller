@@ -1,0 +1,3 @@
+main = f x z;
+f x z = f x z;
+f x z = and (and x y) z

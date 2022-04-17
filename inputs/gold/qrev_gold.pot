@@ -1,0 +1,7 @@
+main = f' xs;
+qrev xs ys = case xs of
+                Nil -> ys
+              | Cons(x,xs') -> (qrev xs' Cons(x,ys));
+f' xs = case xs of
+           Nil -> []
+         | Cons(x,xs') -> (qrev xs' [x])

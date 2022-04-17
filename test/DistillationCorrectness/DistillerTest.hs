@@ -49,19 +49,27 @@ test_and = let
 
 test_not :: IO TestTree
 test_not = let
-    funTerm = Apply (Fun "not") (Free "x")
-    funDef = [("not",(["x"],Case (Free "x") [("True",[],Con "False" []),("False",[],Con "True" [])]))]
-    result = distillProg (funTerm, funDef)
-    expectedTerm = Apply (Fun "f'") (Free "x")
-    expectedFunDef = ("f'",(["x"],Case (Free "x") [("True",[],Con "False" []),("False",[],Con "True" [])]))
-    in return $ testGroup "Distiller" [testCase "Distiller: not x, term " $ fst result @?= expectedTerm
-                                      ,testCase "Distiller: not x, fundef " $ expectedFunDef `elem` snd result @?= True]
+    givenFunTerms = map (Apply (Fun "not")) xTerms
+    givenFunDef = [("not",([_x],Case freex [("True", [], false),("False", [], true)]))]
+    results = map (\funTerm -> distillProg (funTerm, givenFunDef)) givenFunTerms
+
+    funDef = Case (Free "x") [("True",[],Con "False" []),("False",[],Con "True" [])]
+    expectedFunDefsTerms = map (\x -> case x of
+        Con "True" [] -> false
+        Con "False" [] -> true
+        Free "x" -> funDef) xTerms
+    expectedTerms = map (\x -> case x of
+        Con "True" [] -> false
+        Con "False" [] -> true
+        Free "x" -> Apply (Fun "f'") (Free "x")) xTerms
+    expectedFunDefs = map (\funDef -> ("f'", (free funDef, funDef))) expectedFunDefsTerms
+    in return $ generateTestCase expectedTerms expectedFunDefs givenFunTerms results
 
 test_or :: IO TestTree
 test_or = let
     or = "or"
     funDefTerm = Case (Free _x) [("True",[], Con "True" []),("False",[], freey)]
-    
+
     givenFunTerms = map (\(x, y) -> Apply (Apply (Fun or) x) y) xyTerms
     givenFunDef = [(or, ([_x, _y], Case freex [("True",[], true),("False",[], freey)]))]
     results = map (\funTerm -> distillProg (funTerm, givenFunDef)) givenFunTerms
@@ -86,16 +94,17 @@ test_iff = let
     funTerm = Apply (Apply (Fun "iff") (Free "x")) (Free "y")
     funDef = [("iff",(["x","y"],Case (Free "x") [("True",[],Free "y"),("False",[],Apply (Fun "not") (Free "y"))]))
              ,("not",(["x"],Case (Free "x") [("True",[],Con "False" []),("False",[],Con "True" [])]))]
-    result = (Apply (Lambda "x" (Free "x")) (Free "x"), funDef)
-    in return $ testGroup "Distiller" [testCase "Distiller: iff True x" $ distillProg (funTerm, funDef) @?= result]
+    result = distillProg (funTerm, funDef)
+    resultTerm = Apply (Apply (Fun "f''") (Free "x")) (Free "y")
+    expectedFunDef = ("f''",(["x","y"],Case (Free "x") [("True",[],Free "y"),("False",[],Case (Free "y") [("True",[],Con "False" []),("False",[],Con "True" [])])]))
+    in return $ testGroup "Distiller" [testCase "Distiller: iff x y, term" $ resultTerm @?= fst result
+                                      ,testCase "Distiller: iff x y, fundef" $ expectedFunDef `elem` snd result @?= True]
 
 test_eqBool :: IO TestTree
 test_eqBool = let
     funTerm = Apply (Apply (Fun "eqBool") (Free "x")) (Con "False" [])
     funDef = [("eqBool",(["x","y"],Case (Free "x") [("True",[],Free "y"),("False",[],Apply (Fun "not") (Free "y"))]))
              ,("not",(["x"],Case (Free "x") [("True",[],Con "False" []),("False",[],Con "True" [])]))]
-    --result = Lambda "y" (Lambda "x" (Case (Free "x") [("True",[],Con "False" []),("False",[],Con "True" [])]))
-    --result = (Lambda "y" (Lambda "x" (Case (Free "x") [("True",[],Con "False" []),("False",[],Lambda "x" (Con "True" []))])), funDef)
     result = distillProg (funTerm, funDef)
     expectedTerm = Apply (Fun "f''") (Free "x")
     expectedFunDef = ("f''",(["x"],Case (Free "x") [("True",[],Con "False" []),("False",[],Con "True" [])]))
@@ -106,7 +115,6 @@ test_implies :: IO TestTree
 test_implies = let
     funTerm = Apply (Apply (Fun "implies") (Free "x")) (Con "True" [])
     funDef = [("implies",(["x","y"],Case (Free "x") [("True",[],Free "y"),("False",[],Con "True" [])]))]
-    --result = (Lambda "y" (Lambda "x" (Case (Free "x") [("True",[],Con "True" []),("False",[],Con "True" [])])), funDef)
     result = distillProg (funTerm, funDef)
     expectedTerm = Apply (Fun "f'") (Free "x")
     expectedFunDef = ("f'",(["x"],Case (Free "x") [("True",[],Con "True" []),("False",[],Con "True" [])]))

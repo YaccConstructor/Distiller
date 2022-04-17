@@ -1,3 +1,5 @@
+{-# LANGUAGE LambdaCase #-}
+
 module DistillationCorrectness.DistillerTest where
 
 import Test.Tasty.Providers (TestTree)
@@ -18,7 +20,7 @@ yTerms = [false, true]
 xyTerms = [(x, y) | x <- xTerms, y <- yTerms]
 
 generateTestCase expectedTerms expectedFunDefs givenFunTerms results = let
-     description x y = "Distiller: " ++ show x ++ ", " ++ show y
+     description x y = "Term = " ++ show x ++ ", distilled " ++ y
      termsTestCases = zipWith3 (\result expectedTerm givenTerm ->
              testCase (description givenTerm "term") $ result @?= expectedTerm) (map fst results) expectedTerms givenFunTerms
      funDefsTestCases = zipWith3 (\result expectedFunDef givenTerm ->
@@ -54,14 +56,14 @@ test_not = let
     results = map (\funTerm -> distillProg (funTerm, givenFunDef)) givenFunTerms
 
     funDef = Case (Free "x") [("True",[],Con "False" []),("False",[],Con "True" [])]
-    expectedFunDefsTerms = map (\x -> case x of
-        Con "True" [] -> false
-        Con "False" [] -> true
-        Free "x" -> funDef) xTerms
-    expectedTerms = map (\x -> case x of
-        Con "True" [] -> false
-        Con "False" [] -> true
-        Free "x" -> Apply (Fun "f'") (Free "x")) xTerms
+    expectedFunDefsTerms = map (\case
+                                  Con "True" [] -> false
+                                  Con "False" [] -> true
+                                  _ -> funDef) xTerms
+    expectedTerms = map (\case
+                           Con "True" [] -> false
+                           Con "False" [] -> true
+                           _ -> Apply (Fun "f'") (Free "x")) xTerms
     expectedFunDefs = map (\funDef -> ("f'", (free funDef, funDef))) expectedFunDefsTerms
     in return $ generateTestCase expectedTerms expectedFunDefs givenFunTerms results
 
@@ -78,14 +80,14 @@ test_or = let
                 (Con "True" [], _) -> true
                 (Con "False" [], Con "True" []) -> true
                 (Con "False" [], Con "False" []) -> false
-                (Free "x", _)  -> let
+                _  -> let
                     term = substituteTermWithNewTerm funDefTerm (_y, y)
                     in substituteTermWithNewTerm term (_x, x)) xyTerms
     expectedTerms = map (\(x, y) -> case (x, y) of
                                 (Con "True" [], _) -> true
                                 (Con "False" [], Con "True" []) -> true
                                 (Con "False" [], Con "False" []) -> false
-                                (Free "x", _) -> Apply (Fun "f'") freex) xyTerms
+                                _ -> Apply (Fun "f'") freex) xyTerms
     expectedFunDefs = map (\funDef -> ("f'", (free funDef, funDef))) expectedFunDefsTerms
     in return $ generateTestCase expectedTerms expectedFunDefs givenFunTerms results
 
@@ -123,7 +125,7 @@ test_implies = let
 
 test_f :: IO TestTree
 test_f = let
-    funTerm = (Apply (Fun "f") (Free "x"))
+    funTerm = Apply (Fun "f") (Free "x")
     funDef = [("f",(["x"],Apply (Fun "f") (Free "x")))]
     result = (Apply (Fun "f") (Free "x"), funDef)  
     in return $ testGroup "Distiller" [testCase "Distiller: f x = f x" $ distillProg (funTerm, funDef) @?= result]
@@ -174,7 +176,7 @@ test_plusplus = let
     funTerm = Apply (Apply (Fun "plus") (Free "x")) (Free "x")
     funDef = [("plus",(["x","y"],Case (Free "x") [("Zero",[],Free "y"),("Succ",["x'"],Con "Succ" [Apply (Apply (Fun "plus") (Free "x'")) (Free "y")])]))]
     result = distillProg (funTerm, funDef)
-    expectedTerm = (Apply (Fun "f'") (Free "x"))
+    expectedTerm = Apply (Fun "f'") (Free "x")
     expectedFunDef = ("f'",(["x"],Case (Free "x") [("Zero",[],Con "Zero" []),("Succ",["x'"],Con "Succ" [Apply (Apply (Fun "plus") (Free "x'")) (Con "Succ" [Free "x'"])])]))
     in return $ testGroup "Distiller" [testCase "Distiller: plus x x, term " $ fst result @?= expectedTerm
                                       ,testCase "Distiller: plus x x, funDef" $ expectedFunDef `elem` snd result @?= True]

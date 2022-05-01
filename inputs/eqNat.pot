@@ -1,0 +1,9 @@
+main = eqNat x y;
+
+eqNat x y = case x of
+               Zero -> (case y of
+                           Zero -> True
+                         | Succ(y) -> False)
+             | Succ(x') -> case y of
+                             Zero -> False
+                           | Succ(y') -> eqNat x' y'

@@ -1,4 +1,4 @@
-main = iff True x;
+main = iff x y;
 
 iff x y = case x of                   
              True -> y            

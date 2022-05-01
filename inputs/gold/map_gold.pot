@@ -1,4 +1,4 @@
-main = f l g;
-f l g = case l of
-           Nil -> []
-         | Cons(x,xs) -> Cons(g x,f xs g)
+main = f' f l;
+f' f l = case l of
+            Nil -> []
+          | Cons(x,xs') -> Cons(f x,f' f xs')

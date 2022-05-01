@@ -1,0 +1,3 @@
+import Nat
+
+main = gt x x

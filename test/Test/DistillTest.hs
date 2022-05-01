@@ -119,7 +119,7 @@ test_distillerBasicTest20 =
 
 test_distillerBasicTest21 :: IO TestTree
 test_distillerBasicTest21 = 
-    createDistillationTest "append_Zero" "inputs/" "gold/append_Zero_gold" "inputs/" defaultTimeout
+    createDistillationTest "append_Nil" "inputs/" "gold/append_Nil_gold" "inputs/" defaultTimeout
 
 test_distillerBasicTest22 :: IO TestTree
 test_distillerBasicTest22 = 
@@ -144,6 +144,30 @@ test_distillerBasicTest26 =
 test_distillerBasicTest27 :: IO TestTree
 test_distillerBasicTest27 =
     createDistillationTest "qrev" "inputs/" "gold/qrev_gold" "inputs/" defaultTimeout
+
+test_distillerBasicTest28 :: IO TestTree
+test_distillerBasicTest28 =
+    createDistillationTest "map" "inputs/" "gold/map_gold" "inputs/" defaultTimeout
+
+test_distillerBasicTest29 :: IO TestTree
+test_distillerBasicTest29 =
+    createDistillationTest "mul" "inputs/" "gold/mul_gold" "inputs/" defaultTimeout
+
+test_distillerBasicTest30 :: IO TestTree
+test_distillerBasicTest30 =
+    createDistillationTest "gt" "inputs/" "gold/gt_gold" "inputs/" defaultTimeout
+
+test_distillerBasicTest31 :: IO TestTree
+test_distillerBasicTest31 =
+    createDistillationTest "eqNat" "inputs/" "gold/eqNat_gold" "inputs/" defaultTimeout
+
+test_distillerBasicTest32 :: IO TestTree
+test_distillerBasicTest32 =
+    createDistillationTest "eqBool" "inputs/" "gold/eqBool_gold" "inputs/" defaultTimeout
+
+test_distillerBasicTest33 :: IO TestTree
+test_distillerBasicTest33 =
+    createDistillationTest "implies" "inputs/" "gold/implies_gold" "inputs/" defaultTimeout
 -- Linear algebra tests
 
 test_distillerLinearAlgebraTest1 :: IO TestTree

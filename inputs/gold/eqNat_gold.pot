@@ -1,0 +1,8 @@
+main = f' x y''';
+f' x y''' = case x of
+               Zero -> (case y''' of
+                           Zero -> True
+                         | Succ(y''') -> False)
+             | Succ(x') -> (case y''' of
+                               Zero -> False
+                             | Succ(y') -> (f' x' y'''))

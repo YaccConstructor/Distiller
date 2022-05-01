@@ -1,0 +1,10 @@
+main = f' xs ys;
+plus x y = case x of
+              Zero -> y
+            | Succ(x') -> Succ(plus x' y);
+mul x y = case x of
+             Zero -> 0
+           | Succ(x') -> (plus y (mul x' y));
+f' xs ys = case xs of
+              Zero -> 0
+            | Succ(x') -> (plus ys (mul x' ys))
